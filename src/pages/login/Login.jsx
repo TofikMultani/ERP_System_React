@@ -14,6 +14,7 @@ function Login() {
     email: "",
     password: "",
     module: "",
+    rememberMe: true,
   });
   const [errors, setErrors] = useState({});
 
@@ -27,10 +28,12 @@ function Login() {
 
   function handleChange(event) {
     const { name, value } = event.target;
+    const nextValue =
+      event.target.type === "checkbox" ? event.target.checked : value;
 
     setFormValues((currentValues) => ({
       ...currentValues,
-      [name]: value,
+      [name]: nextValue,
     }));
 
     setErrors((currentErrors) => ({
@@ -86,21 +89,18 @@ function Login() {
     <main className="login-page">
       <section className="login-card">
         <div className="login-card__hero">
-          <span className="login-card__eyebrow">ERP System</span>
-          <h1>Role-based access</h1>
-          <p>
-            Sign in with your work email, choose a module, and continue to the
-            correct ERP dashboard.
-          </p>
+          <div className="login-card__brand">ERP System</div>
+          <h1>Sign in to your account</h1>
+          <p>Access your ERP workspace with your business credentials.</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit} noValidate>
           <label className="login-form__field">
-            <span>Email</span>
+            <span>Email Address</span>
             <input
               type="email"
               name="email"
-              placeholder="admin@erp.local"
+              placeholder="you@company.com"
               value={formValues.email}
               onChange={handleChange}
               aria-invalid={Boolean(errors.email)}
@@ -139,16 +139,29 @@ function Login() {
             {errors.module ? <small>{errors.module}</small> : null}
           </label>
 
-          <button type="submit">Login</button>
+          <div className="login-form__meta">
+            <label className="login-form__checkbox">
+              <input
+                type="checkbox"
+                name="rememberMe"
+                checked={formValues.rememberMe}
+                onChange={handleChange}
+              />
+              <span>Remember me</span>
+            </label>
+
+            <button type="button" className="login-form__link">
+              Forgot password?
+            </button>
+          </div>
+
+          <button type="submit">Sign In</button>
         </form>
 
         <div className="login-card__footer">
-          <p>Selected role is stored in localStorage for protected routing.</p>
-          <div className="login-card__chips" aria-label="Available modules">
-            {moduleOptions.map((module) => (
-              <span key={module.value}>{module.label}</span>
-            ))}
-          </div>
+          <p>
+            Static ERP demo with role-based routing and localStorage session.
+          </p>
         </div>
       </section>
     </main>

@@ -25,3 +25,25 @@ export function clearStoredRole() {
 export function getRouteForRole(role) {
   return moduleOptions.find((module) => module.value === role)?.route ?? "/";
 }
+
+// Paths each role is permitted to visit.
+// profile and settings are universal (all authenticated roles).
+export const ROLE_ALLOWED_PATHS = {
+  admin: [
+    "/admin",
+    "/hr",
+    "/sales",
+    "/inventory",
+    "/finance",
+    "/support",
+    "/it",
+    "/profile",
+    "/settings",
+  ],
+  hr: ["/hr", "/profile", "/settings"],
+  sales: ["/sales", "/profile", "/settings"],
+  inventory: ["/inventory", "/profile", "/settings"],
+  finance: ["/finance", "/profile", "/settings"],
+  support: ["/support", "/profile", "/settings"],
+  it: ["/it", "/profile", "/settings"],
+};

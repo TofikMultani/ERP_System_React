@@ -17,10 +17,22 @@ function getModuleMeta(pathname) {
     settings: "Settings",
   };
 
+  const descriptions = {
+    admin:
+      "Track company-wide metrics, orders, people, and operational health.",
+    hr: "Manage workforce operations, attendance, payroll, and talent programs.",
+    sales: "Review pipeline, customers, orders, quotations, and collections.",
+    inventory: "Control products, warehouses, stock levels, and suppliers.",
+    finance: "Monitor invoices, expenses, payouts, and business cash flow.",
+    support: "Supervise tickets, assignment queues, and response performance.",
+    it: "Oversee systems, assets, maintenance schedules, and uptime.",
+    profile: "Review account identity, role, and contact information.",
+    settings: "Configure currency, language, and dashboard preferences.",
+  };
+
   return {
     title: labels[currentModule] ?? "Dashboard",
-    description:
-      "Reusable ERP dashboard layout with shared navigation and content shell.",
+    description: descriptions[currentModule] ?? descriptions.admin,
   };
 }
 

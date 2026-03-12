@@ -1,0 +1,203 @@
+import { useState } from "react";
+import Card from "../../components/Card.jsx";
+import Table from "../../components/Table.jsx";
+
+const initialSystems = [
+  {
+    id: 1,
+    name: "Email Server",
+    ip: "192.168.1.10",
+    status: "Operational",
+    uptime: "99.9%",
+    lastCheck: "2026-03-10 14:30",
+  },
+  {
+    id: 2,
+    name: "Database Server",
+    ip: "192.168.1.11",
+    status: "Operational",
+    uptime: "99.95%",
+    lastCheck: "2026-03-10 14:30",
+  },
+  {
+    id: 3,
+    name: "Web Server",
+    ip: "192.168.1.12",
+    status: "Operational",
+    uptime: "99.8%",
+    lastCheck: "2026-03-10 14:30",
+  },
+  {
+    id: 4,
+    name: "File Server",
+    ip: "192.168.1.13",
+    status: "Maintenance",
+    uptime: "98.5%",
+    lastCheck: "2026-03-10 14:25",
+  },
+  {
+    id: 5,
+    name: "Backup Server",
+    ip: "192.168.1.14",
+    status: "Operational",
+    uptime: "99.7%",
+    lastCheck: "2026-03-10 14:30",
+  },
+];
+
+function Systems() {
+  const [systems, setSystems] = useState(initialSystems);
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    ip: "",
+    status: "Operational",
+  });
+
+  const filtered =
+    filterStatus === "All"
+      ? systems
+      : systems.filter((s) => s.status === filterStatus);
+
+  const handleAddSystem = (e) => {
+    e.preventDefault();
+    if (formData.name.trim() && formData.ip) {
+      const newSystem = {
+        id: systems.length + 1,
+        name: formData.name,
+        ip: formData.ip,
+        status: formData.status,
+        uptime: "N/A",
+        lastCheck: new Date().toLocaleString(),
+      };
+      setSystems([...systems, newSystem]);
+      setFormData({ name: "", ip: "", status: "Operational" });
+      setShowForm(false);
+    }
+  };
+
+  return (
+    <div className="it-page">
+      <div className="it-page__header">
+        <div>
+          <h2>Systems</h2>
+          <p>Monitor and manage IT systems and servers</p>
+        </div>
+      </div>
+
+      <div className="it-cards">
+        <Card title="Total Systems" value={systems.length} helper="Monitored" />
+        <Card
+          title="Operational"
+          value={systems.filter((s) => s.status === "Operational").length}
+          helper="Running"
+        />
+        <Card
+          title="In Maintenance"
+          value={systems.filter((s) => s.status === "Maintenance").length}
+          helper="Being serviced"
+        />
+        <Card title="Avg Uptime" value="99.75%" helper="Last 30 days" />
+      </div>
+
+      <div className="it-panel">
+        <div className="it-panel__toolbar">
+          <h3 className="it-panel__title">Systems List</h3>
+          <div
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <div className="it-filter-group">
+              {["All", "Operational", "Maintenance"].map((status) => (
+                <button
+                  key={status}
+                  className={`it-filter-btn ${filterStatus === status ? "it-filter-btn--active" : ""}`}
+                  onClick={() => setFilterStatus(status)}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+            <button className="it-btn" onClick={() => setShowForm(!showForm)}>
+              + Add System
+            </button>
+          </div>
+        </div>
+
+        {!showForm && (
+          <Table
+            columns={["Name", "IP Address", "Status", "Uptime", "Last Check"]}
+            rows={filtered.map((s) => [
+              s.name,
+              s.ip,
+              s.status,
+              s.uptime,
+              s.lastCheck,
+            ])}
+          />
+        )}
+
+        {showForm && (
+          <form onSubmit={handleAddSystem} className="it-form__grid">
+            <div className="it-form__field">
+              <label>System Name</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="it-form__field">
+              <label>IP Address</label>
+              <input
+                type="text"
+                value={formData.ip}
+                onChange={(e) =>
+                  setFormData({ ...formData, ip: e.target.value })
+                }
+                placeholder="192.168.0.0"
+                required
+              />
+            </div>
+            <div className="it-form__field">
+              <label>Status</label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
+              >
+                <option>Operational</option>
+                <option>Maintenance</option>
+                <option>Down</option>
+              </select>
+            </div>
+            <div style={{ gridColumn: "1 / -1", display: "flex", gap: "1rem" }}>
+              <button type="submit" className="it-btn">
+                Add
+              </button>
+              <button
+                type="button"
+                className="it-btn"
+                style={{ background: "#ccc", color: "#333" }}
+                onClick={() => setShowForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default Systems;
