@@ -4,12 +4,23 @@ import Topbar from "../components/Topbar.jsx";
 
 function getModuleMeta(pathname) {
   const currentModule = pathname.split("/")[1] || "admin";
-  const label = currentModule === "it" ? "IT" : currentModule;
+
+  const labels = {
+    admin: "Dashboard",
+    hr: "HR",
+    sales: "Sales",
+    inventory: "Inventory",
+    finance: "Finance",
+    support: "Customer Support",
+    it: "IT",
+    profile: "Profile",
+    settings: "Settings",
+  };
 
   return {
-    title: label.charAt(0).toUpperCase() + label.slice(1),
+    title: labels[currentModule] ?? "Dashboard",
     description:
-      "Static ERP dashboard layout with routing-only module placeholders.",
+      "Reusable ERP dashboard layout with shared navigation and content shell.",
   };
 }
 

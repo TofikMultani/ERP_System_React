@@ -218,6 +218,7 @@ a {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
+  background: #eef1f7;
 }
 
 .sidebar {
@@ -225,8 +226,18 @@ a {
   flex-direction: column;
   gap: 1.75rem;
   padding: 2rem 1.25rem;
-  background: linear-gradient(180deg, #0b1f33 0%, #12314f 100%);
-  color: #f3f7ff;
+  background: #000000;
+  color: #f3f4f6;
+}
+
+.sidebar__brand {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar__eyebrow {
+  background: rgba(90, 61, 240, 0.18);
+  color: #c6bbff;
 }
 
 .sidebar__nav {
@@ -234,10 +245,13 @@ a {
   gap: 0.55rem;
 }
 
-.sidebar__link {
+.sidebar__link,
+.sidebar__logout {
+  width: 100%;
   padding: 0.9rem 1rem;
   border-radius: 14px;
-  color: rgba(243, 247, 255, 0.74);
+  color: rgba(255, 255, 255, 0.74);
+  text-align: left;
   transition:
     background-color 0.2s ease,
     color 0.2s ease,
@@ -245,16 +259,25 @@ a {
 }
 
 .sidebar__link:hover,
-.sidebar__link--active {
-  color: #fff;
+.sidebar__link--active,
+.sidebar__logout:hover {
+  color: #ffffff;
   background: rgba(255, 255, 255, 0.12);
   transform: translateX(2px);
+}
+
+.sidebar__logout {
+  margin-top: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  cursor: pointer;
 }
 
 .admin-shell__content {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  background: #eef1f7;
 }
 
 .topbar {
@@ -264,8 +287,7 @@ a {
   align-items: center;
   padding: 1.5rem 2rem;
   border-bottom: 1px solid rgba(20, 33, 61, 0.08);
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(18px);
+  background: #ffffff;
 }
 
 .topbar__actions {
@@ -296,6 +318,7 @@ a {
 
 .admin-shell__main {
   padding: 2rem;
+  background: #eef1f7;
 }
 
 .module-page {
@@ -306,10 +329,10 @@ a {
 .module-page__hero,
 .module-page__panel,
 .erp-card {
-  border: 1px solid rgba(20, 33, 61, 0.1);
+  border: 1px solid rgba(20, 33, 61, 0.08);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 20px 45px rgba(20, 33, 61, 0.08);
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(20, 33, 61, 0.05);
 }
 
 .module-page__hero {
@@ -324,11 +347,7 @@ a {
   min-width: 220px;
   padding: 1rem 1.25rem;
   border-radius: 18px;
-  background: linear-gradient(
-    135deg,
-    rgba(90, 61, 240, 0.1) 0%,
-    rgba(114, 87, 255, 0.16) 100%
-  );
+  background: rgba(90, 61, 240, 0.08);
   color: var(--color-primary);
 }
 
@@ -417,5 +436,9 @@ a {
 
   .topbar__search {
     min-width: 0;
+  }
+
+  .admin-shell__main {
+    padding: 1rem;
   }
 }

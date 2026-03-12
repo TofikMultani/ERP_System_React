@@ -2,9 +2,19 @@ import Card from "../components/Card.jsx";
 import Table from "../components/Table.jsx";
 
 function formatModuleName(moduleKey) {
-  return moduleKey === "it"
-    ? "IT"
-    : moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1);
+  const labels = {
+    admin: "Dashboard",
+    hr: "HR",
+    sales: "Sales",
+    inventory: "Inventory",
+    finance: "Finance",
+    support: "Customer Support",
+    it: "IT",
+    profile: "Profile",
+    settings: "Settings",
+  };
+
+  return labels[moduleKey] ?? "Dashboard";
 }
 
 function ModuleLayout({ moduleKey, title, description }) {
@@ -63,14 +73,14 @@ function ModuleLayout({ moduleKey, title, description }) {
     <section className="module-page">
       <div className="module-page__hero">
         <div>
-          <span className="module-page__tag">Route ready</span>
+          <span className="module-page__tag">Module View</span>
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
 
         <div className="module-page__status">
-          <span>Static UI only</span>
-          <strong>No backend or database connected</strong>
+          <span>Layout Status</span>
+          <strong>Reusable dashboard shell active</strong>
         </div>
       </div>
 
@@ -88,10 +98,13 @@ function ModuleLayout({ moduleKey, title, description }) {
       <section className="module-page__panel">
         <div className="module-page__panel-header">
           <div>
-            <span className="module-page__tag">Structure</span>
-            <h4>{moduleName} route placeholder</h4>
+            <span className="module-page__tag">Overview</span>
+            <h4>{moduleName} dashboard summary</h4>
           </div>
-          <p>Use this area for future module-specific pages and widgets.</p>
+          <p>
+            Shared content panel for every ERP route using the same layout
+            structure.
+          </p>
         </div>
 
         <Table columns={columns} rows={rows} />
