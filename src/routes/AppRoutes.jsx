@@ -62,15 +62,14 @@ const modules = [
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Login />} />
 
-      <Route element={<ProtectedRoute allowAccess={true} />}>
-        <Route path="/" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin" replace />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AdminLayout />}>
           {modules.map((module) => (
             <Route
               key={module.key}
-              path={module.key}
+              path={`/${module.key}`}
               element={
                 <ModuleLayout
                   moduleKey={module.key}
@@ -83,7 +82,8 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
