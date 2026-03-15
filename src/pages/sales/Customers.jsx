@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -78,6 +79,11 @@ function Customers() {
 
   const handleAddCustomer = (e) => {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     if (formData.name.trim()) {
       setCustomers([
         ...customers,
@@ -166,7 +172,7 @@ function Customers() {
       {showForm && (
         <div className="sales-panel sales-form">
           <h3 className="sales-panel__title">Add Customer</h3>
-          <form onSubmit={handleAddCustomer} className="sales-form__grid">
+          <form onSubmit={handleAddCustomer} className="sales-form__grid" noValidate onChange={handleFormFieldValidation}>
             <div className="sales-form__field">
               <label>Company Name</label>
               <input
@@ -232,3 +238,6 @@ function Customers() {
 }
 
 export default Customers;
+
+
+

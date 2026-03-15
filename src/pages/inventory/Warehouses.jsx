@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -79,6 +80,11 @@ function Warehouses() {
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     setWarehouses((prev) => [
       ...prev,
       { ...form, id: prev.length + 1, occupied: 0, status: "Active" },
@@ -106,7 +112,7 @@ function Warehouses() {
       </div>
 
       {showForm && (
-        <form className="inv-form inv-panel" onSubmit={handleSubmit}>
+        <form className="inv-form inv-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
           <h3 className="inv-panel__title">New Warehouse</h3>
           <div className="inv-form__grid">
             <div className="inv-form__field">
@@ -165,3 +171,6 @@ function Warehouses() {
 }
 
 export default Warehouses;
+
+
+

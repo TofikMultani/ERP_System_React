@@ -1,77 +1,88 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { getStoredRole } from "../../utils/auth.js";
+import {
+  getRoleLabel,
+  getStoredProfile,
+  storeProfile,
+} from "../../utils/profile.js";
 
 function Profile() {
-  const [role] = useState(localStorage.getItem("erp_user_role") || "unknown");
+  const role = getStoredRole() || "admin";
+  const initialProfile = useMemo(() => getStoredProfile(role), [role]);
+  const [user, setUser] = useState(initialProfile);
+  const [formValues, setFormValues] = useState(initialProfile);
+  const [isEditing, setIsEditing] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const getRoleLabel = (role) => {
-    const roleMap = {
-      admin: "Administrator",
-      hr: "HR Manager",
-      sales: "Sales Representative",
-      inventory: "Inventory Manager",
-      finance: "Finance Manager",
-      support: "Support Agent",
-      it: "IT Specialist",
+  function handleChange(event) {
+    const { name, value } = event.target;
+
+    setFormValues((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
+    setErrors((current) => ({
+      ...current,
+      [name]: "",
+    }));
+  }
+
+  function validateForm() {
+    const nextErrors = {};
+
+    if (!formValues.name.trim()) {
+      nextErrors.name = "Full Name is required.";
+    }
+
+    if (!formValues.email.trim()) {
+      nextErrors.email = "Email Address is required.";
+    } else if (!/^\S+@\S+\.\S+$/.test(formValues.email.trim())) {
+      nextErrors.email = "Enter a valid email address.";
+    }
+
+    if (!formValues.department.trim()) {
+      nextErrors.department = "Department is required.";
+    }
+
+    if (!formValues.phone.trim()) {
+      nextErrors.phone = "Phone is required.";
+    }
+
+    if (!formValues.joinDate.trim()) {
+      nextErrors.joinDate = "Joined On is required.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  function handleSave(event) {
+    event.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    const nextUser = {
+      name: formValues.name.trim(),
+      email: formValues.email.trim(),
+      department: formValues.department.trim(),
+      phone: formValues.phone.trim(),
+      joinDate: formValues.joinDate,
     };
-    return roleMap[role] || role;
-  };
 
-  const getUserData = (role) => {
-    const users = {
-      admin: {
-        name: "Administrator",
-        email: "admin@erpsystem.com",
-        department: "Management",
-        joinDate: "2024-01-01",
-        phone: "+1-555-0001",
-      },
-      hr: {
-        name: "HR Department",
-        email: "hr@erpsystem.com",
-        department: "Human Resources",
-        joinDate: "2024-01-15",
-        phone: "+1-555-0002",
-      },
-      sales: {
-        name: "Sales Team",
-        email: "sales@erpsystem.com",
-        department: "Sales",
-        joinDate: "2024-02-01",
-        phone: "+1-555-0003",
-      },
-      inventory: {
-        name: "Inventory Manager",
-        email: "inventory@erpsystem.com",
-        department: "Operations",
-        joinDate: "2024-02-15",
-        phone: "+1-555-0004",
-      },
-      finance: {
-        name: "Finance Department",
-        email: "finance@erpsystem.com",
-        department: "Finance",
-        joinDate: "2024-03-01",
-        phone: "+1-555-0005",
-      },
-      support: {
-        name: "Support Team",
-        email: "support@erpsystem.com",
-        department: "Customer Support",
-        joinDate: "2024-03-15",
-        phone: "+1-555-0006",
-      },
-      it: {
-        name: "IT Department",
-        email: "it@erpsystem.com",
-        department: "Information Technology",
-        joinDate: "2024-04-01",
-        phone: "+1-555-0007",
-      },
-    };
-    return users[role] || users.admin;
-  };
+    storeProfile(role, nextUser);
+    setUser(nextUser);
+    setFormValues(nextUser);
+    setIsEditing(false);
+  }
 
-  const user = getUserData(role);
+  function handleCancel() {
+    setFormValues(user);
+    setErrors({});
+    setIsEditing(false);
+  }
 
   return (
     <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
@@ -123,7 +134,7 @@ function Profile() {
           {user.name.charAt(0)}
         </div>
 
-        <div style={{ display: "grid", gap: "1.5rem" }}>
+        <form style={{ display: "grid", gap: "1.5rem" }} onSubmit={handleSave}>
           <div>
             <label
               style={{
@@ -136,15 +147,44 @@ function Profile() {
             >
               Full Name
             </label>
-            <div
-              style={{
-                fontSize: "1.1rem",
-                fontWeight: "600",
-                color: "var(--color-text)",
-              }}
-            >
-              {user.name}
-            </div>
+            {isEditing ? (
+              <>
+                <input
+                  name="name"
+                  value={formValues.name}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "0.9rem 1rem",
+                    border: `1px solid ${errors.name ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
+                    borderRadius: "14px",
+                    background: "var(--color-surface-muted)",
+                    color: "var(--color-text)",
+                    outline: "none",
+                  }}
+                />
+                {errors.name ? (
+                  <small
+                    style={{
+                      color: "var(--color-danger)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {errors.name}
+                  </small>
+                ) : null}
+              </>
+            ) : (
+              <div
+                style={{
+                  fontSize: "1.1rem",
+                  fontWeight: "600",
+                  color: "var(--color-text)",
+                }}
+              >
+                {user.name}
+              </div>
+            )}
           </div>
 
           <div>
@@ -159,9 +199,38 @@ function Profile() {
             >
               Email Address
             </label>
-            <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
-              {user.email}
-            </div>
+            {isEditing ? (
+              <>
+                <input
+                  name="email"
+                  value={formValues.email}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "0.9rem 1rem",
+                    border: `1px solid ${errors.email ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
+                    borderRadius: "14px",
+                    background: "var(--color-surface-muted)",
+                    color: "var(--color-text)",
+                    outline: "none",
+                  }}
+                />
+                {errors.email ? (
+                  <small
+                    style={{
+                      color: "var(--color-danger)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {errors.email}
+                  </small>
+                ) : null}
+              </>
+            ) : (
+              <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
+                {user.email}
+              </div>
+            )}
           </div>
 
           <div>
@@ -204,9 +273,38 @@ function Profile() {
             >
               Department
             </label>
-            <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
-              {user.department}
-            </div>
+            {isEditing ? (
+              <>
+                <input
+                  name="department"
+                  value={formValues.department}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "0.9rem 1rem",
+                    border: `1px solid ${errors.department ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
+                    borderRadius: "14px",
+                    background: "var(--color-surface-muted)",
+                    color: "var(--color-text)",
+                    outline: "none",
+                  }}
+                />
+                {errors.department ? (
+                  <small
+                    style={{
+                      color: "var(--color-danger)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {errors.department}
+                  </small>
+                ) : null}
+              </>
+            ) : (
+              <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
+                {user.department}
+              </div>
+            )}
           </div>
 
           <div>
@@ -221,9 +319,38 @@ function Profile() {
             >
               Phone
             </label>
-            <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
-              {user.phone}
-            </div>
+            {isEditing ? (
+              <>
+                <input
+                  name="phone"
+                  value={formValues.phone}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "0.9rem 1rem",
+                    border: `1px solid ${errors.phone ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
+                    borderRadius: "14px",
+                    background: "var(--color-surface-muted)",
+                    color: "var(--color-text)",
+                    outline: "none",
+                  }}
+                />
+                {errors.phone ? (
+                  <small
+                    style={{
+                      color: "var(--color-danger)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {errors.phone}
+                  </small>
+                ) : null}
+              </>
+            ) : (
+              <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
+                {user.phone}
+              </div>
+            )}
           </div>
 
           <div>
@@ -238,28 +365,99 @@ function Profile() {
             >
               Joined On
             </label>
-            <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
-              {new Date(user.joinDate).toLocaleDateString()}
-            </div>
+            {isEditing ? (
+              <>
+                <input
+                  type="date"
+                  name="joinDate"
+                  value={formValues.joinDate}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "0.9rem 1rem",
+                    border: `1px solid ${errors.joinDate ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
+                    borderRadius: "14px",
+                    background: "var(--color-surface-muted)",
+                    color: "var(--color-text)",
+                    outline: "none",
+                  }}
+                />
+                {errors.joinDate ? (
+                  <small
+                    style={{
+                      color: "var(--color-danger)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {errors.joinDate}
+                  </small>
+                ) : null}
+              </>
+            ) : (
+              <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
+                {new Date(user.joinDate).toLocaleDateString()}
+              </div>
+            )}
           </div>
-        </div>
 
-        <button
-          style={{
-            marginTop: "2rem",
-            width: "100%",
-            padding: "0.85rem",
-            borderRadius: "12px",
-            border: "0",
-            background: "linear-gradient(135deg, #5a3df0 0%, #7257ff 100%)",
-            color: "#fff",
-            fontWeight: "600",
-            cursor: "pointer",
-            fontSize: "0.95rem",
-          }}
-        >
-          Edit Profile
-        </button>
+          {isEditing ? (
+            <div style={{ marginTop: "2rem", display: "flex", gap: "0.75rem" }}>
+              <button
+                type="submit"
+                style={{
+                  flex: 1,
+                  padding: "0.85rem",
+                  borderRadius: "12px",
+                  border: "0",
+                  background:
+                    "linear-gradient(135deg, #5a3df0 0%, #7257ff 100%)",
+                  color: "#fff",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  fontSize: "0.95rem",
+                }}
+              >
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                style={{
+                  flex: 1,
+                  padding: "0.85rem",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(27, 35, 64, 0.16)",
+                  background: "#ffffff",
+                  color: "var(--color-text)",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  fontSize: "0.95rem",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              style={{
+                marginTop: "2rem",
+                width: "100%",
+                padding: "0.85rem",
+                borderRadius: "12px",
+                border: "0",
+                background: "linear-gradient(135deg, #5a3df0 0%, #7257ff 100%)",
+                color: "#fff",
+                fontWeight: "600",
+                cursor: "pointer",
+                fontSize: "0.95rem",
+              }}
+            >
+              Edit Profile
+            </button>
+          )}
+        </form>
       </div>
     </div>
   );

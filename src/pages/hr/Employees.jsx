@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Table from "../../components/Table.jsx";
 
 const initialEmployees = [
@@ -136,6 +137,11 @@ function Employees() {
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     setEmployees((prev) => [...prev, { ...form, id: prev.length + 1 }]);
     setForm(emptyForm);
     setShowForm(false);
@@ -160,7 +166,7 @@ function Employees() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit}>
+        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
           <h3 className="hr-panel__title">New Employee</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field">
@@ -261,3 +267,6 @@ function Employees() {
 }
 
 export default Employees;
+
+
+

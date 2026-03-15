@@ -1,6 +1,8 @@
 import { Bell, CalendarDays, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getStoredRole } from "../utils/auth.js";
+import { getStoredProfile, PROFILE_UPDATED_EVENT } from "../utils/profile.js";
 
 function formatLabel(segment) {
   return segment
@@ -12,6 +14,18 @@ function formatLabel(segment) {
 function Topbar({ title, description }) {
   const location = useLocation();
   const userRole = getStoredRole() || "admin";
+  const [, setProfileVersion] = useState(0);
+  const profile = getStoredProfile(userRole);
+
+  useEffect(() => {
+    function handleProfileUpdate() {
+      setProfileVersion((value) => value + 1);
+    }
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdate);
+    return () =>
+      window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdate);
+  }, [userRole]);
 
   // Generate breadcrumbs from path
   const pathParts = location.pathname.split("/").filter(Boolean);
@@ -78,10 +92,10 @@ function Topbar({ title, description }) {
 
           <div className="topbar__profile">
             <div className="topbar__avatar">
-              {userRole.charAt(0).toUpperCase()}
+              {(profile.name || userRole).charAt(0).toUpperCase()}
             </div>
             <div className="topbar__profile-info">
-              <div className="topbar__profile-name">ERP Workspace</div>
+              <div className="topbar__profile-name">{profile.name}</div>
               <div className="topbar__profile-role">
                 {formatLabel(userRole)}
               </div>

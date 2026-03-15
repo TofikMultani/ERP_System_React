@@ -1,6 +1,12 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import AdminLayout from "../layout/AdminLayout.jsx";
+import HRLayout from "../layout/HRLayout.jsx";
+import InventoryLayout from "../layout/InventoryLayout.jsx";
+import SalesLayout from "../layout/SalesLayout.jsx";
+import FinanceLayout from "../layout/FinanceLayout.jsx";
+import ITLayout from "../layout/ITLayout.jsx";
+import SupportLayout from "../layout/SupportLayout.jsx";
 import Login from "../pages/login/Login.jsx";
 import Dashboard from "../pages/admin/Dashboard.jsx";
 import HRDashboard from "../pages/hr/HRDashboard.jsx";
@@ -58,71 +64,77 @@ function AppRoutes() {
             element={<Navigate to="/admin" replace />}
           />
 
-          <Route path="/hr" element={<Navigate to="/hr/dashboard" replace />} />
-          <Route path="/hr/dashboard" element={<HRDashboard />} />
-          <Route path="/hr/employees" element={<Employees />} />
-          <Route path="/hr/departments" element={<Departments />} />
-          <Route path="/hr/attendance" element={<Attendance />} />
-          <Route path="/hr/leave" element={<Leave />} />
-          <Route path="/hr/payroll" element={<Payroll />} />
-          <Route path="/hr/recruitment" element={<Recruitment />} />
-          <Route path="/hr/performance" element={<Performance />} />
-          <Route path="/hr/documents" element={<Documents />} />
-          <Route path="/hr/training" element={<Training />} />
-          <Route path="/hr/reports" element={<HRReports />} />
+          <Route path="/hr" element={<HRLayout />}>
+            <Route index element={<HRDashboard />} />
+            <Route path="dashboard" element={<Navigate to="/hr" replace />} />
+            <Route path="employees" element={<Employees />} />
+            <Route path="departments" element={<Departments />} />
+            <Route path="attendance" element={<Attendance />} />
+            <Route path="leave" element={<Leave />} />
+            <Route path="payroll" element={<Payroll />} />
+            <Route path="recruitment" element={<Recruitment />} />
+            <Route path="performance" element={<Performance />} />
+            <Route path="documents" element={<Documents />} />
+            <Route path="training" element={<Training />} />
+            <Route path="reports" element={<HRReports />} />
+          </Route>
 
-          <Route
-            path="/inventory"
-            element={<Navigate to="/inventory/products" replace />}
-          />
-          <Route path="/inventory/products" element={<Products />} />
-          <Route path="/inventory/categories" element={<Categories />} />
-          <Route path="/inventory/stock" element={<Stock />} />
-          <Route path="/inventory/suppliers" element={<Suppliers />} />
-          <Route path="/inventory/warehouses" element={<Warehouses />} />
-          <Route
-            path="/inventory/purchase-orders"
-            element={<PurchaseOrders />}
-          />
-          <Route path="/inventory/adjustments" element={<Adjustments />} />
-          <Route path="/inventory/reports" element={<InventoryReports />} />
+          <Route path="/inventory" element={<InventoryLayout />}>
+            <Route index element={<Products />} />
+            <Route path="products" element={<Products />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="stock" element={<Stock />} />
+            <Route path="suppliers" element={<Suppliers />} />
+            <Route path="warehouses" element={<Warehouses />} />
+            <Route path="purchase-orders" element={<PurchaseOrders />} />
+            <Route path="adjustments" element={<Adjustments />} />
+            <Route path="reports" element={<InventoryReports />} />
+          </Route>
 
-          <Route
-            path="/sales"
-            element={<Navigate to="/sales/dashboard" replace />}
-          />
-          <Route path="/sales/dashboard" element={<SalesDashboard />} />
-          <Route path="/sales/customers" element={<Customers />} />
-          <Route path="/sales/orders" element={<SalesOrders />} />
-          <Route path="/sales/invoices" element={<SalesInvoices />} />
-          <Route path="/sales/quotations" element={<Quotations />} />
-          <Route path="/sales/reports" element={<SalesReports />} />
+          <Route path="/sales" element={<SalesLayout />}>
+            <Route index element={<SalesDashboard />} />
+            <Route
+              path="dashboard"
+              element={<Navigate to="/sales" replace />}
+            />
+            <Route path="customers" element={<Customers />} />
+            <Route path="orders" element={<SalesOrders />} />
+            <Route path="invoices" element={<SalesInvoices />} />
+            <Route path="quotations" element={<Quotations />} />
+            <Route path="reports" element={<SalesReports />} />
+          </Route>
 
-          <Route
-            path="/finance"
-            element={<Navigate to="/finance/dashboard" replace />}
-          />
-          <Route path="/finance/dashboard" element={<FinanceDashboard />} />
-          <Route path="/finance/invoices" element={<FinanceInvoices />} />
-          <Route path="/finance/expenses" element={<Expenses />} />
-          <Route path="/finance/payments" element={<Payments />} />
-          <Route path="/finance/reports" element={<FinanceReports />} />
+          <Route path="/finance" element={<FinanceLayout />}>
+            <Route index element={<FinanceDashboard />} />
+            <Route
+              path="dashboard"
+              element={<Navigate to="/finance" replace />}
+            />
+            <Route path="invoices" element={<FinanceInvoices />} />
+            <Route path="expenses" element={<Expenses />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="reports" element={<FinanceReports />} />
+          </Route>
 
-          <Route path="/it" element={<Navigate to="/it/dashboard" replace />} />
-          <Route path="/it/dashboard" element={<ITDashboard />} />
-          <Route path="/it/systems" element={<Systems />} />
-          <Route path="/it/assets" element={<Assets />} />
-          <Route path="/it/maintenance" element={<Maintenance />} />
-          <Route path="/it/reports" element={<ITReports />} />
+          <Route path="/it" element={<ITLayout />}>
+            <Route index element={<ITDashboard />} />
+            <Route path="dashboard" element={<Navigate to="/it" replace />} />
+            <Route path="systems" element={<Systems />} />
+            <Route path="assets" element={<Assets />} />
+            <Route path="maintenance" element={<Maintenance />} />
+            <Route path="reports" element={<ITReports />} />
+          </Route>
 
-          <Route
-            path="/support"
-            element={<Navigate to="/support/dashboard" replace />}
-          />
-          <Route path="/support/dashboard" element={<SupportDashboard />} />
-          <Route path="/support/tickets" element={<Tickets />} />
-          <Route path="/support/assign-ticket" element={<AssignTicket />} />
-          <Route path="/support/reports" element={<SupportReports />} />
+          <Route path="/support" element={<SupportLayout />}>
+            <Route index element={<SupportDashboard />} />
+            <Route
+              path="dashboard"
+              element={<Navigate to="/support" replace />}
+            />
+            <Route path="tickets" element={<Tickets />} />
+            <Route path="assign-ticket" element={<AssignTicket />} />
+            <Route path="reports" element={<SupportReports />} />
+          </Route>
 
           {/* Profile Page */}
           <Route path="/profile" element={<Profile />} />

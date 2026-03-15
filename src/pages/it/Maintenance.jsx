@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -59,6 +60,11 @@ function Maintenance() {
 
   const handleAddMaintenance = (e) => {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     if (
       formData.assetName.trim() &&
       formData.maintenanceType &&
@@ -168,7 +174,7 @@ function Maintenance() {
         )}
 
         {showForm && (
-          <form onSubmit={handleAddMaintenance} className="it-form__grid">
+          <form onSubmit={handleAddMaintenance} className="it-form__grid" noValidate onChange={handleFormFieldValidation}>
             <div className="it-form__field">
               <label>Asset Name</label>
               <input
@@ -241,3 +247,6 @@ function Maintenance() {
 }
 
 export default Maintenance;
+
+
+

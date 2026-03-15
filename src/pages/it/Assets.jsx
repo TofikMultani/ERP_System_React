@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -74,6 +75,11 @@ function Assets() {
 
   const handleAddAsset = (e) => {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     if (formData.name.trim() && formData.serialNo) {
       const newAsset = {
         id: `AST-${String(assets.length + 1).padStart(3, "0")}`,
@@ -188,7 +194,7 @@ function Assets() {
         )}
 
         {showForm && (
-          <form onSubmit={handleAddAsset} className="it-form__grid">
+          <form onSubmit={handleAddAsset} className="it-form__grid" noValidate onChange={handleFormFieldValidation}>
             <div className="it-form__field">
               <label>Asset Name</label>
               <input
@@ -266,3 +272,6 @@ function Assets() {
 }
 
 export default Assets;
+
+
+

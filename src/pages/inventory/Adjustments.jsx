@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -102,6 +103,11 @@ function Adjustments() {
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     setAdjustments((prev) => [
       ...prev,
       { ...form, id: prev.length + 1, approvedBy: "Admin" },
@@ -129,7 +135,7 @@ function Adjustments() {
       </div>
 
       {showForm && (
-        <form className="inv-form inv-panel" onSubmit={handleSubmit}>
+        <form className="inv-form inv-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
           <h3 className="inv-panel__title">Stock Adjustment</h3>
           <div className="inv-form__grid">
             <div className="inv-form__field">
@@ -225,3 +231,6 @@ function Adjustments() {
 }
 
 export default Adjustments;
+
+
+

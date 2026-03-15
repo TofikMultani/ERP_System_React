@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -113,6 +114,11 @@ function Documents() {
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     setDocs((prev) => [
       ...prev,
       { ...form, id: prev.length + 1, status: "Active" },
@@ -144,7 +150,7 @@ function Documents() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit}>
+        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
           <h3 className="hr-panel__title">Add Document Record</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field hr-form__field--full">
@@ -226,3 +232,6 @@ function Documents() {
 }
 
 export default Documents;
+
+
+

@@ -267,6 +267,41 @@ a {
   font-size: 0.85rem;
 }
 
+.login-form__field[data-error],
+.hr-form__field[data-error],
+.inv-form__field[data-error],
+.sales-form__field[data-error],
+.finance-form__field[data-error],
+.it-form__field[data-error] {
+  position: relative;
+}
+
+.login-form__field[data-error]::after,
+.hr-form__field[data-error]::after,
+.inv-form__field[data-error]::after,
+.sales-form__field[data-error]::after,
+.finance-form__field[data-error]::after,
+.it-form__field[data-error]::after {
+  content: attr(data-error);
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.hr-form__field input[aria-invalid="true"],
+.hr-form__field select[aria-invalid="true"],
+.inv-form__field input[aria-invalid="true"],
+.inv-form__field select[aria-invalid="true"],
+.sales-form__field input[aria-invalid="true"],
+.sales-form__field select[aria-invalid="true"],
+.finance-form__field input[aria-invalid="true"],
+.finance-form__field select[aria-invalid="true"],
+.it-form__field input[aria-invalid="true"],
+.it-form__field select[aria-invalid="true"] {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 4px rgba(209, 67, 67, 0.1);
+}
+
 .login-form button,
 .topbar__profile {
   border: 0;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -54,6 +55,11 @@ function Invoices() {
 
   const handleAddInvoice = (e) => {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     if (formData.vendor.trim() && formData.amount) {
       const newInvoice = {
         id: `FIN-INV-${String(invoices.length + 1).padStart(3, "0")}`,
@@ -211,7 +217,7 @@ function Invoices() {
         )}
 
         {showForm && (
-          <form onSubmit={handleAddInvoice} className="finance-form__grid">
+          <form onSubmit={handleAddInvoice} className="finance-form__grid" noValidate onChange={handleFormFieldValidation}>
             <div className="finance-form__field">
               <label>Vendor Name</label>
               <input
@@ -266,3 +272,6 @@ function Invoices() {
 }
 
 export default Invoices;
+
+
+

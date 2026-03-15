@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -107,6 +108,11 @@ function Products() {
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     setProducts((prev) => [
       ...prev,
       { ...form, id: prev.length + 1, status: "Active" },
@@ -140,7 +146,7 @@ function Products() {
       </div>
 
       {showForm && (
-        <form className="inv-form inv-panel" onSubmit={handleSubmit}>
+        <form className="inv-form inv-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
           <h3 className="inv-panel__title">New Product</h3>
           <div className="inv-form__grid">
             <div className="inv-form__field">
@@ -228,3 +234,6 @@ function Products() {
 }
 
 export default Products;
+
+
+

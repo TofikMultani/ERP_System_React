@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -80,6 +81,11 @@ function Departments() {
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     setDepts((prev) => [...prev, { ...form, id: prev.length + 1 }]);
     setForm(emptyForm);
     setShowForm(false);
@@ -109,7 +115,7 @@ function Departments() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit}>
+        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
           <h3 className="hr-panel__title">New Department</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field">
@@ -176,3 +182,6 @@ function Departments() {
 }
 
 export default Departments;
+
+
+

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -59,6 +60,11 @@ function Payments() {
 
   const handleAddPayment = (e) => {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     if (formData.vendor.trim() && formData.amount) {
       const newPayment = {
         id: payments.length + 1,
@@ -178,7 +184,7 @@ function Payments() {
         )}
 
         {showForm && (
-          <form onSubmit={handleAddPayment} className="finance-form__grid">
+          <form onSubmit={handleAddPayment} className="finance-form__grid" noValidate onChange={handleFormFieldValidation}>
             <div className="finance-form__field">
               <label>Vendor Name</label>
               <input
@@ -246,3 +252,6 @@ function Payments() {
 }
 
 export default Payments;
+
+
+

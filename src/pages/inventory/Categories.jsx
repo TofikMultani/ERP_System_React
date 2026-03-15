@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -74,6 +75,11 @@ function Categories() {
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     setCategories((prev) => [
       ...prev,
       { ...form, id: prev.length + 1, productCount: 0, status: "Active" },
@@ -101,7 +107,7 @@ function Categories() {
       </div>
 
       {showForm && (
-        <form className="inv-form inv-panel" onSubmit={handleSubmit}>
+        <form className="inv-form inv-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
           <h3 className="inv-panel__title">New Category</h3>
           <div className="inv-form__grid">
             <div className="inv-form__field inv-form__field--full">
@@ -139,3 +145,6 @@ function Categories() {
 }
 
 export default Categories;
+
+
+

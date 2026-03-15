@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -62,6 +63,11 @@ function Expenses() {
 
   const handleAddExpense = (e) => {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     if (formData.description.trim() && formData.amount) {
       const newExpense = {
         id: expenses.length + 1,
@@ -166,7 +172,7 @@ function Expenses() {
         )}
 
         {showForm && (
-          <form onSubmit={handleAddExpense} className="finance-form__grid">
+          <form onSubmit={handleAddExpense} className="finance-form__grid" noValidate onChange={handleFormFieldValidation}>
             <div className="finance-form__field">
               <label>Category</label>
               <select
@@ -225,3 +231,6 @@ function Expenses() {
 }
 
 export default Expenses;
+
+
+

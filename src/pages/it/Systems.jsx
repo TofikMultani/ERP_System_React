@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -62,6 +63,11 @@ function Systems() {
 
   const handleAddSystem = (e) => {
     e.preventDefault();
+
+    const formElement = e.currentTarget;
+    if (!validateFormWithInlineErrors(formElement)) {
+      return;
+    }
     if (formData.name.trim() && formData.ip) {
       const newSystem = {
         id: systems.length + 1,
@@ -143,7 +149,7 @@ function Systems() {
         )}
 
         {showForm && (
-          <form onSubmit={handleAddSystem} className="it-form__grid">
+          <form onSubmit={handleAddSystem} className="it-form__grid" noValidate onChange={handleFormFieldValidation}>
             <div className="it-form__field">
               <label>System Name</label>
               <input
@@ -201,3 +207,6 @@ function Systems() {
 }
 
 export default Systems;
+
+
+
