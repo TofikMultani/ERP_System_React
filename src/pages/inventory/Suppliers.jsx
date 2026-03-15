@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -79,9 +84,13 @@ const summary = [
 const emptyForm = { name: "", contact: "", email: "", phone: "", city: "" };
 
 function Suppliers() {
-  const [suppliers, setSuppliers] = useState(initialSuppliers);
+  const [suppliers, setSuppliers] = usePersistentState(
+    "erp_inventory_suppliers",
+    initialSuppliers,
+  );
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
 
   function handleChange(e) {
@@ -95,11 +104,20 @@ function Suppliers() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setSuppliers((prev) => [
-      ...prev,
-      { ...form, id: prev.length + 1, status: "Active" },
-    ]);
+    if (editingId !== null) {
+      setSuppliers((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setSuppliers((prev) => [
+        ...prev,
+        { ...form, id: prev.length + 1, status: "Active" },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
 
@@ -108,6 +126,13 @@ function Suppliers() {
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setSuppliers, row, "supplier");
 
   return (
     <div className="inv-page">
@@ -128,7 +153,12 @@ function Suppliers() {
       </div>
 
       {showForm && (
-        <form className="inv-form inv-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="inv-form inv-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="inv-panel__title">New Supplier</h3>
           <div className="inv-form__grid">
             <div className="inv-form__field inv-form__field--full">
@@ -199,13 +229,15 @@ function Suppliers() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Table columns={columns} rows={filtered} />
+        <Table
+          columns={columns}
+          rows={filtered}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Suppliers;
-
-
-

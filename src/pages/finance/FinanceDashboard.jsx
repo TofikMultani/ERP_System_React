@@ -1,4 +1,5 @@
 import Card from "../../components/Card.jsx";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   BarChart,
   Bar,
@@ -32,7 +33,34 @@ const monthlyData = [
 const COLORS = ["#5a3df0", "#3b82f6", "#10b981", "#fbbf24", "#ef4444"];
 
 function FinanceDashboard() {
-  const totalIncome = monthlyData.reduce((sum, m) => sum + m.income, 0);
+  const invoices = usePersistentSnapshot("erp_finance_invoices", []);
+  const expenses = usePersistentSnapshot("erp_finance_expenses", []);
+  const payments = usePersistentSnapshot("erp_finance_payments", []);
+
+  const totalIncome = invoices.reduce(
+    (sum, invoice) =>
+      sum +
+      (Number.parseInt(String(invoice.amount).replace(/[^\d]/g, ""), 10) || 0),
+    0,
+  );
+  const totalExpenses = expenses.reduce(
+    (sum, expense) =>
+      sum +
+      (Number.parseInt(String(expense.amount).replace(/[^\d]/g, ""), 10) || 0),
+    0,
+  );
+  const pendingInvoices = invoices
+    .filter((invoice) => invoice.status !== "Paid")
+    .reduce(
+      (sum, invoice) =>
+        sum +
+        (Number.parseInt(String(invoice.amount).replace(/[^\d]/g, ""), 10) ||
+          0),
+      0,
+    );
+  const completedPayments = payments.filter(
+    (payment) => payment.status === "Completed",
+  ).length;
 
   return (
     <div className="finance-page">
@@ -44,13 +72,25 @@ function FinanceDashboard() {
       </div>
 
       <div className="finance-cards">
-        <Card title="Total Income" value="₹15.85L" helper="YTD" />
-        <Card title="Total Expenses" value="₹12.40L" helper="YTD" />
-        <Card title="Net Profit" value="₹3.45L" helper="YTD" />
+        <Card
+          title="Total Income"
+          value={`₹${(totalIncome / 100000).toFixed(2)}L`}
+          helper={`${invoices.length} invoices`}
+        />
+        <Card
+          title="Total Expenses"
+          value={`₹${(totalExpenses / 100000).toFixed(2)}L`}
+          helper={`${expenses.length} expense records`}
+        />
+        <Card
+          title="Net Profit"
+          value={`₹${((totalIncome - totalExpenses) / 100000).toFixed(2)}L`}
+          helper="Income minus expenses"
+        />
         <Card
           title="Pending Invoices"
-          value="₹2.15L"
-          helper="Not yet received"
+          value={`₹${(pendingInvoices / 100000).toFixed(2)}L`}
+          helper={`${completedPayments} payments completed`}
         />
       </div>
 

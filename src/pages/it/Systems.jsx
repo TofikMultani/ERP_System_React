@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -47,9 +52,13 @@ const initialSystems = [
 ];
 
 function Systems() {
-  const [systems, setSystems] = useState(initialSystems);
+  const [systems, setSystems] = usePersistentState(
+    "erp_it_systems",
+    initialSystems,
+  );
   const [filterStatus, setFilterStatus] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     ip: "",
@@ -61,6 +70,26 @@ function Systems() {
       ? systems
       : systems.filter((s) => s.status === filterStatus);
 
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      setEditingId(targetRow.id);
+      setFormData({
+        name: targetRow.name || "",
+        ip: targetRow.ip || "",
+        status: targetRow.status || "Operational",
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setSystems, targetRow, "system");
+    }
+  };
+
   const handleAddSystem = (e) => {
     e.preventDefault();
 
@@ -69,16 +98,32 @@ function Systems() {
       return;
     }
     if (formData.name.trim() && formData.ip) {
-      const newSystem = {
-        id: systems.length + 1,
-        name: formData.name,
-        ip: formData.ip,
-        status: formData.status,
-        uptime: "N/A",
-        lastCheck: new Date().toLocaleString(),
-      };
-      setSystems([...systems, newSystem]);
+      if (editingId !== null) {
+        setSystems((previousRows) =>
+          previousRows.map((item) =>
+            String(item.id) === String(editingId)
+              ? {
+                  ...item,
+                  name: formData.name,
+                  ip: formData.ip,
+                  status: formData.status,
+                }
+              : item,
+          ),
+        );
+      } else {
+        const newSystem = {
+          id: systems.length + 1,
+          name: formData.name,
+          ip: formData.ip,
+          status: formData.status,
+          uptime: "N/A",
+          lastCheck: new Date().toLocaleString(),
+        };
+        setSystems([...systems, newSystem]);
+      }
       setFormData({ name: "", ip: "", status: "Operational" });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -145,11 +190,18 @@ function Systems() {
               s.uptime,
               s.lastCheck,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
         {showForm && (
-          <form onSubmit={handleAddSystem} className="it-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddSystem}
+            className="it-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="it-form__field">
               <label>System Name</label>
               <input
@@ -207,6 +259,3 @@ function Systems() {
 }
 
 export default Systems;
-
-
-

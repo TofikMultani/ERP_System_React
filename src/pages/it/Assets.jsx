@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -57,9 +62,13 @@ const initialAssets = [
 ];
 
 function Assets() {
-  const [assets, setAssets] = useState(initialAssets);
+  const [assets, setAssets] = usePersistentState(
+    "erp_it_assets",
+    initialAssets,
+  );
   const [filterType, setFilterType] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     assetType: "Laptop",
@@ -73,6 +82,28 @@ function Assets() {
       ? assets
       : assets.filter((a) => a.assetType === filterType);
 
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      setEditingId(targetRow.id);
+      setFormData({
+        name: targetRow.name || "",
+        assetType: targetRow.assetType || "Laptop",
+        model: targetRow.model || "",
+        serialNo: targetRow.serialNo || "",
+        value: String(targetRow.value || "").replace(/[^\d]/g, ""),
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setAssets, targetRow, "asset");
+    }
+  };
+
   const handleAddAsset = (e) => {
     e.preventDefault();
 
@@ -81,17 +112,34 @@ function Assets() {
       return;
     }
     if (formData.name.trim() && formData.serialNo) {
-      const newAsset = {
-        id: `AST-${String(assets.length + 1).padStart(3, "0")}`,
-        name: formData.name,
-        assetType: formData.assetType,
-        model: formData.model,
-        serialNo: formData.serialNo,
-        purchaseDate: new Date().toISOString().split("T")[0],
-        status: "Active",
-        value: "₹" + formData.value,
-      };
-      setAssets([...assets, newAsset]);
+      if (editingId !== null) {
+        setAssets((previousRows) =>
+          previousRows.map((item) =>
+            String(item.id) === String(editingId)
+              ? {
+                  ...item,
+                  name: formData.name,
+                  assetType: formData.assetType,
+                  model: formData.model,
+                  serialNo: formData.serialNo,
+                  value: "₹" + formData.value,
+                }
+              : item,
+          ),
+        );
+      } else {
+        const newAsset = {
+          id: `AST-${String(assets.length + 1).padStart(3, "0")}`,
+          name: formData.name,
+          assetType: formData.assetType,
+          model: formData.model,
+          serialNo: formData.serialNo,
+          purchaseDate: new Date().toISOString().split("T")[0],
+          status: "Active",
+          value: "₹" + formData.value,
+        };
+        setAssets([...assets, newAsset]);
+      }
       setFormData({
         name: "",
         assetType: "Laptop",
@@ -99,6 +147,7 @@ function Assets() {
         serialNo: "",
         value: "",
       });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -190,11 +239,18 @@ function Assets() {
               a.status,
               a.value,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
         {showForm && (
-          <form onSubmit={handleAddAsset} className="it-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddAsset}
+            className="it-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="it-form__field">
               <label>Asset Name</label>
               <input
@@ -272,6 +328,3 @@ function Assets() {
 }
 
 export default Assets;
-
-
-

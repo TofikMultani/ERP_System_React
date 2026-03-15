@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -47,9 +52,13 @@ const initialExpenses = [
 ];
 
 function Expenses() {
-  const [expenses, setExpenses] = useState(initialExpenses);
+  const [expenses, setExpenses] = usePersistentState(
+    "erp_finance_expenses",
+    initialExpenses,
+  );
   const [filterCategory, setFilterCategory] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     category: "Salaries",
     description: "",
@@ -61,6 +70,26 @@ function Expenses() {
       ? expenses
       : expenses.filter((e) => e.category === filterCategory);
 
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      setEditingId(targetRow.id);
+      setFormData({
+        category: targetRow.category || "Salaries",
+        description: targetRow.description || "",
+        amount: String(targetRow.amount || "").replace(/[^\d]/g, ""),
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setExpenses, targetRow, "expense");
+    }
+  };
+
   const handleAddExpense = (e) => {
     e.preventDefault();
 
@@ -69,16 +98,32 @@ function Expenses() {
       return;
     }
     if (formData.description.trim() && formData.amount) {
-      const newExpense = {
-        id: expenses.length + 1,
-        date: new Date().toISOString().split("T")[0],
-        category: formData.category,
-        description: formData.description,
-        amount: "₹" + formData.amount,
-        status: "Pending",
-      };
-      setExpenses([...expenses, newExpense]);
+      if (editingId !== null) {
+        setExpenses((previousRows) =>
+          previousRows.map((item) =>
+            String(item.id) === String(editingId)
+              ? {
+                  ...item,
+                  category: formData.category,
+                  description: formData.description,
+                  amount: "₹" + formData.amount,
+                }
+              : item,
+          ),
+        );
+      } else {
+        const newExpense = {
+          id: expenses.length + 1,
+          date: new Date().toISOString().split("T")[0],
+          category: formData.category,
+          description: formData.description,
+          amount: "₹" + formData.amount,
+          status: "Pending",
+        };
+        setExpenses([...expenses, newExpense]);
+      }
       setFormData({ category: "Salaries", description: "", amount: "" });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -168,11 +213,18 @@ function Expenses() {
               e.amount,
               e.status,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
         {showForm && (
-          <form onSubmit={handleAddExpense} className="finance-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddExpense}
+            className="finance-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="finance-form__field">
               <label>Category</label>
               <select
@@ -231,6 +283,3 @@ function Expenses() {
 }
 
 export default Expenses;
-
-
-

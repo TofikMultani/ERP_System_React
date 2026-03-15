@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -83,9 +88,13 @@ const emptyForm = {
 };
 
 function PurchaseOrders() {
-  const [pos, setPos] = useState(initialPOs);
+  const [pos, setPos] = usePersistentState(
+    "erp_inventory_purchase_orders",
+    initialPOs,
+  );
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [filterStatus, setFilterStatus] = useState("All");
 
   function handleChange(e) {
@@ -99,16 +108,32 @@ function PurchaseOrders() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setPos((prev) => [
-      ...prev,
-      { ...form, id: prev.length + 1, status: "Pending" },
-    ]);
+    if (editingId !== null) {
+      setPos((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setPos((prev) => [
+        ...prev,
+        { ...form, id: prev.length + 1, status: "Pending" },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
 
   const filtered =
     filterStatus === "All" ? pos : pos.filter((p) => p.status === filterStatus);
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setPos, row, "purchase order");
 
   return (
     <div className="inv-page">
@@ -129,7 +154,12 @@ function PurchaseOrders() {
       </div>
 
       {showForm && (
-        <form className="inv-form inv-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="inv-form inv-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="inv-panel__title">New Purchase Order</h3>
           <div className="inv-form__grid">
             <div className="inv-form__field">
@@ -226,13 +256,15 @@ function PurchaseOrders() {
             )}
           </div>
         </div>
-        <Table columns={columns} rows={filtered} />
+        <Table
+          columns={columns}
+          rows={filtered}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default PurchaseOrders;
-
-
-

@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -43,9 +48,13 @@ const initialPayments = [
 ];
 
 function Payments() {
-  const [payments, setPayments] = useState(initialPayments);
+  const [payments, setPayments] = usePersistentState(
+    "erp_finance_payments",
+    initialPayments,
+  );
   const [filterStatus, setFilterStatus] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     vendor: "",
     invoiceId: "",
@@ -58,6 +67,27 @@ function Payments() {
       ? payments
       : payments.filter((p) => p.status === filterStatus);
 
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      setEditingId(targetRow.id);
+      setFormData({
+        vendor: targetRow.vendor || "",
+        invoiceId: targetRow.invoiceId || "",
+        amount: String(targetRow.amount || "").replace(/[^\d]/g, ""),
+        method: targetRow.method || "Bank Transfer",
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setPayments, targetRow, "payment");
+    }
+  };
+
   const handleAddPayment = (e) => {
     e.preventDefault();
 
@@ -66,22 +96,39 @@ function Payments() {
       return;
     }
     if (formData.vendor.trim() && formData.amount) {
-      const newPayment = {
-        id: payments.length + 1,
-        date: new Date().toISOString().split("T")[0],
-        vendor: formData.vendor,
-        invoiceId: formData.invoiceId,
-        amount: "₹" + formData.amount,
-        method: formData.method,
-        status: "Pending",
-      };
-      setPayments([...payments, newPayment]);
+      if (editingId !== null) {
+        setPayments((previousRows) =>
+          previousRows.map((item) =>
+            String(item.id) === String(editingId)
+              ? {
+                  ...item,
+                  vendor: formData.vendor,
+                  invoiceId: formData.invoiceId,
+                  amount: "₹" + formData.amount,
+                  method: formData.method,
+                }
+              : item,
+          ),
+        );
+      } else {
+        const newPayment = {
+          id: payments.length + 1,
+          date: new Date().toISOString().split("T")[0],
+          vendor: formData.vendor,
+          invoiceId: formData.invoiceId,
+          amount: "₹" + formData.amount,
+          method: formData.method,
+          status: "Pending",
+        };
+        setPayments([...payments, newPayment]);
+      }
       setFormData({
         vendor: "",
         invoiceId: "",
         amount: "",
         method: "Bank Transfer",
       });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -180,11 +227,18 @@ function Payments() {
               p.method,
               p.status,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
         {showForm && (
-          <form onSubmit={handleAddPayment} className="finance-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddPayment}
+            className="finance-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="finance-form__field">
               <label>Vendor Name</label>
               <input
@@ -252,6 +306,3 @@ function Payments() {
 }
 
 export default Payments;
-
-
-

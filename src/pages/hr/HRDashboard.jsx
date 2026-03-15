@@ -1,5 +1,6 @@
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   Bar,
   BarChart,
@@ -12,13 +13,6 @@ import {
   YAxis,
 } from "recharts";
 
-const cards = [
-  { title: "Total Employees", value: "248", helper: "+12 this month" },
-  { title: "Present Today", value: "214", helper: "86.3% attendance" },
-  { title: "On Leave", value: "18", helper: "7 pending approvals" },
-  { title: "Open Positions", value: "9", helper: "3 urgent roles" },
-];
-
 const headcountData = [
   { month: "Jan", count: 224 },
   { month: "Feb", count: 229 },
@@ -28,15 +22,6 @@ const headcountData = [
   { month: "Jun", count: 248 },
 ];
 
-const deptData = [
-  { dept: "Eng", employees: 74 },
-  { dept: "Sales", employees: 48 },
-  { dept: "HR", employees: 22 },
-  { dept: "Finance", employees: 31 },
-  { dept: "IT", employees: 40 },
-  { dept: "Support", employees: 33 },
-];
-
 const recentColumns = [
   { header: "Name", accessor: "name" },
   { header: "Department", accessor: "dept" },
@@ -44,45 +29,61 @@ const recentColumns = [
   { header: "Status", accessor: "status" },
 ];
 
-const recentRows = [
-  {
-    id: 1,
-    name: "Ananya Sharma",
-    dept: "Engineering",
-    role: "Senior Dev",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Rohan Mehta",
-    dept: "HR",
-    role: "HR Manager",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Priya Nair",
-    dept: "Finance",
-    role: "Analyst",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Arjun Patel",
-    dept: "Sales",
-    role: "Sales Lead",
-    status: "On Leave",
-  },
-  {
-    id: 5,
-    name: "Sneha Joshi",
-    dept: "IT",
-    role: "Sys Admin",
-    status: "Active",
-  },
-];
-
 function HRDashboard() {
+  const employees = usePersistentSnapshot("erp_hr_employees", []);
+  const leaves = usePersistentSnapshot("erp_hr_leave", []);
+  const recruitment = usePersistentSnapshot("erp_hr_recruitment", []);
+
+  const cards = [
+    {
+      title: "Total Employees",
+      value: employees.length,
+      helper: `${employees.filter((employee) => employee.status === "Active").length} active employees`,
+    },
+    {
+      title: "Present Today",
+      value: employees.filter((employee) => employee.status === "Active")
+        .length,
+      helper: `${employees.length ? ((employees.filter((employee) => employee.status === "Active").length / employees.length) * 100).toFixed(1) : "0.0"}% active status`,
+    },
+    {
+      title: "On Leave",
+      value: leaves.filter(
+        (leave) => leave.status === "Pending" || leave.status === "Approved",
+      ).length,
+      helper: `${leaves.filter((leave) => leave.status === "Pending").length} pending approvals`,
+    },
+    {
+      title: "Open Positions",
+      value: recruitment.filter(
+        (candidate) => candidate.status === "In Progress",
+      ).length,
+      helper: `${recruitment.filter((candidate) => candidate.status === "Selected").length} selected candidates`,
+    },
+  ];
+
+  const deptCounts = employees.reduce((accumulator, employee) => {
+    const key = employee.dept || "Unknown";
+    accumulator[key] = (accumulator[key] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  const deptData = Object.entries(deptCounts).map(([dept, count]) => ({
+    dept: dept.length > 10 ? dept.slice(0, 10) : dept,
+    employees: count,
+  }));
+
+  const recentRows = employees
+    .slice(-5)
+    .reverse()
+    .map((employee) => ({
+      id: employee.id,
+      name: employee.name,
+      dept: employee.dept,
+      role: employee.role,
+      status: employee.status,
+    }));
+
   return (
     <div className="hr-page">
       <div className="hr-page__header">

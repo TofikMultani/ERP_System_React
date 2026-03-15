@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -71,9 +76,13 @@ const emptyForm = {
 };
 
 function Departments() {
-  const [depts, setDepts] = useState(initialDepts);
+  const [depts, setDepts] = usePersistentState(
+    "erp_hr_departments",
+    initialDepts,
+  );
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -86,10 +95,26 @@ function Departments() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setDepts((prev) => [...prev, { ...form, id: prev.length + 1 }]);
+    if (editingId !== null) {
+      setDepts((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setDepts((prev) => [...prev, { ...form, id: prev.length + 1 }]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setDepts, row, "department");
 
   return (
     <div className="hr-page">
@@ -115,7 +140,12 @@ function Departments() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="hr-form hr-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="hr-panel__title">New Department</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field">
@@ -175,13 +205,15 @@ function Departments() {
 
       <div className="hr-panel">
         <h3 className="hr-panel__title">All Departments</h3>
-        <Table columns={columns} rows={depts} />
+        <Table
+          columns={columns}
+          rows={depts}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Departments;
-
-
-

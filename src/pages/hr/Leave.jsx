@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -101,9 +106,10 @@ const emptyForm = {
 };
 
 function Leave() {
-  const [leaves, setLeaves] = useState(initialLeaves);
+  const [leaves, setLeaves] = usePersistentState("erp_hr_leave", initialLeaves);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -116,13 +122,29 @@ function Leave() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setLeaves((prev) => [
-      ...prev,
-      { ...form, id: prev.length + 1, status: "Pending" },
-    ]);
+    if (editingId !== null) {
+      setLeaves((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setLeaves((prev) => [
+        ...prev,
+        { ...form, id: prev.length + 1, status: "Pending" },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setLeaves, row, "leave request");
 
   return (
     <div className="hr-page">
@@ -143,7 +165,12 @@ function Leave() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="hr-form hr-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="hr-panel__title">Leave Application</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field">
@@ -231,13 +258,15 @@ function Leave() {
 
       <div className="hr-panel">
         <h3 className="hr-panel__title">Leave Records</h3>
-        <Table columns={columns} rows={leaves} />
+        <Table
+          columns={columns}
+          rows={leaves}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Leave;
-
-
-

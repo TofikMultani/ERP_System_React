@@ -16,6 +16,8 @@ import {
   getStoredRole,
   ROLE_ALLOWED_PATHS,
 } from "../utils/auth.js";
+import { getStoredProfile, PROFILE_UPDATED_EVENT } from "../utils/profile.js";
+import { useEffect, useState } from "react";
 
 const navigationItems = [
   {
@@ -48,6 +50,18 @@ function Sidebar() {
   const navigate = useNavigate();
   const userRole = getStoredRole() || "admin";
   const allowedPaths = ROLE_ALLOWED_PATHS[userRole] || [];
+  const [, setProfileVersion] = useState(0);
+  const profile = getStoredProfile(userRole);
+
+  useEffect(() => {
+    function handleProfileUpdate() {
+      setProfileVersion((value) => value + 1);
+    }
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdate);
+    return () =>
+      window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdate);
+  }, [userRole]);
 
   // Filter navigation items based on role access
   const filteredItems = navigationItems.filter((item) =>
@@ -68,15 +82,20 @@ function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar__brand">
+      <button
+        type="button"
+        className="sidebar__brand sidebar__brand-button"
+        onClick={() => navigate("/profile")}
+      >
         <div className="sidebar__logo">
           <div className="sidebar__logo-icon">📊</div>
           <div>
             <div className="sidebar__logo-text">ERP System</div>
-            <div className="sidebar__logo-sub">{userRole.toUpperCase()}</div>
+            <div className="sidebar__logo-sub">{profile.name}</div>
+            <div className="sidebar__logo-meta">{userRole.toUpperCase()}</div>
           </div>
         </div>
-      </div>
+      </button>
 
       <nav className="sidebar__nav" aria-label="ERP navigation">
         {/* Main Navigation */}

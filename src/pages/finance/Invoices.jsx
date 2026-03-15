@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -39,9 +44,13 @@ const initialInvoices = [
 ];
 
 function Invoices() {
-  const [invoices, setInvoices] = useState(initialInvoices);
+  const [invoices, setInvoices] = usePersistentState(
+    "erp_finance_invoices",
+    initialInvoices,
+  );
   const [filterStatus, setFilterStatus] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     vendor: "",
     amount: "",
@@ -53,6 +62,26 @@ function Invoices() {
       ? invoices
       : invoices.filter((i) => i.status === filterStatus);
 
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      setEditingId(targetRow.id);
+      setFormData({
+        vendor: targetRow.vendor || "",
+        amount: String(targetRow.amount || "").replace(/[^\d]/g, ""),
+        dueDate: targetRow.dueDate || "",
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setInvoices, targetRow, "invoice");
+    }
+  };
+
   const handleAddInvoice = (e) => {
     e.preventDefault();
 
@@ -61,16 +90,32 @@ function Invoices() {
       return;
     }
     if (formData.vendor.trim() && formData.amount) {
-      const newInvoice = {
-        id: `FIN-INV-${String(invoices.length + 1).padStart(3, "0")}`,
-        vendor: formData.vendor,
-        date: new Date().toISOString().split("T")[0],
-        dueDate: formData.dueDate,
-        amount: "₹" + formData.amount,
-        status: "Pending",
-      };
-      setInvoices([...invoices, newInvoice]);
+      if (editingId !== null) {
+        setInvoices((previousRows) =>
+          previousRows.map((item) =>
+            String(item.id) === String(editingId)
+              ? {
+                  ...item,
+                  vendor: formData.vendor,
+                  dueDate: formData.dueDate,
+                  amount: "₹" + formData.amount,
+                }
+              : item,
+          ),
+        );
+      } else {
+        const newInvoice = {
+          id: `FIN-INV-${String(invoices.length + 1).padStart(3, "0")}`,
+          vendor: formData.vendor,
+          date: new Date().toISOString().split("T")[0],
+          dueDate: formData.dueDate,
+          amount: "₹" + formData.amount,
+          status: "Pending",
+        };
+        setInvoices([...invoices, newInvoice]);
+      }
       setFormData({ vendor: "", amount: "", dueDate: "" });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -213,11 +258,18 @@ function Invoices() {
               i.amount,
               i.status,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
         {showForm && (
-          <form onSubmit={handleAddInvoice} className="finance-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddInvoice}
+            className="finance-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="finance-form__field">
               <label>Vendor Name</label>
               <input
@@ -272,6 +324,3 @@ function Invoices() {
 }
 
 export default Invoices;
-
-
-

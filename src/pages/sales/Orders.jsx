@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -47,9 +52,13 @@ const initialOrders = [
 ];
 
 function Orders() {
-  const [orders, setOrders] = useState(initialOrders);
+  const [orders, setOrders] = usePersistentState(
+    "erp_sales_orders",
+    initialOrders,
+  );
   const [filterStatus, setFilterStatus] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     customer: "",
     amount: "",
@@ -62,6 +71,27 @@ function Orders() {
       ? orders
       : orders.filter((o) => o.status === filterStatus);
 
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      setEditingId(targetRow.id);
+      setFormData({
+        customer: targetRow.customer || "",
+        amount: String(targetRow.amount || "").replace(/[^\d]/g, ""),
+        status: targetRow.status || "Processing",
+        items: String(targetRow.items || ""),
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setOrders, targetRow, "order");
+    }
+  };
+
   const handleAddOrder = (e) => {
     e.preventDefault();
 
@@ -70,21 +100,38 @@ function Orders() {
       return;
     }
     if (formData.customer.trim() && formData.amount) {
-      const newOrder = {
-        id: `ORD-${String(orders.length + 1).padStart(3, "0")}`,
-        customer: formData.customer,
-        date: new Date().toISOString().split("T")[0],
-        amount: "₹" + formData.amount,
-        status: formData.status,
-        items: parseInt(formData.items) || 0,
-      };
-      setOrders([...orders, newOrder]);
+      if (editingId !== null) {
+        setOrders((previousRows) =>
+          previousRows.map((item) =>
+            String(item.id) === String(editingId)
+              ? {
+                  ...item,
+                  customer: formData.customer,
+                  amount: "₹" + formData.amount,
+                  status: formData.status,
+                  items: parseInt(formData.items) || 0,
+                }
+              : item,
+          ),
+        );
+      } else {
+        const newOrder = {
+          id: `ORD-${String(orders.length + 1).padStart(3, "0")}`,
+          customer: formData.customer,
+          date: new Date().toISOString().split("T")[0],
+          amount: "₹" + formData.amount,
+          status: formData.status,
+          items: parseInt(formData.items) || 0,
+        };
+        setOrders([...orders, newOrder]);
+      }
       setFormData({
         customer: "",
         amount: "",
         status: "Processing",
         items: "",
       });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -166,11 +213,18 @@ function Orders() {
               o.status,
               o.items,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
         {showForm && (
-          <form onSubmit={handleAddOrder} className="sales-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddOrder}
+            className="sales-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="sales-form__field">
               <label>Customer</label>
               <input
@@ -237,6 +291,3 @@ function Orders() {
 }
 
 export default Orders;
-
-
-

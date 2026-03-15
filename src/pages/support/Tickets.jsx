@@ -2,49 +2,7 @@ import { useState } from "react";
 import Card from "../../components/Card.jsx";
 import Button from "../../components/Button.jsx";
 import Badge from "../../components/Badge.jsx";
-
-const ticketsData = [
-  {
-    id: "TKT-001",
-    title: "Login issue on mobile",
-    customer: "John Doe",
-    status: "open",
-    priority: "high",
-    created: "2024-03-10",
-  },
-  {
-    id: "TKT-002",
-    title: "Product compatibility question",
-    customer: "Jane Smith",
-    status: "in-progress",
-    priority: "medium",
-    created: "2024-03-09",
-  },
-  {
-    id: "TKT-003",
-    title: "Integration setup help",
-    customer: "ABC Corp",
-    status: "resolved",
-    priority: "high",
-    created: "2024-03-08",
-  },
-  {
-    id: "TKT-004",
-    title: "Feature request - dark mode",
-    customer: "Tech Team",
-    status: "open",
-    priority: "low",
-    created: "2024-03-07",
-  },
-  {
-    id: "TKT-005",
-    title: "Performance degradation",
-    customer: "Premium User",
-    status: "in-progress",
-    priority: "critical",
-    created: "2024-03-06",
-  },
-];
+import { ticketsData } from "../../utils/supportData.js";
 
 function getStatusColor(status) {
   const statusMap = {

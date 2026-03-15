@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -94,9 +99,13 @@ const emptyForm = {
 };
 
 function Recruitment() {
-  const [candidates, setCandidates] = useState(initialCandidates);
+  const [candidates, setCandidates] = usePersistentState(
+    "erp_hr_recruitment",
+    initialCandidates,
+  );
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -109,13 +118,29 @@ function Recruitment() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setCandidates((prev) => [
-      ...prev,
-      { ...form, id: prev.length + 1, status: "In Progress" },
-    ]);
+    if (editingId !== null) {
+      setCandidates((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setCandidates((prev) => [
+        ...prev,
+        { ...form, id: prev.length + 1, status: "In Progress" },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setCandidates, row, "candidate");
 
   return (
     <div className="hr-page">
@@ -136,7 +161,12 @@ function Recruitment() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="hr-form hr-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="hr-panel__title">New Candidate</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field">
@@ -203,13 +233,15 @@ function Recruitment() {
 
       <div className="hr-panel">
         <h3 className="hr-panel__title">Candidate Pipeline</h3>
-        <Table columns={columns} rows={candidates} />
+        <Table
+          columns={columns}
+          rows={candidates}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Recruitment;
-
-
-

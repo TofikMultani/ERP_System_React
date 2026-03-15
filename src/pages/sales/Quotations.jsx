@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -52,9 +57,13 @@ const initialQuotations = [
 ];
 
 function Quotations() {
-  const [quotations, setQuotations] = useState(initialQuotations);
+  const [quotations, setQuotations] = usePersistentState(
+    "erp_sales_quotations",
+    initialQuotations,
+  );
   const [filterStatus, setFilterStatus] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     customer: "",
     amount: "",
@@ -66,6 +75,33 @@ function Quotations() {
       ? quotations
       : quotations.filter((q) => q.status === filterStatus);
 
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      const createdDate = new Date(targetRow.date || new Date());
+      const expiryDate = new Date(targetRow.expiryDate || createdDate);
+      const days = Math.max(
+        1,
+        Math.round((expiryDate - createdDate) / (1000 * 60 * 60 * 24)),
+      );
+
+      setEditingId(targetRow.id);
+      setFormData({
+        customer: targetRow.customer || "",
+        amount: String(targetRow.amount || "").replace(/[^\d]/g, ""),
+        days: String(days || 30),
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setQuotations, targetRow, "quotation");
+    }
+  };
+
   const handleAddQuotation = (e) => {
     e.preventDefault();
 
@@ -74,19 +110,44 @@ function Quotations() {
       return;
     }
     if (formData.customer.trim() && formData.amount) {
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + parseInt(formData.days));
-      const newQuote = {
-        id: `QT-${String(quotations.length + 1).padStart(3, "0")}`,
-        customer: formData.customer,
-        date: new Date().toISOString().split("T")[0],
-        expiryDate: expiryDate.toISOString().split("T")[0],
-        amount: "₹" + formData.amount,
-        status: "Sent",
-        conversion: "-",
-      };
-      setQuotations([...quotations, newQuote]);
+      const dayCount = parseInt(formData.days, 10) || 30;
+
+      if (editingId !== null) {
+        setQuotations((previousRows) =>
+          previousRows.map((item) => {
+            if (String(item.id) !== String(editingId)) {
+              return item;
+            }
+
+            const baseDate = new Date(item.date || new Date());
+            const nextExpiryDate = new Date(baseDate);
+            nextExpiryDate.setDate(nextExpiryDate.getDate() + dayCount);
+
+            return {
+              ...item,
+              customer: formData.customer,
+              amount: "₹" + formData.amount,
+              expiryDate: nextExpiryDate.toISOString().split("T")[0],
+            };
+          }),
+        );
+      } else {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + dayCount);
+        const newQuote = {
+          id: `QT-${String(quotations.length + 1).padStart(3, "0")}`,
+          customer: formData.customer,
+          date: new Date().toISOString().split("T")[0],
+          expiryDate: expiryDate.toISOString().split("T")[0],
+          amount: "₹" + formData.amount,
+          status: "Sent",
+          conversion: "-",
+        };
+        setQuotations([...quotations, newQuote]);
+      }
+
       setFormData({ customer: "", amount: "", days: "30" });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -176,11 +237,18 @@ function Quotations() {
               q.status,
               q.conversion,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
         {showForm && (
-          <form onSubmit={handleAddQuotation} className="sales-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddQuotation}
+            className="sales-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="sales-form__field">
               <label>Customer</label>
               <input
@@ -234,6 +302,3 @@ function Quotations() {
 }
 
 export default Quotations;
-
-
-

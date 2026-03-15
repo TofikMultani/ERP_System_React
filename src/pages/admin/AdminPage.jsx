@@ -11,15 +11,10 @@ import {
 } from "recharts";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
+import { ticketsData } from "../../utils/supportData.js";
 
 // ── Static data ──────────────────────────────────────────────────────────────
-
-const statCards = [
-  { title: "Total Employees", value: "248", helper: "+12 hired this month" },
-  { title: "Total Products", value: "1,340", helper: "86 low-stock items" },
-  { title: "Total Revenue", value: "$842,500", helper: "+8.4% vs last month" },
-  { title: "Open Tickets", value: "37", helper: "14 high-priority" },
-];
 
 const revenueData = [
   { month: "Jan", revenue: 62000 },
@@ -47,49 +42,6 @@ const employeeColumns = [
   { header: "Status", accessor: "status" },
 ];
 
-const employeeRows = [
-  {
-    id: 1,
-    name: "Ananya Sharma",
-    department: "Engineering",
-    role: "Senior Dev",
-    joined: "01 Mar 2026",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Rohan Mehta",
-    department: "HR",
-    role: "HR Manager",
-    joined: "15 Feb 2026",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Priya Nair",
-    department: "Finance",
-    role: "Analyst",
-    joined: "10 Feb 2026",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Arjun Patel",
-    department: "Sales",
-    role: "Sales Lead",
-    joined: "05 Jan 2026",
-    status: "On Leave",
-  },
-  {
-    id: 5,
-    name: "Sneha Joshi",
-    department: "IT",
-    role: "Sys Admin",
-    joined: "20 Jan 2026",
-    status: "Active",
-  },
-];
-
 const orderColumns = [
   { header: "Order ID", accessor: "orderId" },
   { header: "Customer", accessor: "customer" },
@@ -98,58 +50,78 @@ const orderColumns = [
   { header: "Date", accessor: "date" },
 ];
 
-const orderRows = [
-  {
-    id: 1,
-    orderId: "#ORD-1021",
-    customer: "Tech Supplies Co.",
-    amount: "$4,200",
-    status: "Delivered",
-    date: "10 Mar 2026",
-  },
-  {
-    id: 2,
-    orderId: "#ORD-1020",
-    customer: "Global Retail Ltd.",
-    amount: "$1,800",
-    status: "Processing",
-    date: "09 Mar 2026",
-  },
-  {
-    id: 3,
-    orderId: "#ORD-1019",
-    customer: "NextGen Labs",
-    amount: "$9,500",
-    status: "Delivered",
-    date: "08 Mar 2026",
-  },
-  {
-    id: 4,
-    orderId: "#ORD-1018",
-    customer: "Horizon Foods",
-    amount: "$670",
-    status: "Cancelled",
-    date: "07 Mar 2026",
-  },
-  {
-    id: 5,
-    orderId: "#ORD-1017",
-    customer: "Apex Systems",
-    amount: "$3,300",
-    status: "Pending",
-    date: "06 Mar 2026",
-  },
-];
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatRevenue(value) {
   return `$${(value / 1000).toFixed(0)}k`;
 }
 
+function parseRupeeAmount(value) {
+  return Number.parseInt(String(value).replace(/[^\d]/g, ""), 10) || 0;
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 function AdminPage() {
+  const employees = usePersistentSnapshot("erp_hr_employees", []);
+  const products = usePersistentSnapshot("erp_inventory_products", []);
+  const orders = usePersistentSnapshot("erp_sales_orders", []);
+
+  const totalRevenue = orders.reduce(
+    (sum, order) => sum + parseRupeeAmount(order.amount),
+    0,
+  );
+  const openTickets = ticketsData.filter(
+    (ticket) => ticket.status !== "resolved",
+  ).length;
+
+  const statCards = [
+    {
+      title: "Total Employees",
+      value: employees.length,
+      helper: `${employees.filter((employee) => employee.status === "Active").length} active records`,
+    },
+    {
+      title: "Total Products",
+      value: products.length,
+      helper: `${products.filter((product) => product.status === "Low Stock").length} low-stock items`,
+    },
+    {
+      title: "Total Revenue",
+      value: `₹${(totalRevenue / 100000).toFixed(2)}L`,
+      helper: `${orders.length} saved sales orders`,
+    },
+    {
+      title: "Open Tickets",
+      value: openTickets,
+      helper: `${ticketsData.length} tickets in support queue`,
+    },
+  ];
+
+  const employeeRows = employees
+    .slice(-5)
+    .reverse()
+    .map((employee) => ({
+      id: employee.id,
+      name: employee.name,
+      department: employee.dept,
+      role: employee.role,
+      joined: employee.joined,
+      status: employee.status,
+    }));
+
+  const orderRows = orders
+    .slice(-5)
+    .reverse()
+    .map((order) => ({
+      id: order.id,
+      orderId: order.id,
+      customer: order.customer,
+      amount: order.amount,
+      status: order.status,
+      date: order.date,
+    }));
+
   return (
     <div className="admin-dashboard">
       {/* ── Stat Cards ─────────────────────────────────────────── */}

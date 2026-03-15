@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -101,9 +106,13 @@ const emptyForm = {
 };
 
 function Training() {
-  const [programs, setPrograms] = useState(initialPrograms);
+  const [programs, setPrograms] = usePersistentState(
+    "erp_hr_training",
+    initialPrograms,
+  );
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -116,13 +125,30 @@ function Training() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setPrograms((prev) => [
-      ...prev,
-      { ...form, id: prev.length + 1, status: "Upcoming" },
-    ]);
+    if (editingId !== null) {
+      setPrograms((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setPrograms((prev) => [
+        ...prev,
+        { ...form, id: prev.length + 1, status: "Upcoming" },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) =>
+    deleteRowById(setPrograms, row, "training program");
 
   return (
     <div className="hr-page">
@@ -143,7 +169,12 @@ function Training() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="hr-form hr-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="hr-panel__title">New Training Program</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field hr-form__field--full">
@@ -223,13 +254,15 @@ function Training() {
 
       <div className="hr-panel">
         <h3 className="hr-panel__title">Training Programs</h3>
-        <Table columns={columns} rows={programs} />
+        <Table
+          columns={columns}
+          rows={programs}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Training;
-
-
-

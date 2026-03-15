@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
+import { deleteRowById } from "../../utils/tableActions.js";
 
 const initialStock = [
   {
@@ -102,15 +103,69 @@ const summary = [
   { title: "Total Value", value: "$4.2M", helper: "inventory value" },
 ];
 
-const lowStockAlerts = initialStock.filter((s) => s.onHand <= s.reorderLevel);
-
 function Stock() {
+  const [stockRows, setStockRows] = useState(initialStock);
   const [filterWarehouse, setFilterWarehouse] = useState("All");
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState({
+    product: "",
+    sku: "",
+    onHand: "",
+    reorderLevel: "",
+    reorderQty: "",
+    warehouse: "Main",
+    lastUpdated: "",
+  });
 
   const filtered =
     filterWarehouse === "All"
-      ? initialStock
-      : initialStock.filter((s) => s.warehouse === filterWarehouse);
+      ? stockRows
+      : stockRows.filter((s) => s.warehouse === filterWarehouse);
+
+  const lowStockAlerts = stockRows.filter((s) => s.onHand <= s.reorderLevel);
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({
+      product: row.product || "",
+      sku: row.sku || "",
+      onHand: String(row.onHand ?? ""),
+      reorderLevel: String(row.reorderLevel ?? ""),
+      reorderQty: String(row.reorderQty ?? ""),
+      warehouse: row.warehouse || "Main",
+      lastUpdated: row.lastUpdated || "",
+    });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setStockRows, row, "stock item");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingId === null) {
+      return;
+    }
+
+    setStockRows((previousRows) =>
+      previousRows.map((item) =>
+        String(item.id) === String(editingId)
+          ? {
+              ...item,
+              product: form.product,
+              sku: form.sku,
+              onHand: Number.parseInt(form.onHand, 10) || 0,
+              reorderLevel: Number.parseInt(form.reorderLevel, 10) || 0,
+              reorderQty: Number.parseInt(form.reorderQty, 10) || 0,
+              warehouse: form.warehouse,
+              lastUpdated: form.lastUpdated,
+            }
+          : item,
+      ),
+    );
+
+    setEditingId(null);
+    setShowForm(false);
+  };
 
   return (
     <div className="inv-page">
@@ -144,6 +199,100 @@ function Stock() {
         </div>
       )}
 
+      {showForm && (
+        <form className="inv-form inv-panel" onSubmit={handleSubmit}>
+          <h3 className="inv-panel__title">Edit Stock Item</h3>
+          <div className="inv-form__grid">
+            <div className="inv-form__field">
+              <label>Product</label>
+              <input
+                value={form.product}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, product: e.target.value }))
+                }
+                required
+              />
+            </div>
+            <div className="inv-form__field">
+              <label>SKU</label>
+              <input
+                value={form.sku}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, sku: e.target.value }))
+                }
+                required
+              />
+            </div>
+            <div className="inv-form__field">
+              <label>On Hand</label>
+              <input
+                type="number"
+                value={form.onHand}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, onHand: e.target.value }))
+                }
+              />
+            </div>
+            <div className="inv-form__field">
+              <label>Reorder Level</label>
+              <input
+                type="number"
+                value={form.reorderLevel}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, reorderLevel: e.target.value }))
+                }
+              />
+            </div>
+            <div className="inv-form__field">
+              <label>Reorder Qty</label>
+              <input
+                type="number"
+                value={form.reorderQty}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, reorderQty: e.target.value }))
+                }
+              />
+            </div>
+            <div className="inv-form__field">
+              <label>Warehouse</label>
+              <select
+                value={form.warehouse}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, warehouse: e.target.value }))
+                }
+              >
+                <option>Main</option>
+                <option>Secondary</option>
+              </select>
+            </div>
+            <div className="inv-form__field">
+              <label>Last Updated</label>
+              <input
+                value={form.lastUpdated}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, lastUpdated: e.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "0.8rem" }}>
+            <button type="submit" className="inv-btn">
+              Save
+            </button>
+            <button
+              type="button"
+              className="inv-btn"
+              onClick={() => {
+                setEditingId(null);
+                setShowForm(false);
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
       <div className="inv-panel">
         <div className="inv-panel__toolbar">
           <h3 className="inv-panel__title">Stock Inventory</h3>
@@ -159,7 +308,12 @@ function Stock() {
             ))}
           </div>
         </div>
-        <Table columns={columns} rows={filtered} />
+        <Table
+          columns={columns}
+          rows={filtered}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );

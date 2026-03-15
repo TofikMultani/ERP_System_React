@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -65,9 +70,13 @@ const summary = [
 const emptyForm = { name: "", description: "" };
 
 function Categories() {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = usePersistentState(
+    "erp_inventory_categories",
+    initialCategories,
+  );
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -80,13 +89,29 @@ function Categories() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setCategories((prev) => [
-      ...prev,
-      { ...form, id: prev.length + 1, productCount: 0, status: "Active" },
-    ]);
+    if (editingId !== null) {
+      setCategories((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setCategories((prev) => [
+        ...prev,
+        { ...form, id: prev.length + 1, productCount: 0, status: "Active" },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setCategories, row, "category");
 
   return (
     <div className="inv-page">
@@ -107,7 +132,12 @@ function Categories() {
       </div>
 
       {showForm && (
-        <form className="inv-form inv-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="inv-form inv-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="inv-panel__title">New Category</h3>
           <div className="inv-form__grid">
             <div className="inv-form__field inv-form__field--full">
@@ -138,13 +168,15 @@ function Categories() {
 
       <div className="inv-panel">
         <h3 className="inv-panel__title">All Categories</h3>
-        <Table columns={columns} rows={categories} />
+        <Table
+          columns={columns}
+          rows={categories}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Categories;
-
-
-

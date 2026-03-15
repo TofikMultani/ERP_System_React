@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -93,9 +98,13 @@ const emptyForm = {
 };
 
 function Adjustments() {
-  const [adjustments, setAdjustments] = useState(initialAdjustments);
+  const [adjustments, setAdjustments] = usePersistentState(
+    "erp_inventory_adjustments",
+    initialAdjustments,
+  );
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -108,13 +117,30 @@ function Adjustments() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setAdjustments((prev) => [
-      ...prev,
-      { ...form, id: prev.length + 1, approvedBy: "Admin" },
-    ]);
+    if (editingId !== null) {
+      setAdjustments((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setAdjustments((prev) => [
+        ...prev,
+        { ...form, id: prev.length + 1, approvedBy: "Admin" },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) =>
+    deleteRowById(setAdjustments, row, "adjustment");
 
   return (
     <div className="inv-page">
@@ -135,7 +161,12 @@ function Adjustments() {
       </div>
 
       {showForm && (
-        <form className="inv-form inv-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="inv-form inv-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="inv-panel__title">Stock Adjustment</h3>
           <div className="inv-form__grid">
             <div className="inv-form__field">
@@ -224,13 +255,15 @@ function Adjustments() {
 
       <div className="inv-panel">
         <h3 className="inv-panel__title">Adjustment Log</h3>
-        <Table columns={columns} rows={adjustments} />
+        <Table
+          columns={columns}
+          rows={adjustments}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Adjustments;
-
-
-

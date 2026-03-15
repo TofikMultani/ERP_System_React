@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Table from "../../components/Table.jsx";
 
 const initialEmployees = [
@@ -126,9 +131,13 @@ const emptyForm = {
 };
 
 function Employees() {
-  const [employees, setEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = usePersistentState(
+    "erp_hr_employees",
+    initialEmployees,
+  );
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
 
   function handleChange(e) {
@@ -142,8 +151,17 @@ function Employees() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setEmployees((prev) => [...prev, { ...form, id: prev.length + 1 }]);
+    if (editingId !== null) {
+      setEmployees((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setEmployees((prev) => [...prev, { ...form, id: prev.length + 1 }]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
 
@@ -152,6 +170,13 @@ function Employees() {
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setEmployees, row, "employee");
 
   return (
     <div className="hr-page">
@@ -166,7 +191,12 @@ function Employees() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="hr-form hr-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="hr-panel__title">New Employee</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field">
@@ -260,13 +290,15 @@ function Employees() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Table columns={columns} rows={filtered} />
+        <Table
+          columns={columns}
+          rows={filtered}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Employees;
-
-
-

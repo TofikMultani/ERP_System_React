@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -43,9 +48,13 @@ const initialMaintenance = [
 ];
 
 function Maintenance() {
-  const [maintenance, setMaintenance] = useState(initialMaintenance);
+  const [maintenance, setMaintenance] = usePersistentState(
+    "erp_it_maintenance",
+    initialMaintenance,
+  );
   const [filterStatus, setFilterStatus] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     assetName: "",
     maintenanceType: "",
@@ -57,6 +66,27 @@ function Maintenance() {
     filterStatus === "All"
       ? maintenance
       : maintenance.filter((m) => m.status === filterStatus);
+
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      setEditingId(targetRow.id);
+      setFormData({
+        assetName: targetRow.assetName || "",
+        maintenanceType: targetRow.maintenanceType || "",
+        scheduledDate: targetRow.scheduledDate || "",
+        priority: targetRow.priority || "Medium",
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setMaintenance, targetRow, "maintenance task");
+    }
+  };
 
   const handleAddMaintenance = (e) => {
     e.preventDefault();
@@ -70,22 +100,39 @@ function Maintenance() {
       formData.maintenanceType &&
       formData.scheduledDate
     ) {
-      const newMaintenance = {
-        id: maintenance.length + 1,
-        assetId: `AST-${Math.floor(Math.random() * 1000)}`,
-        assetName: formData.assetName,
-        maintenanceType: formData.maintenanceType,
-        scheduledDate: formData.scheduledDate,
-        status: "Scheduled",
-        priority: formData.priority,
-      };
-      setMaintenance([...maintenance, newMaintenance]);
+      if (editingId !== null) {
+        setMaintenance((previousRows) =>
+          previousRows.map((item) =>
+            String(item.id) === String(editingId)
+              ? {
+                  ...item,
+                  assetName: formData.assetName,
+                  maintenanceType: formData.maintenanceType,
+                  scheduledDate: formData.scheduledDate,
+                  priority: formData.priority,
+                }
+              : item,
+          ),
+        );
+      } else {
+        const newMaintenance = {
+          id: maintenance.length + 1,
+          assetId: `AST-${Math.floor(Math.random() * 1000)}`,
+          assetName: formData.assetName,
+          maintenanceType: formData.maintenanceType,
+          scheduledDate: formData.scheduledDate,
+          status: "Scheduled",
+          priority: formData.priority,
+        };
+        setMaintenance([...maintenance, newMaintenance]);
+      }
       setFormData({
         assetName: "",
         maintenanceType: "",
         scheduledDate: "",
         priority: "Medium",
       });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -170,11 +217,18 @@ function Maintenance() {
               m.status,
               m.priority,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
         {showForm && (
-          <form onSubmit={handleAddMaintenance} className="it-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddMaintenance}
+            className="it-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="it-form__field">
               <label>Asset Name</label>
               <input
@@ -247,6 +301,3 @@ function Maintenance() {
 }
 
 export default Maintenance;
-
-
-

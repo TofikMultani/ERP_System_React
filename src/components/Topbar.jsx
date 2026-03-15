@@ -1,7 +1,15 @@
 import { Bell, CalendarDays, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { getStoredRole } from "../utils/auth.js";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  getRouteForRole,
+  getStoredRole,
+  ROLE_ALLOWED_PATHS,
+} from "../utils/auth.js";
+import {
+  filterNavigationItems,
+  getSearchableNavigationItems,
+} from "../utils/navigation.js";
 import { getStoredProfile, PROFILE_UPDATED_EVENT } from "../utils/profile.js";
 
 function formatLabel(segment) {
@@ -13,9 +21,17 @@ function formatLabel(segment) {
 
 function Topbar({ title, description }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const userRole = getStoredRole() || "admin";
+  const allowedPaths = ROLE_ALLOWED_PATHS[userRole] || [];
   const [, setProfileVersion] = useState(0);
   const profile = getStoredProfile(userRole);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const searchItems = filterNavigationItems(
+    getSearchableNavigationItems(allowedPaths),
+    searchQuery,
+  );
 
   useEffect(() => {
     function handleProfileUpdate() {
@@ -39,12 +55,28 @@ function Topbar({ title, description }) {
     year: "numeric",
   }).format(new Date());
 
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+
+    if (!searchItems.length) {
+      return;
+    }
+
+    navigate(searchItems[0].path);
+    setSearchQuery("");
+  }
+
+  function handleSearchSelect(path) {
+    navigate(path);
+    setSearchQuery("");
+  }
+
   return (
     <header className="topbar">
       <div className="topbar__main">
         <div className="topbar__title-group">
           <div className="topbar__breadcrumbs">
-            <Link to="/admin" className="topbar__breadcrumb">
+            <Link to={getRouteForRole(userRole)} className="topbar__breadcrumb">
               Dashboard
             </Link>
             {breadcrumbs.map((crumb, index) => (
@@ -81,16 +113,43 @@ function Topbar({ title, description }) {
             </button>
           </div>
 
-          <label className="topbar__search">
+          <form className="topbar__search" onSubmit={handleSearchSubmit}>
             <Search className="topbar__search-icon" strokeWidth={1.8} />
             <input
               type="search"
-              placeholder="Search employees, invoices, tickets..."
+              placeholder="Search module pages, reports, forms..."
               className="topbar__search-input"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
             />
-          </label>
+            {searchQuery.trim() ? (
+              <div className="topbar__search-results">
+                {searchItems.length ? (
+                  searchItems.map((item) => (
+                    <button
+                      key={item.path}
+                      type="button"
+                      className="topbar__search-result"
+                      onClick={() => handleSearchSelect(item.path)}
+                    >
+                      <span className="topbar__search-result-label">
+                        {item.label}
+                      </span>
+                      <span className="topbar__search-result-path">
+                        {item.path}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="topbar__search-empty">
+                    No matching pages found.
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </form>
 
-          <div className="topbar__profile">
+          <Link to="/profile" className="topbar__profile">
             <div className="topbar__avatar">
               {(profile.name || userRole).charAt(0).toUpperCase()}
             </div>
@@ -100,7 +159,7 @@ function Topbar({ title, description }) {
                 {formatLabel(userRole)}
               </div>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </header>

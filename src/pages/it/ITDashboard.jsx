@@ -1,4 +1,5 @@
 import Card from "../../components/Card.jsx";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   BarChart,
   Bar,
@@ -19,19 +20,43 @@ const systemsData = [
   { week: "Week 4", uptime: 99.95, incidents: 1 },
 ];
 
-const assetDistribution = [
-  { type: "Laptops", count: 45, value: "₹45L" },
-  { type: "Desktops", count: 30, value: "₹36L" },
-  { type: "Servers", count: 8, value: "₹80L" },
-  { type: "Networking", count: 25, value: "₹18L" },
-];
-
 function ITDashboard() {
-  const totalAssets = assetDistribution.reduce((sum, a) => sum + a.count, 0);
-  const totalValue = assetDistribution.reduce(
-    (sum, a) => sum + parseInt(a.value.replace("₹", "").replace("L", "")),
+  const systems = usePersistentSnapshot("erp_it_systems", []);
+  const assets = usePersistentSnapshot("erp_it_assets", []);
+  const maintenance = usePersistentSnapshot("erp_it_maintenance", []);
+
+  const totalAssets = assets.length;
+  const totalValue = assets.reduce(
+    (sum, asset) =>
+      sum +
+      (Number.parseInt(String(asset.value).replace(/[^\d]/g, ""), 10) || 0),
     0,
   );
+  const operationalSystems = systems.filter(
+    (system) => system.status === "Operational",
+  ).length;
+  const uptime = systems.length
+    ? ((operationalSystems / systems.length) * 100).toFixed(2)
+    : "0.00";
+  const assetDistribution = Object.entries(
+    assets.reduce((accumulator, asset) => {
+      const type = asset.assetType || "Other";
+      const value =
+        Number.parseInt(String(asset.value).replace(/[^\d]/g, ""), 10) || 0;
+
+      if (!accumulator[type]) {
+        accumulator[type] = { count: 0, value: 0 };
+      }
+
+      accumulator[type].count += 1;
+      accumulator[type].value += value;
+      return accumulator;
+    }, {}),
+  ).map(([type, data]) => ({
+    type,
+    count: data.count,
+    value: `₹${(data.value / 100000).toFixed(2)}L`,
+  }));
 
   return (
     <div className="it-page">
@@ -43,12 +68,22 @@ function ITDashboard() {
       </div>
 
       <div className="it-cards">
-        <Card title="System Uptime" value="99.85%" helper="Last 30 days" />
+        <Card
+          title="System Uptime"
+          value={`${uptime}%`}
+          helper="Operational systems"
+        />
         <Card title="Total Assets" value={totalAssets} helper="IT inventory" />
-        <Card title="Pending Maintenance" value="5" helper="Tasks" />
+        <Card
+          title="Pending Maintenance"
+          value={
+            maintenance.filter((task) => task.status !== "Completed").length
+          }
+          helper="Open tasks"
+        />
         <Card
           title="Total Asset Value"
-          value={"₹" + totalValue + "L"}
+          value={`₹${(totalValue / 100000).toFixed(2)}L`}
           helper="Inventory value"
         />
       </div>

@@ -1,4 +1,5 @@
 import Card from "../../components/Card.jsx";
+import { ticketsData } from "../../utils/supportData.js";
 import {
   BarChart,
   Bar,
@@ -26,6 +27,16 @@ const resolutionData = [
 ];
 
 function SupportDashboard() {
+  const openTickets = ticketsData.filter(
+    (ticket) => ticket.status === "open",
+  ).length;
+  const resolvedTickets = ticketsData.filter(
+    (ticket) => ticket.status === "resolved",
+  ).length;
+  const inProgressTickets = ticketsData.filter(
+    (ticket) => ticket.status === "in-progress",
+  ).length;
+
   return (
     <div className="support-page">
       <div className="support-page__header">
@@ -36,9 +47,21 @@ function SupportDashboard() {
       </div>
 
       <div className="support-cards">
-        <Card title="Open Tickets" value="48" helper="Awaiting response" />
-        <Card title="Resolved Today" value="12" helper="Avg resolution" />
-        <Card title="Avg Response Time" value="2.5 hrs" helper="Within SLA" />
+        <Card
+          title="Open Tickets"
+          value={openTickets}
+          helper="Awaiting response"
+        />
+        <Card
+          title="Resolved Tickets"
+          value={resolvedTickets}
+          helper="Closed items"
+        />
+        <Card
+          title="In Progress"
+          value={inProgressTickets}
+          helper="Assigned to agents"
+        />
         <Card title="Customer Satisfaction" value="4.8/5" helper="Rating" />
       </div>
 

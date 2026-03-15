@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -103,9 +108,10 @@ const emptyForm = {
 };
 
 function Documents() {
-  const [docs, setDocs] = useState(initialDocs);
+  const [docs, setDocs] = usePersistentState("erp_hr_documents", initialDocs);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
 
   function handleChange(e) {
@@ -119,17 +125,33 @@ function Documents() {
     if (!validateFormWithInlineErrors(formElement)) {
       return;
     }
-    setDocs((prev) => [
-      ...prev,
-      { ...form, id: prev.length + 1, status: "Active" },
-    ]);
+    if (editingId !== null) {
+      setDocs((previousRows) =>
+        previousRows.map((item) =>
+          String(item.id) === String(editingId) ? { ...item, ...form } : item,
+        ),
+      );
+    } else {
+      setDocs((prev) => [
+        ...prev,
+        { ...form, id: prev.length + 1, status: "Active" },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
 
   const filtered = docs.filter((d) =>
     `${d.name} ${d.category}`.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setForm({ ...emptyForm, ...row });
+    setShowForm(true);
+  };
+  const handleDelete = (row) => deleteRowById(setDocs, row, "document");
 
   return (
     <div className="hr-page">
@@ -150,7 +172,12 @@ function Documents() {
       </div>
 
       {showForm && (
-        <form className="hr-form hr-panel" onSubmit={handleSubmit} noValidate onChange={handleFormFieldValidation}>
+        <form
+          className="hr-form hr-panel"
+          onSubmit={handleSubmit}
+          noValidate
+          onChange={handleFormFieldValidation}
+        >
           <h3 className="hr-panel__title">Add Document Record</h3>
           <div className="hr-form__grid">
             <div className="hr-form__field hr-form__field--full">
@@ -225,13 +252,15 @@ function Documents() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Table columns={columns} rows={filtered} />
+        <Table
+          columns={columns}
+          rows={filtered}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
 }
 
 export default Documents;
-
-
-

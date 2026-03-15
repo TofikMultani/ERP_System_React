@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { handleFormFieldValidation, validateFormWithInlineErrors } from "../../utils/formValidation.js";
+import {
+  handleFormFieldValidation,
+  validateFormWithInlineErrors,
+} from "../../utils/formValidation.js";
+import { usePersistentState } from "../../utils/persistentState.js";
+import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -61,9 +66,13 @@ const initialCustomers = [
 ];
 
 function Customers() {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const [customers, setCustomers] = usePersistentState(
+    "erp_sales_customers",
+    initialCustomers,
+  );
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -77,6 +86,27 @@ function Customers() {
       c.email.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const handleEdit = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      setEditingId(targetRow.id);
+      setFormData({
+        name: targetRow.name || "",
+        email: targetRow.email || "",
+        phone: targetRow.phone || "",
+        status: targetRow.status || "Active",
+      });
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = (_, rowIndex) => {
+    const targetRow = filtered[rowIndex];
+    if (targetRow) {
+      deleteRowById(setCustomers, targetRow, "customer");
+    }
+  };
+
   const handleAddCustomer = (e) => {
     e.preventDefault();
 
@@ -85,16 +115,33 @@ function Customers() {
       return;
     }
     if (formData.name.trim()) {
-      setCustomers([
-        ...customers,
-        {
-          id: customers.length + 1,
-          ...formData,
-          totalOrders: 0,
-          totalValue: "₹0",
-        },
-      ]);
+      if (editingId !== null) {
+        setCustomers((previousRows) =>
+          previousRows.map((item) =>
+            String(item.id) === String(editingId)
+              ? {
+                  ...item,
+                  name: formData.name,
+                  email: formData.email,
+                  phone: formData.phone,
+                  status: formData.status,
+                }
+              : item,
+          ),
+        );
+      } else {
+        setCustomers([
+          ...customers,
+          {
+            id: customers.length + 1,
+            ...formData,
+            totalOrders: 0,
+            totalValue: "₹0",
+          },
+        ]);
+      }
       setFormData({ name: "", email: "", phone: "", status: "Active" });
+      setEditingId(null);
       setShowForm(false);
     }
   };
@@ -165,6 +212,8 @@ function Customers() {
               c.totalOrders,
               c.totalValue,
             ])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         </div>
       )}
@@ -172,7 +221,12 @@ function Customers() {
       {showForm && (
         <div className="sales-panel sales-form">
           <h3 className="sales-panel__title">Add Customer</h3>
-          <form onSubmit={handleAddCustomer} className="sales-form__grid" noValidate onChange={handleFormFieldValidation}>
+          <form
+            onSubmit={handleAddCustomer}
+            className="sales-form__grid"
+            noValidate
+            onChange={handleFormFieldValidation}
+          >
             <div className="sales-form__field">
               <label>Company Name</label>
               <input
@@ -238,6 +292,3 @@ function Customers() {
 }
 
 export default Customers;
-
-
-

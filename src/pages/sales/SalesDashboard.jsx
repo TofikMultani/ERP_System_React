@@ -1,4 +1,5 @@
 import Card from "../../components/Card.jsx";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   BarChart,
   Bar,
@@ -18,28 +19,39 @@ const monthlyData = [
   { month: "March", revenue: 92500, orders: 18 },
 ];
 
-const topCustomers = [
-  {
-    name: "ABC Corporation",
-    phone: "+1-555-1001",
-    email: "contact@abc.com",
-    spent: "₹450,000",
-  },
-  {
-    name: "Premier Solutions",
-    phone: "+1-555-1004",
-    email: "hello@premier.com",
-    spent: "₹380,000",
-  },
-  {
-    name: "XYZ Ltd",
-    phone: "+1-555-1002",
-    email: "info@xyz.com",
-    spent: "₹320,000",
-  },
-];
-
 function SalesDashboard() {
+  const customers = usePersistentSnapshot("erp_sales_customers", []);
+  const orders = usePersistentSnapshot("erp_sales_orders", []);
+  const quotations = usePersistentSnapshot("erp_sales_quotations", []);
+
+  const currentMonthRevenue = orders.reduce((sum, order) => {
+    const amount =
+      Number.parseInt(String(order.amount).replace(/[^\d]/g, ""), 10) || 0;
+    return sum + amount;
+  }, 0);
+
+  const topCustomers = [...customers]
+    .sort((left, right) => {
+      const leftValue =
+        Number.parseInt(
+          String(left.totalValue || "0").replace(/[^\d]/g, ""),
+          10,
+        ) || 0;
+      const rightValue =
+        Number.parseInt(
+          String(right.totalValue || "0").replace(/[^\d]/g, ""),
+          10,
+        ) || 0;
+      return rightValue - leftValue;
+    })
+    .slice(0, 3)
+    .map((customer) => ({
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email,
+      spent: customer.totalValue || "₹0",
+    }));
+
   return (
     <div className="sales-page">
       <div className="sales-page__header">
@@ -52,16 +64,30 @@ function SalesDashboard() {
       <div className="sales-cards">
         <Card
           title="This Month Revenue"
-          value="₹92.5K"
-          helper="Current month"
+          value={`₹${(currentMonthRevenue / 100000).toFixed(2)}L`}
+          helper="Saved order revenue"
         />
-        <Card title="Total Orders" value="45" helper="YTD" />
+        <Card
+          title="Total Orders"
+          value={orders.length}
+          helper="Saved orders"
+        />
         <Card
           title="Active Customers"
-          value="12"
+          value={
+            customers.filter((customer) => customer.status === "Active").length
+          }
           helper="Ongoing relationships"
         />
-        <Card title="Pending Quotes" value="3" helper="Awaiting response" />
+        <Card
+          title="Pending Quotes"
+          value={
+            quotations.filter((quotation) =>
+              ["Pending", "Sent"].includes(quotation.status),
+            ).length
+          }
+          helper="Awaiting response"
+        />
       </div>
 
       <div className="sales-charts">
