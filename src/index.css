@@ -1489,16 +1489,33 @@ a {
     background 0.15s ease;
 }
 
+.erp-table__action-btn--edit {
+  border-color: rgba(33, 95, 232, 0.3);
+  color: #215fe8;
+  background: rgba(33, 95, 232, 0.08);
+}
+
+.erp-table__action-btn--delete {
+  border-color: rgba(209, 67, 67, 0.3);
+  color: #d14343;
+  background: rgba(209, 67, 67, 0.08);
+}
+
 .erp-table__action-btn--edit:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: rgba(90, 61, 240, 0.06);
+  border-color: #1b4fc4;
+  color: #1b4fc4;
+  background: rgba(27, 79, 196, 0.14);
 }
 
 .erp-table__action-btn--delete:hover {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-  background: rgba(209, 67, 67, 0.08);
+  border-color: #b83232;
+  color: #b83232;
+  background: rgba(184, 50, 50, 0.14);
+}
+
+.erp-table__action-btn:focus-visible {
+  outline: 2px solid #1f3a8a;
+  outline-offset: 2px;
 }
 
 .erp-table tbody tr:last-child td {
