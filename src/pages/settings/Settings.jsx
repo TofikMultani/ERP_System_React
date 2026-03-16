@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PERSISTENT_STATE_UPDATED_EVENT } from "../../utils/persistentState.js";
 
 const DEFAULT_SETTINGS = {
   currency: "₹",
@@ -8,9 +9,11 @@ const DEFAULT_SETTINGS = {
   twoFactor: false,
 };
 
+const SETTINGS_STORAGE_KEY = "erp_settings";
+
 function readStoredSettings() {
   try {
-    const rawSettings = localStorage.getItem("erp_settings");
+    const rawSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
     return rawSettings
       ? { ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) }
       : DEFAULT_SETTINGS;
@@ -27,13 +30,23 @@ function Settings() {
   };
 
   const handleSave = () => {
-    localStorage.setItem("erp_settings", JSON.stringify(settings));
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    window.dispatchEvent(
+      new CustomEvent(PERSISTENT_STATE_UPDATED_EVENT, {
+        detail: { storageKey: SETTINGS_STORAGE_KEY },
+      }),
+    );
     alert("Settings saved successfully!");
   };
 
   const handleReset = () => {
     setSettings(DEFAULT_SETTINGS);
-    localStorage.removeItem("erp_settings");
+    localStorage.removeItem(SETTINGS_STORAGE_KEY);
+    window.dispatchEvent(
+      new CustomEvent(PERSISTENT_STATE_UPDATED_EVENT, {
+        detail: { storageKey: SETTINGS_STORAGE_KEY },
+      }),
+    );
   };
 
   return (

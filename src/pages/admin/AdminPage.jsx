@@ -50,14 +50,34 @@ const orderColumns = [
   { header: "Date", accessor: "date" },
 ];
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+const SETTINGS_STORAGE_KEY = "erp_settings";
 
-function formatRevenue(value) {
-  return `$${(value / 1000).toFixed(0)}k`;
-}
+const CURRENCY_CONFIG = {
+  "₹": { code: "INR", locale: "en-IN", rateFromInr: 1 },
+  $: { code: "USD", locale: "en-US", rateFromInr: 0.012 },
+  "€": { code: "EUR", locale: "de-DE", rateFromInr: 0.011 },
+  "£": { code: "GBP", locale: "en-GB", rateFromInr: 0.0094 },
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function parseRupeeAmount(value) {
   return Number.parseInt(String(value).replace(/[^\d]/g, ""), 10) || 0;
+}
+
+function convertFromInr(inrValue, currencySymbol) {
+  const config = CURRENCY_CONFIG[currencySymbol] || CURRENCY_CONFIG["₹"];
+  return inrValue * config.rateFromInr;
+}
+
+function formatCurrencyValue(value, currencySymbol) {
+  const config = CURRENCY_CONFIG[currencySymbol] || CURRENCY_CONFIG["₹"];
+  return new Intl.NumberFormat(config.locale, {
+    style: "currency",
+    currency: config.code,
+    notation: "compact",
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -66,11 +86,21 @@ function AdminPage() {
   const employees = usePersistentSnapshot("erp_hr_employees", []);
   const products = usePersistentSnapshot("erp_inventory_products", []);
   const orders = usePersistentSnapshot("erp_sales_orders", []);
+  const settings = usePersistentSnapshot(SETTINGS_STORAGE_KEY, {
+    currency: "₹",
+  });
+  const selectedCurrency = CURRENCY_CONFIG[settings?.currency]
+    ? settings.currency
+    : "₹";
 
   const totalRevenue = orders.reduce(
     (sum, order) => sum + parseRupeeAmount(order.amount),
     0,
   );
+  const convertedRevenueData = revenueData.map((item) => ({
+    ...item,
+    revenueConverted: convertFromInr(item.revenue, selectedCurrency),
+  }));
   const openTickets = ticketsData.filter(
     (ticket) => ticket.status !== "resolved",
   ).length;
@@ -88,7 +118,10 @@ function AdminPage() {
     },
     {
       title: "Total Revenue",
-      value: `₹${(totalRevenue / 100000).toFixed(2)}L`,
+      value: formatCurrencyValue(
+        convertFromInr(totalRevenue, selectedCurrency),
+        selectedCurrency,
+      ),
       helper: `${orders.length} saved sales orders`,
     },
     {
@@ -132,6 +165,7 @@ function AdminPage() {
             title={card.title}
             value={card.value}
             helper={card.helper}
+            currencySymbol={selectedCurrency}
           />
         ))}
       </section>
@@ -143,7 +177,7 @@ function AdminPage() {
           <h3 className="admin-dashboard__panel-title">Monthly Revenue</h3>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart
-              data={revenueData}
+              data={convertedRevenueData}
               margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
             >
               <CartesianGrid
@@ -158,19 +192,28 @@ function AdminPage() {
               />
               <YAxis
                 tick={{ fontSize: 12, fill: "#69708a" }}
-                tickFormatter={formatRevenue}
+                tickFormatter={(value) =>
+                  formatCurrencyValue(value, selectedCurrency)
+                }
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                formatter={(v) => [`$${v.toLocaleString()}`, "Revenue"]}
+                formatter={(value) => [
+                  formatCurrencyValue(Number(value) || 0, selectedCurrency),
+                  "Revenue",
+                ]}
                 contentStyle={{
                   borderRadius: "12px",
                   border: "1px solid rgba(20,33,61,0.1)",
                   boxShadow: "0 8px 24px rgba(20,33,61,0.08)",
                 }}
               />
-              <Bar dataKey="revenue" fill="#5a3df0" radius={[6, 6, 0, 0]} />
+              <Bar
+                dataKey="revenueConverted"
+                fill="#5a3df0"
+                radius={[6, 6, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
