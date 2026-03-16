@@ -326,6 +326,100 @@ a {
   color: var(--color-text-soft);
 }
 
+.forgot-password {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.forgot-password__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 18, 33, 0.56);
+  backdrop-filter: blur(2px);
+}
+
+.forgot-password__card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 440px);
+  padding: 1.35rem;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.forgot-password__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.forgot-password__header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--color-text);
+}
+
+.forgot-password__close {
+  border: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+  background: var(--color-surface-alt);
+  color: var(--color-text-soft);
+}
+
+.forgot-password__close:hover {
+  color: var(--color-text);
+}
+
+.forgot-password__hint {
+  margin: 0 0 0.45rem;
+  color: var(--color-text-soft);
+  font-size: 0.92rem;
+}
+
+.forgot-password__form {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.forgot-password__form button {
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #5a3df0 0%, #7257ff 100%);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.9rem 1rem;
+}
+
+.forgot-password__message {
+  margin: 0;
+  font-size: 0.87rem;
+  border-radius: 10px;
+  padding: 0.7rem 0.75rem;
+  color: #214b28;
+  background: rgba(16, 185, 129, 0.17);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+@media (max-width: 520px) {
+  .forgot-password__card {
+    padding: 1.1rem;
+  }
+}
+
 /* Admin Shell Layout */
 .admin-shell {
   min-height: 100vh;
