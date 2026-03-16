@@ -1,13 +1,26 @@
 import { useState } from "react";
 
+const DEFAULT_SETTINGS = {
+  currency: "₹",
+  theme: "light",
+  language: "English",
+  notifications: true,
+  twoFactor: false,
+};
+
+function readStoredSettings() {
+  try {
+    const rawSettings = localStorage.getItem("erp_settings");
+    return rawSettings
+      ? { ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) }
+      : DEFAULT_SETTINGS;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
 function Settings() {
-  const [settings, setSettings] = useState({
-    currency: "₹",
-    theme: "light",
-    language: "English",
-    notifications: true,
-    twoFactor: false,
-  });
+  const [settings, setSettings] = useState(() => readStoredSettings());
 
   const handleSettingChange = (key, value) => {
     setSettings({ ...settings, [key]: value });
@@ -18,299 +31,195 @@ function Settings() {
     alert("Settings saved successfully!");
   };
 
+  const handleReset = () => {
+    setSettings(DEFAULT_SETTINGS);
+    localStorage.removeItem("erp_settings");
+  };
+
   return (
-    <div style={{ padding: "2rem", maxWidth: "700px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "2rem" }}>
-        <h2
-          style={{
-            margin: "0 0 0.5rem",
-            fontSize: "1.8rem",
-            color: "var(--color-text)",
-          }}
-        >
-          Settings
-        </h2>
-        <p
-          style={{
-            margin: "0",
-            color: "var(--color-text-soft)",
-            fontSize: "0.95rem",
-          }}
-        >
-          Manage your application preferences
-        </p>
-      </div>
+    <section className="settings-page">
+      <header className="settings-page__hero">
+        <div>
+          <p className="settings-page__eyebrow">Workspace Preferences</p>
+          <h2>Settings</h2>
+          <p className="settings-page__subtext">
+            Configure platform behavior, localization, and account security with
+            a cleaner admin-grade control panel.
+          </p>
+        </div>
+        <div className="settings-page__status-card">
+          <span className="settings-page__status-label">Current theme</span>
+          <strong>
+            {settings.theme === "auto" ? "System" : settings.theme}
+          </strong>
+          <span className="settings-page__status-note">
+            Preferences are stored locally for this ERP workspace.
+          </span>
+        </div>
+      </header>
 
-      <div
-        style={{
-          padding: "2rem",
-          borderRadius: "20px",
-          border: "1px solid rgba(20, 33, 61, 0.08)",
-          background: "#ffffff",
-          boxShadow: "0 8px 24px rgba(20, 33, 61, 0.05)",
-        }}
-      >
-        <div style={{ display: "grid", gap: "2rem" }}>
-          {/* Currency Setting */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.95rem",
-                fontWeight: "600",
-                color: "var(--color-text)",
-                marginBottom: "0.6rem",
-              }}
-            >
-              Currency
-            </label>
-            <select
-              value={settings.currency}
-              onChange={(e) => handleSettingChange("currency", e.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.75rem 0.9rem",
-                borderRadius: "10px",
-                border: "1px solid rgba(27, 35, 64, 0.14)",
-                background: "var(--color-surface-muted)",
-                color: "var(--color-text)",
-                fontSize: "0.95rem",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
-            >
-              <option value="₹">Indian Rupee (₹)</option>
-              <option value="$">US Dollar ($)</option>
-              <option value="€">Euro (€)</option>
-              <option value="£">British Pound (£)</option>
-            </select>
-            <p
-              style={{
-                margin: "0.5rem 0 0",
-                fontSize: "0.85rem",
-                color: "var(--color-text-soft)",
-              }}
-            >
-              Choose your preferred currency for all transactions
-            </p>
-          </div>
-
-          {/* Theme Setting */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.95rem",
-                fontWeight: "600",
-                color: "var(--color-text)",
-                marginBottom: "0.6rem",
-              }}
-            >
-              Theme
-            </label>
-            <select
-              value={settings.theme}
-              onChange={(e) => handleSettingChange("theme", e.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.75rem 0.9rem",
-                borderRadius: "10px",
-                border: "1px solid rgba(27, 35, 64, 0.14)",
-                background: "var(--color-surface-muted)",
-                color: "var(--color-text)",
-                fontSize: "0.95rem",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
-            >
-              <option value="light">Light Mode</option>
-              <option value="dark">Dark Mode</option>
-              <option value="auto">Auto (System)</option>
-            </select>
-            <p
-              style={{
-                margin: "0.5rem 0 0",
-                fontSize: "0.85rem",
-                color: "var(--color-text-soft)",
-              }}
-            >
-              Select your preferred visual theme
-            </p>
-          </div>
-
-          {/* Language Setting */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.95rem",
-                fontWeight: "600",
-                color: "var(--color-text)",
-                marginBottom: "0.6rem",
-              }}
-            >
-              Language
-            </label>
-            <select
-              value={settings.language}
-              onChange={(e) => handleSettingChange("language", e.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.75rem 0.9rem",
-                borderRadius: "10px",
-                border: "1px solid rgba(27, 35, 64, 0.14)",
-                background: "var(--color-surface-muted)",
-                color: "var(--color-text)",
-                fontSize: "0.95rem",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
-            >
-              <option value="English">English</option>
-              <option value="Hindi">Hindi</option>
-              <option value="Spanish">Spanish</option>
-              <option value="French">French</option>
-            </select>
-            <p
-              style={{
-                margin: "0.5rem 0 0",
-                fontSize: "0.85rem",
-                color: "var(--color-text-soft)",
-              }}
-            >
-              Choose your interface language
-            </p>
-          </div>
-
-          {/* Notifications Toggle */}
-          <div
-            style={{
-              padding: "1.2rem",
-              borderRadius: "12px",
-              background: "rgba(90, 61, 240, 0.05)",
-              border: "1px solid rgba(90, 61, 240, 0.15)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+      <div className="settings-page__layout">
+        <div className="settings-page__panel">
+          <div className="settings-page__panel-head">
             <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "0.95rem",
-                  fontWeight: "600",
-                  color: "var(--color-text)",
-                  marginBottom: "0.3rem",
-                }}
-              >
-                Email Notifications
-              </label>
-              <p
-                style={{
-                  margin: "0",
-                  fontSize: "0.85rem",
-                  color: "var(--color-text-soft)",
-                }}
-              >
-                Receive system alerts via email
+              <h3>General Preferences</h3>
+              <p>
+                Set how finance, display, and language values appear across the
+                application.
               </p>
             </div>
-            <input
-              type="checkbox"
-              checked={settings.notifications}
-              onChange={(e) =>
-                handleSettingChange("notifications", e.target.checked)
-              }
-              style={{ width: "24px", height: "24px", cursor: "pointer" }}
-            />
           </div>
 
-          {/* Two-Factor Authentication */}
-          <div
-            style={{
-              padding: "1.2rem",
-              borderRadius: "12px",
-              background: "rgba(59, 130, 246, 0.05)",
-              border: "1px solid rgba(59, 130, 246, 0.15)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "0.95rem",
-                  fontWeight: "600",
-                  color: "var(--color-text)",
-                  marginBottom: "0.3rem",
-                }}
+          <div className="settings-page__grid">
+            <div className="settings-page__field-card">
+              <label htmlFor="settings-currency">Currency</label>
+              <select
+                id="settings-currency"
+                className="settings-page__select"
+                value={settings.currency}
+                onChange={(event) =>
+                  handleSettingChange("currency", event.target.value)
+                }
               >
-                Two-Factor Authentication
-              </label>
-              <p
-                style={{
-                  margin: "0",
-                  fontSize: "0.85rem",
-                  color: "var(--color-text-soft)",
-                }}
-              >
-                Add extra security to your account
+                <option value="₹">Indian Rupee (₹)</option>
+                <option value="$">US Dollar ($)</option>
+                <option value="€">Euro (€)</option>
+                <option value="£">British Pound (£)</option>
+              </select>
+              <p>
+                Choose the default currency shown in reports, invoices, and
+                dashboards.
               </p>
             </div>
-            <input
-              type="checkbox"
-              checked={settings.twoFactor}
-              onChange={(e) =>
-                handleSettingChange("twoFactor", e.target.checked)
-              }
-              style={{ width: "24px", height: "24px", cursor: "pointer" }}
-            />
+
+            <div className="settings-page__field-card">
+              <label htmlFor="settings-theme">Theme</label>
+              <select
+                id="settings-theme"
+                className="settings-page__select"
+                value={settings.theme}
+                onChange={(event) =>
+                  handleSettingChange("theme", event.target.value)
+                }
+              >
+                <option value="light">Light Mode</option>
+                <option value="dark">Dark Mode</option>
+                <option value="auto">Auto (System)</option>
+              </select>
+              <p>
+                Set the visual appearance best suited to your workspace and
+                display environment.
+              </p>
+            </div>
+
+            <div className="settings-page__field-card settings-page__field-card--full">
+              <label htmlFor="settings-language">Language</label>
+              <select
+                id="settings-language"
+                className="settings-page__select"
+                value={settings.language}
+                onChange={(event) =>
+                  handleSettingChange("language", event.target.value)
+                }
+              >
+                <option value="English">English</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Spanish">Spanish</option>
+                <option value="French">French</option>
+              </select>
+              <p>
+                Choose the default interface language used throughout modules
+                and navigation.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "1rem",
-            marginTop: "2.5rem",
-          }}
-        >
-          <button
-            onClick={handleSave}
-            style={{
-              padding: "0.85rem",
-              borderRadius: "12px",
-              border: "0",
-              background: "linear-gradient(135deg, #5a3df0 0%, #7257ff 100%)",
-              color: "#fff",
-              fontWeight: "600",
-              cursor: "pointer",
-              fontSize: "0.95rem",
-            }}
-          >
-            Save Changes
-          </button>
-          <button
-            style={{
-              padding: "0.85rem",
-              borderRadius: "12px",
-              border: "1px solid rgba(27, 35, 64, 0.14)",
-              background: "transparent",
-              color: "var(--color-text)",
-              fontWeight: "600",
-              cursor: "pointer",
-              fontSize: "0.95rem",
-            }}
-          >
-            Reset to Default
-          </button>
-        </div>
+        <aside className="settings-page__panel settings-page__panel--side">
+          <div className="settings-page__panel-head">
+            <div>
+              <h3>Security & Alerts</h3>
+              <p>
+                Control communication preferences and strengthen account access.
+              </p>
+            </div>
+          </div>
+
+          <div className="settings-page__toggle-list">
+            <label className="settings-page__toggle-card">
+              <div>
+                <span className="settings-page__toggle-title">
+                  Email Notifications
+                </span>
+                <p>
+                  Receive important system alerts, activity updates, and
+                  reminders by email.
+                </p>
+              </div>
+              <span className="settings-page__switch">
+                <input
+                  type="checkbox"
+                  checked={settings.notifications}
+                  onChange={(event) =>
+                    handleSettingChange("notifications", event.target.checked)
+                  }
+                />
+                <span className="settings-page__switch-slider" />
+              </span>
+            </label>
+
+            {/* <label className="settings-page__toggle-card settings-page__toggle-card--info">
+              <div>
+                <span className="settings-page__toggle-title">
+                  Two-Factor Authentication
+                </span>
+                <p>
+                  Add a second verification step to increase account security
+                  for sensitive workflows.
+                </p>
+              </div>
+              <span className="settings-page__switch">
+                <input
+                  type="checkbox"
+                  checked={settings.twoFactor}
+                  onChange={(event) =>
+                    handleSettingChange("twoFactor", event.target.checked)
+                  }
+                />
+                <span className="settings-page__switch-slider" />
+              </span>
+            </label> */}
+          </div>
+
+          <div className="settings-page__summary">
+            <span className="settings-page__summary-label">Active profile</span>
+            <div className="settings-page__summary-tags">
+              <span>{settings.currency}</span>
+              <span>{settings.language}</span>
+              <span>{settings.notifications ? "Alerts On" : "Alerts Off"}</span>
+              {/* <span>{settings.twoFactor ? "2FA Enabled" : "2FA Disabled"}</span> */}
+            </div>
+          </div>
+        </aside>
       </div>
-    </div>
+
+      <div className="settings-page__actions">
+        <button
+          type="button"
+          onClick={handleSave}
+          className="settings-page__btn settings-page__btn--primary"
+        >
+          Save Changes
+        </button>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="settings-page__btn settings-page__btn--secondary"
+        >
+          Reset to Default
+        </button>
+      </div>
+    </section>
   );
 }
 

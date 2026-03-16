@@ -84,355 +84,161 @@ function Profile() {
     setIsEditing(false);
   }
 
-  return (
-    <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "2rem" }}>
-        <h2
-          style={{
-            margin: "0 0 0.5rem",
-            fontSize: "1.8rem",
-            color: "var(--color-text)",
-          }}
-        >
-          My Profile
-        </h2>
-        <p
-          style={{
-            margin: "0",
-            color: "var(--color-text-soft)",
-            fontSize: "0.95rem",
-          }}
-        >
-          Your account information and role details
-        </p>
-      </div>
+  function getInputClass(fieldName) {
+    return `profile-page__input${errors[fieldName] ? " profile-page__input--error" : ""}`;
+  }
 
-      <div
-        style={{
-          padding: "2rem",
-          borderRadius: "20px",
-          border: "1px solid rgba(20, 33, 61, 0.08)",
-          background: "#ffffff",
-          boxShadow: "0 8px 24px rgba(20, 33, 61, 0.05)",
-        }}
-      >
-        <div
-          style={{
-            width: "100px",
-            height: "100px",
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #5a3df0 0%, #7257ff 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontSize: "2.5rem",
-            fontWeight: "700",
-            marginBottom: "1.5rem",
-          }}
-        >
-          {user.name.charAt(0)}
+  return (
+    <section className="profile-page">
+      <header className="profile-page__hero">
+        <div>
+          <p className="profile-page__eyebrow">Account Settings</p>
+          <h2>My Profile</h2>
+          <p className="profile-page__subtext">
+            Manage your personal details, department information, and account
+            identity used across the ERP platform.
+          </p>
+        </div>
+        <div className="profile-page__role-chip">{getRoleLabel(role)}</div>
+      </header>
+
+      <div className="profile-page__card">
+        <div className="profile-page__identity">
+          <div className="profile-page__avatar" aria-hidden="true">
+            {user.name.charAt(0)}
+          </div>
+          <div className="profile-page__identity-meta">
+            <h3>{user.name}</h3>
+            <p>{user.email}</p>
+          </div>
         </div>
 
-        <form style={{ display: "grid", gap: "1.5rem" }} onSubmit={handleSave}>
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                color: "var(--color-text-soft)",
-                marginBottom: "0.4rem",
-              }}
-            >
-              Full Name
-            </label>
-            {isEditing ? (
-              <>
-                <input
-                  name="name"
-                  value={formValues.name}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.9rem 1rem",
-                    border: `1px solid ${errors.name ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
-                    borderRadius: "14px",
-                    background: "var(--color-surface-muted)",
-                    color: "var(--color-text)",
-                    outline: "none",
-                  }}
-                />
-                {errors.name ? (
-                  <small
-                    style={{
-                      color: "var(--color-danger)",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    {errors.name}
-                  </small>
-                ) : null}
-              </>
-            ) : (
-              <div
-                style={{
-                  fontSize: "1.1rem",
-                  fontWeight: "600",
-                  color: "var(--color-text)",
-                }}
-              >
-                {user.name}
-              </div>
-            )}
-          </div>
+        <form className="profile-page__form" onSubmit={handleSave} noValidate>
+          <div className="profile-page__grid">
+            <div className="profile-page__field">
+              <label htmlFor="profile-name">Full Name</label>
+              {isEditing ? (
+                <>
+                  <input
+                    id="profile-name"
+                    name="name"
+                    value={formValues.name}
+                    onChange={handleChange}
+                    className={getInputClass("name")}
+                  />
+                  {errors.name ? (
+                    <small className="profile-page__error">{errors.name}</small>
+                  ) : null}
+                </>
+              ) : (
+                <p className="profile-page__value">{user.name}</p>
+              )}
+            </div>
 
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                color: "var(--color-text-soft)",
-                marginBottom: "0.4rem",
-              }}
-            >
-              Email Address
-            </label>
-            {isEditing ? (
-              <>
-                <input
-                  name="email"
-                  value={formValues.email}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.9rem 1rem",
-                    border: `1px solid ${errors.email ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
-                    borderRadius: "14px",
-                    background: "var(--color-surface-muted)",
-                    color: "var(--color-text)",
-                    outline: "none",
-                  }}
-                />
-                {errors.email ? (
-                  <small
-                    style={{
-                      color: "var(--color-danger)",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    {errors.email}
-                  </small>
-                ) : null}
-              </>
-            ) : (
-              <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
-                {user.email}
-              </div>
-            )}
-          </div>
+            <div className="profile-page__field">
+              <label htmlFor="profile-email">Email Address</label>
+              {isEditing ? (
+                <>
+                  <input
+                    id="profile-email"
+                    name="email"
+                    value={formValues.email}
+                    onChange={handleChange}
+                    className={getInputClass("email")}
+                  />
+                  {errors.email ? (
+                    <small className="profile-page__error">
+                      {errors.email}
+                    </small>
+                  ) : null}
+                </>
+              ) : (
+                <p className="profile-page__value">{user.email}</p>
+              )}
+            </div>
 
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                color: "var(--color-text-soft)",
-                marginBottom: "0.4rem",
-              }}
-            >
-              Role
-            </label>
-            <div
-              style={{
-                display: "inline-block",
-                padding: "0.4rem 1rem",
-                borderRadius: "8px",
-                background:
-                  "linear-gradient(135deg, rgba(90, 61, 240, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)",
-                color: "#5a3df0",
-                fontWeight: "600",
-                fontSize: "0.9rem",
-              }}
-            >
-              {getRoleLabel(role)}
+            <div className="profile-page__field">
+              <label htmlFor="profile-department">Department</label>
+              {isEditing ? (
+                <>
+                  <input
+                    id="profile-department"
+                    name="department"
+                    value={formValues.department}
+                    onChange={handleChange}
+                    className={getInputClass("department")}
+                  />
+                  {errors.department ? (
+                    <small className="profile-page__error">
+                      {errors.department}
+                    </small>
+                  ) : null}
+                </>
+              ) : (
+                <p className="profile-page__value">{user.department}</p>
+              )}
+            </div>
+
+            <div className="profile-page__field">
+              <label htmlFor="profile-phone">Phone</label>
+              {isEditing ? (
+                <>
+                  <input
+                    id="profile-phone"
+                    name="phone"
+                    value={formValues.phone}
+                    onChange={handleChange}
+                    className={getInputClass("phone")}
+                  />
+                  {errors.phone ? (
+                    <small className="profile-page__error">
+                      {errors.phone}
+                    </small>
+                  ) : null}
+                </>
+              ) : (
+                <p className="profile-page__value">{user.phone}</p>
+              )}
+            </div>
+
+            <div className="profile-page__field profile-page__field--full">
+              <label htmlFor="profile-join-date">Joined On</label>
+              {isEditing ? (
+                <>
+                  <input
+                    type="date"
+                    id="profile-join-date"
+                    name="joinDate"
+                    value={formValues.joinDate}
+                    onChange={handleChange}
+                    className={getInputClass("joinDate")}
+                  />
+                  {errors.joinDate ? (
+                    <small className="profile-page__error">
+                      {errors.joinDate}
+                    </small>
+                  ) : null}
+                </>
+              ) : (
+                <p className="profile-page__value">
+                  {new Date(user.joinDate).toLocaleDateString()}
+                </p>
+              )}
             </div>
           </div>
 
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                color: "var(--color-text-soft)",
-                marginBottom: "0.4rem",
-              }}
-            >
-              Department
-            </label>
-            {isEditing ? (
-              <>
-                <input
-                  name="department"
-                  value={formValues.department}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.9rem 1rem",
-                    border: `1px solid ${errors.department ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
-                    borderRadius: "14px",
-                    background: "var(--color-surface-muted)",
-                    color: "var(--color-text)",
-                    outline: "none",
-                  }}
-                />
-                {errors.department ? (
-                  <small
-                    style={{
-                      color: "var(--color-danger)",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    {errors.department}
-                  </small>
-                ) : null}
-              </>
-            ) : (
-              <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
-                {user.department}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                color: "var(--color-text-soft)",
-                marginBottom: "0.4rem",
-              }}
-            >
-              Phone
-            </label>
-            {isEditing ? (
-              <>
-                <input
-                  name="phone"
-                  value={formValues.phone}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.9rem 1rem",
-                    border: `1px solid ${errors.phone ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
-                    borderRadius: "14px",
-                    background: "var(--color-surface-muted)",
-                    color: "var(--color-text)",
-                    outline: "none",
-                  }}
-                />
-                {errors.phone ? (
-                  <small
-                    style={{
-                      color: "var(--color-danger)",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    {errors.phone}
-                  </small>
-                ) : null}
-              </>
-            ) : (
-              <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
-                {user.phone}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                color: "var(--color-text-soft)",
-                marginBottom: "0.4rem",
-              }}
-            >
-              Joined On
-            </label>
-            {isEditing ? (
-              <>
-                <input
-                  type="date"
-                  name="joinDate"
-                  value={formValues.joinDate}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.9rem 1rem",
-                    border: `1px solid ${errors.joinDate ? "var(--color-danger)" : "rgba(27, 35, 64, 0.14)"}`,
-                    borderRadius: "14px",
-                    background: "var(--color-surface-muted)",
-                    color: "var(--color-text)",
-                    outline: "none",
-                  }}
-                />
-                {errors.joinDate ? (
-                  <small
-                    style={{
-                      color: "var(--color-danger)",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    {errors.joinDate}
-                  </small>
-                ) : null}
-              </>
-            ) : (
-              <div style={{ fontSize: "1rem", color: "var(--color-text)" }}>
-                {new Date(user.joinDate).toLocaleDateString()}
-              </div>
-            )}
-          </div>
-
           {isEditing ? (
-            <div style={{ marginTop: "2rem", display: "flex", gap: "0.75rem" }}>
+            <div className="profile-page__actions">
               <button
                 type="submit"
-                style={{
-                  flex: 1,
-                  padding: "0.85rem",
-                  borderRadius: "12px",
-                  border: "0",
-                  background:
-                    "linear-gradient(135deg, #5a3df0 0%, #7257ff 100%)",
-                  color: "#fff",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  fontSize: "0.95rem",
-                }}
+                className="profile-page__btn profile-page__btn--primary"
               >
                 Save Changes
               </button>
               <button
                 type="button"
                 onClick={handleCancel}
-                style={{
-                  flex: 1,
-                  padding: "0.85rem",
-                  borderRadius: "12px",
-                  border: "1px solid rgba(27, 35, 64, 0.16)",
-                  background: "#ffffff",
-                  color: "var(--color-text)",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  fontSize: "0.95rem",
-                }}
+                className="profile-page__btn profile-page__btn--secondary"
               >
                 Cancel
               </button>
@@ -441,25 +247,14 @@ function Profile() {
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              style={{
-                marginTop: "2rem",
-                width: "100%",
-                padding: "0.85rem",
-                borderRadius: "12px",
-                border: "0",
-                background: "linear-gradient(135deg, #5a3df0 0%, #7257ff 100%)",
-                color: "#fff",
-                fontWeight: "600",
-                cursor: "pointer",
-                fontSize: "0.95rem",
-              }}
+              className="profile-page__btn profile-page__btn--primary profile-page__btn--single"
             >
               Edit Profile
             </button>
           )}
         </form>
       </div>
-    </div>
+    </section>
   );
 }
 
