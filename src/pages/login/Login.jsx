@@ -1,11 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  getRouteForRole,
-  getStoredRole,
-  moduleOptions,
-  storeRole,
-} from "../../utils/auth.js";
+import { getRouteForRole, moduleOptions, storeRole } from "../../utils/auth.js";
 
 function Login() {
   const navigate = useNavigate();
@@ -17,14 +12,6 @@ function Login() {
     rememberMe: true,
   });
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    const storedRole = getStoredRole();
-
-    if (storedRole) {
-      navigate(getRouteForRole(storedRole), { replace: true });
-    }
-  }, [navigate]);
 
   function handleChange(event) {
     const { name, value } = event.target;
