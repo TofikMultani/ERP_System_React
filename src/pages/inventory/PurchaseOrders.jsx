@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
   handleFormFieldValidation,
   validateFormWithInlineErrors,
@@ -14,7 +14,7 @@ const initialPOs = [
     poNumber: "PO-2026-001",
     supplier: "TechSource Global",
     items: 15,
-    amount: "$18,500",
+    amount: "₹18,500",
     date: "05 Mar 2026",
     dueDate: "20 Mar 2026",
     status: "Delivered",
@@ -24,7 +24,7 @@ const initialPOs = [
     poNumber: "PO-2026-002",
     supplier: "Direct Electronics Inc",
     items: 8,
-    amount: "$12,300",
+    amount: "₹12,300",
     date: "07 Mar 2026",
     dueDate: "22 Mar 2026",
     status: "In Transit",
@@ -34,7 +34,7 @@ const initialPOs = [
     poNumber: "PO-2026-003",
     supplier: "Premium Office Ltd",
     items: 6,
-    amount: "$4,200",
+    amount: "₹4,200",
     date: "08 Mar 2026",
     dueDate: "25 Mar 2026",
     status: "Pending",
@@ -44,7 +44,7 @@ const initialPOs = [
     poNumber: "PO-2026-004",
     supplier: "Asian Components Co",
     items: 20,
-    amount: "$8,900",
+    amount: "₹8,900",
     date: "10 Mar 2026",
     dueDate: "28 Mar 2026",
     status: "Pending",
@@ -54,7 +54,7 @@ const initialPOs = [
     poNumber: "PO-2026-005",
     supplier: "Green Supply Partners",
     items: 12,
-    amount: "$6,400",
+    amount: "₹6,400",
     date: "11 Mar 2026",
     dueDate: "26 Mar 2026",
     status: "Confirmed",
@@ -75,7 +75,7 @@ const summary = [
   { title: "Total POs", value: "5", helper: "this month" },
   { title: "Pending", value: "2", helper: "awaiting confirmation" },
   { title: "In Transit", value: "1", helper: "on the way" },
-  { title: "Total Value", value: "$50.3k", helper: "outstanding orders" },
+  { title: "Total Value", value: "₹50.3k", helper: "outstanding orders" },
 ];
 
 const emptyForm = {
@@ -180,7 +180,7 @@ function PurchaseOrders() {
                 onChange={handleChange}
                 required
               >
-                <option value="">Select supplier…</option>
+                <option value="">Select supplierâ€¦</option>
                 {[
                   "TechSource Global",
                   "Direct Electronics Inc",
@@ -209,7 +209,7 @@ function PurchaseOrders() {
                 name="amount"
                 value={form.amount}
                 onChange={handleChange}
-                placeholder="$0.00"
+                placeholder="₹0.00"
               />
             </div>
             <div className="inv-form__field">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
   handleFormFieldValidation,
   validateFormWithInlineErrors,
@@ -14,7 +14,7 @@ const initialDepts = [
     name: "Engineering",
     head: "Ananya Sharma",
     employees: 74,
-    budget: "$420,000",
+    budget: "₹420,000",
     location: "Floor 3",
   },
   {
@@ -22,7 +22,7 @@ const initialDepts = [
     name: "HR",
     head: "Rohan Mehta",
     employees: 22,
-    budget: "$110,000",
+    budget: "₹110,000",
     location: "Floor 1",
   },
   {
@@ -30,7 +30,7 @@ const initialDepts = [
     name: "Finance",
     head: "Divya Rao",
     employees: 31,
-    budget: "$180,000",
+    budget: "₹180,000",
     location: "Floor 2",
   },
   {
@@ -38,7 +38,7 @@ const initialDepts = [
     name: "Sales",
     head: "Arjun Patel",
     employees: 48,
-    budget: "$260,000",
+    budget: "₹260,000",
     location: "Floor 2",
   },
   {
@@ -46,7 +46,7 @@ const initialDepts = [
     name: "IT",
     head: "Sneha Joshi",
     employees: 40,
-    budget: "$200,000",
+    budget: "₹200,000",
     location: "Floor 4",
   },
   {
@@ -54,7 +54,7 @@ const initialDepts = [
     name: "Support",
     head: "Neha Kapoor",
     employees: 33,
-    budget: "$140,000",
+    budget: "₹140,000",
     location: "Floor 1",
   },
 ];
@@ -184,7 +184,7 @@ function Departments() {
                 name="budget"
                 value={form.budget}
                 onChange={handleChange}
-                placeholder="$0"
+                placeholder="₹0"
               />
             </div>
             <div className="hr-form__field">

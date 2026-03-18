@@ -1,4 +1,4 @@
-import Card from "../../components/Card.jsx";
+﻿import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 import {
   Bar,
@@ -47,32 +47,32 @@ const categoryBreakdownRows = [
     id: 1,
     category: "Electronics",
     items: 3,
-    value: "$1,850",
-    avgPrice: "$616.67",
+    value: "₹1,850",
+    avgPrice: "₹616.67",
     reorderRate: "2x/month",
   },
   {
     id: 2,
     category: "Accessories",
     items: 3,
-    value: "$650",
-    avgPrice: "$216.67",
+    value: "₹650",
+    avgPrice: "₹216.67",
     reorderRate: "1x/month",
   },
   {
     id: 3,
     category: "Furniture",
     items: 2,
-    value: "$980",
-    avgPrice: "$490.00",
+    value: "₹980",
+    avgPrice: "₹490.00",
     reorderRate: "3x/year",
   },
   {
     id: 4,
     category: "Lighting",
     items: 1,
-    value: "$320",
-    avgPrice: "$320.00",
+    value: "₹320",
+    avgPrice: "₹320.00",
     reorderRate: "Never",
   },
 ];
@@ -80,7 +80,7 @@ const categoryBreakdownRows = [
 const summary = [
   {
     title: "Total Inventory Value",
-    value: "$3.8M",
+    value: "₹3.8M",
     helper: "across all items",
   },
   { title: "Avg Stock Level", value: "76.3 days", helper: "supply on hand" },
@@ -165,12 +165,12 @@ function Reports() {
               />
               <YAxis
                 tick={{ fontSize: 12, fill: "#69708a" }}
-                tickFormatter={(v) => `$${v / 100}k`}
+                tickFormatter={(v) => `₹${v / 100}k`}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                formatter={(v) => `$${v}`}
+                formatter={(v) => `₹${v}`}
                 contentStyle={{
                   borderRadius: "12px",
                   border: "1px solid rgba(20,33,61,0.1)",

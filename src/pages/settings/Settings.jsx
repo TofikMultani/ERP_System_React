@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { PERSISTENT_STATE_UPDATED_EVENT } from "../../utils/persistentState.js";
 
 const DEFAULT_SETTINGS = {
@@ -95,9 +95,6 @@ function Settings() {
                 }
               >
                 <option value="₹">Indian Rupee (₹)</option>
-                <option value="$">US Dollar ($)</option>
-                <option value="€">Euro (€)</option>
-                <option value="£">British Pound (£)</option>
               </select>
               <p>
                 Choose the default currency shown in reports, invoices, and

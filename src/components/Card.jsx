@@ -1,13 +1,10 @@
-import {
-  BadgeDollarSign,
+﻿import {
   Briefcase,
   CalendarCheck,
   ChartLine,
   Clock3,
-  Euro,
   FileText,
   IndianRupee,
-  PoundSterling,
   ShieldCheck,
   Users,
   Wallet,
@@ -18,9 +15,6 @@ const SETTINGS_STORAGE_KEY = "erp_settings";
 
 const CURRENCY_CONFIG = {
   "₹": { code: "INR", locale: "en-IN", rateFromInr: 1 },
-  $: { code: "USD", locale: "en-US", rateFromInr: 0.012 },
-  "€": { code: "EUR", locale: "de-DE", rateFromInr: 0.011 },
-  "£": { code: "GBP", locale: "en-GB", rateFromInr: 0.0094 },
 };
 
 function getIconKeyForTitle(title = "") {
@@ -123,20 +117,8 @@ function formatCurrencyValue(inrAmount, currencySymbol) {
   }).format(converted);
 }
 
-function renderIcon(iconKey, currencySymbol) {
+function renderIcon(iconKey) {
   if (iconKey === "revenue") {
-    if (currencySymbol === "$") {
-      return <BadgeDollarSign className="erp-card__icon" strokeWidth={1.9} />;
-    }
-
-    if (currencySymbol === "€") {
-      return <Euro className="erp-card__icon" strokeWidth={1.9} />;
-    }
-
-    if (currencySymbol === "£") {
-      return <PoundSterling className="erp-card__icon" strokeWidth={1.9} />;
-    }
-
     return <IndianRupee className="erp-card__icon" strokeWidth={1.9} />;
   }
 
@@ -171,18 +153,14 @@ function renderIcon(iconKey, currencySymbol) {
   return <ChartLine className="erp-card__icon" strokeWidth={1.9} />;
 }
 
-function Card({ title, value, helper, currencySymbol }) {
+function Card({ title, value, helper }) {
   const settings = usePersistentSnapshot(SETTINGS_STORAGE_KEY, {
     currency: "₹",
   });
 
-  const effectiveCurrencySymbol = currencySymbol
-    ? CURRENCY_CONFIG[currencySymbol]
-      ? currencySymbol
-      : "₹"
-    : CURRENCY_CONFIG[settings?.currency]
-      ? settings.currency
-      : "₹";
+  const effectiveCurrencySymbol = CURRENCY_CONFIG[settings?.currency]
+    ? settings.currency
+    : "₹";
 
   const iconKey = getIconKeyForTitle(title);
   const parsedInrAmount = parseInrCompactValue(value);
@@ -196,7 +174,7 @@ function Card({ title, value, helper, currencySymbol }) {
       <div className="erp-card__head">
         <span className="erp-card__title">{title}</span>
         <span className="erp-card__accent" aria-hidden="true">
-          {renderIcon(iconKey, effectiveCurrencySymbol)}
+          {renderIcon(iconKey)}
         </span>
       </div>
       <strong className="erp-card__value">{formattedValue}</strong>

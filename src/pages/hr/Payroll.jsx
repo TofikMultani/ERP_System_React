@@ -1,4 +1,4 @@
-import Card from "../../components/Card.jsx";
+﻿import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 import {
   Bar,
@@ -15,81 +15,81 @@ const payrollData = [
     id: 1,
     name: "Ananya Sharma",
     dept: "Engineering",
-    basic: "$5,200",
-    hra: "$1,040",
-    allowances: "$600",
-    deductions: "$420",
-    net: "$6,420",
+    basic: "₹5,200",
+    hra: "₹1,040",
+    allowances: "₹600",
+    deductions: "₹420",
+    net: "₹6,420",
   },
   {
     id: 2,
     name: "Rohan Mehta",
     dept: "HR",
-    basic: "$4,000",
-    hra: "$800",
-    allowances: "$400",
-    deductions: "$310",
-    net: "$4,890",
+    basic: "₹4,000",
+    hra: "₹800",
+    allowances: "₹400",
+    deductions: "₹310",
+    net: "₹4,890",
   },
   {
     id: 3,
     name: "Priya Nair",
     dept: "Finance",
-    basic: "$4,500",
-    hra: "$900",
-    allowances: "$450",
-    deductions: "$360",
-    net: "$5,490",
+    basic: "₹4,500",
+    hra: "₹900",
+    allowances: "₹450",
+    deductions: "₹360",
+    net: "₹5,490",
   },
   {
     id: 4,
     name: "Arjun Patel",
     dept: "Sales",
-    basic: "$4,800",
-    hra: "$960",
-    allowances: "$700",
-    deductions: "$400",
-    net: "$6,060",
+    basic: "₹4,800",
+    hra: "₹960",
+    allowances: "₹700",
+    deductions: "₹400",
+    net: "₹6,060",
   },
   {
     id: 5,
     name: "Sneha Joshi",
     dept: "IT",
-    basic: "$4,200",
-    hra: "$840",
-    allowances: "$500",
-    deductions: "$350",
-    net: "$5,190",
+    basic: "₹4,200",
+    hra: "₹840",
+    allowances: "₹500",
+    deductions: "₹350",
+    net: "₹5,190",
   },
   {
     id: 6,
     name: "Vikram Singh",
     dept: "Engineering",
-    basic: "$4,600",
-    hra: "$920",
-    allowances: "$550",
-    deductions: "$380",
-    net: "$5,690",
+    basic: "₹4,600",
+    hra: "₹920",
+    allowances: "₹550",
+    deductions: "₹380",
+    net: "₹5,690",
   },
   {
     id: 7,
     name: "Neha Kapoor",
     dept: "Support",
-    basic: "$3,800",
-    hra: "$760",
-    allowances: "$400",
-    deductions: "$300",
-    net: "$4,660",
+    basic: "₹3,800",
+    hra: "₹760",
+    allowances: "₹400",
+    deductions: "₹300",
+    net: "₹4,660",
   },
   {
     id: 8,
     name: "Divya Rao",
     dept: "Finance",
-    basic: "$4,100",
-    hra: "$820",
-    allowances: "$450",
-    deductions: "$330",
-    net: "$5,040",
+    basic: "₹4,100",
+    hra: "₹820",
+    allowances: "₹450",
+    deductions: "₹330",
+    net: "₹5,040",
   },
 ];
 
@@ -113,8 +113,8 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total Payroll", value: "$216,200", helper: "March 2026" },
-  { title: "Avg Salary", value: "$5,405", helper: "per employee" },
+  { title: "Total Payroll", value: "₹216,200", helper: "March 2026" },
+  { title: "Avg Salary", value: "₹5,405", helper: "per employee" },
   { title: "Total Employees", value: "248", helper: "on payroll" },
   { title: "Pending Payouts", value: "6", helper: "to be processed" },
 ];
@@ -156,12 +156,12 @@ function Payroll() {
               />
               <YAxis
                 tick={{ fontSize: 12, fill: "#69708a" }}
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                formatter={(v) => [`$${v.toLocaleString()}`, "Cost"]}
+                formatter={(v) => [`₹${v.toLocaleString()}`, "Cost"]}
                 contentStyle={{
                   borderRadius: "12px",
                   border: "1px solid rgba(20,33,61,0.1)",
@@ -174,7 +174,7 @@ function Payroll() {
       </div>
 
       <div className="hr-panel">
-        <h3 className="hr-panel__title">Employee Payroll — March 2026</h3>
+        <h3 className="hr-panel__title">Employee Payroll â€” March 2026</h3>
         <Table columns={columns} rows={payrollData} />
       </div>
     </div>

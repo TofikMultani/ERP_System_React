@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 import { deleteRowById } from "../../utils/tableActions.js";
@@ -100,7 +100,7 @@ const summary = [
   { title: "Total Stock Items", value: "8", helper: "products tracked" },
   { title: "Low Stock Alert", value: "4", helper: "below reorder level" },
   { title: "Out of Stock", value: "1", helper: "requires immediate reorder" },
-  { title: "Total Value", value: "$4.2M", helper: "inventory value" },
+  { title: "Total Value", value: "₹4.2M", helper: "inventory value" },
 ];
 
 function Stock() {
@@ -186,12 +186,12 @@ function Stock() {
       {lowStockAlerts.length > 0 && (
         <div className="inv-panel inv-panel--alert">
           <h3 className="inv-panel__title">
-            ⚠ Low Stock Alerts ({lowStockAlerts.length})
+            âš  Low Stock Alerts ({lowStockAlerts.length})
           </h3>
           <div className="inv-alert-list">
             {lowStockAlerts.map((item) => (
               <div key={item.id} className="inv-alert-item">
-                <strong>{item.product}</strong> — Only {item.onHand} units on
+                <strong>{item.product}</strong> â€” Only {item.onHand} units on
                 hand (reorder at {item.reorderLevel})
               </div>
             ))}

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Bar,
   BarChart,
   CartesianGrid,
@@ -14,7 +14,7 @@ import Table from "../../components/Table.jsx";
 import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import { ticketsData } from "../../utils/supportData.js";
 
-// ── Static data ──────────────────────────────────────────────────────────────
+// â”€â”€ Static data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const revenueData = [
   { month: "Jan", revenue: 62000 },
@@ -54,12 +54,9 @@ const SETTINGS_STORAGE_KEY = "erp_settings";
 
 const CURRENCY_CONFIG = {
   "₹": { code: "INR", locale: "en-IN", rateFromInr: 1 },
-  $: { code: "USD", locale: "en-US", rateFromInr: 0.012 },
-  "€": { code: "EUR", locale: "de-DE", rateFromInr: 0.011 },
-  "£": { code: "GBP", locale: "en-GB", rateFromInr: 0.0094 },
 };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function parseRupeeAmount(value) {
   return Number.parseInt(String(value).replace(/[^\d]/g, ""), 10) || 0;
@@ -80,7 +77,7 @@ function formatCurrencyValue(value, currencySymbol) {
   }).format(value);
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AdminPage() {
   const employees = usePersistentSnapshot("erp_hr_employees", []);
@@ -157,7 +154,7 @@ function AdminPage() {
 
   return (
     <div className="admin-dashboard">
-      {/* ── Stat Cards ─────────────────────────────────────────── */}
+      {/* â”€â”€ Stat Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="admin-dashboard__cards">
         {statCards.map((card) => (
           <Card
@@ -170,9 +167,9 @@ function AdminPage() {
         ))}
       </section>
 
-      {/* ── Charts ─────────────────────────────────────────────── */}
+      {/* â”€â”€ Charts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="admin-dashboard__charts">
-        {/* Bar chart — Monthly Revenue */}
+        {/* Bar chart â€” Monthly Revenue */}
         <div className="admin-dashboard__panel">
           <h3 className="admin-dashboard__panel-title">Monthly Revenue</h3>
           <ResponsiveContainer width="100%" height={260}>
@@ -218,7 +215,7 @@ function AdminPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Line chart — Monthly Orders */}
+        {/* Line chart â€” Monthly Orders */}
         <div className="admin-dashboard__panel">
           <h3 className="admin-dashboard__panel-title">Monthly Orders</h3>
           <ResponsiveContainer width="100%" height={260}>
@@ -262,7 +259,7 @@ function AdminPage() {
         </div>
       </section>
 
-      {/* ── Tables ─────────────────────────────────────────────── */}
+      {/* â”€â”€ Tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="admin-dashboard__tables">
         <div className="admin-dashboard__panel">
           <h3 className="admin-dashboard__panel-title">Recent Employees</h3>

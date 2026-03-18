@@ -1,4 +1,4 @@
-import Card from "../../components/Card.jsx";
+﻿import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 import {
   Bar,
@@ -47,7 +47,7 @@ const deptSummaryRows = [
     present: 68,
     onLeave: 4,
     perf: "87.4",
-    payroll: "$48,200",
+    payroll: "₹48,200",
   },
   {
     id: 2,
@@ -56,7 +56,7 @@ const deptSummaryRows = [
     present: 21,
     onLeave: 1,
     perf: "80.3",
-    payroll: "$28,600",
+    payroll: "₹28,600",
   },
   {
     id: 3,
@@ -65,7 +65,7 @@ const deptSummaryRows = [
     present: 29,
     onLeave: 2,
     perf: "86.0",
-    payroll: "$41,000",
+    payroll: "₹41,000",
   },
   {
     id: 4,
@@ -74,7 +74,7 @@ const deptSummaryRows = [
     present: 42,
     onLeave: 5,
     perf: "72.4",
-    payroll: "$38,400",
+    payroll: "₹38,400",
   },
   {
     id: 5,
@@ -83,7 +83,7 @@ const deptSummaryRows = [
     present: 38,
     onLeave: 2,
     perf: "89.5",
-    payroll: "$33,800",
+    payroll: "₹33,800",
   },
   {
     id: 6,
@@ -92,7 +92,7 @@ const deptSummaryRows = [
     present: 31,
     onLeave: 2,
     perf: "83.5",
-    payroll: "$26,200",
+    payroll: "₹26,200",
   },
 ];
 
@@ -100,7 +100,7 @@ const summary = [
   { title: "Headcount", value: "248", helper: "+12 from last month" },
   { title: "Attrition Rate", value: "1.2%", helper: "6 exits this quarter" },
   { title: "Avg Attendance", value: "86.3%", helper: "this month" },
-  { title: "Total Payroll", value: "$216k", helper: "March 2026" },
+  { title: "Total Payroll", value: "₹216k", helper: "March 2026" },
 ];
 
 function Reports() {

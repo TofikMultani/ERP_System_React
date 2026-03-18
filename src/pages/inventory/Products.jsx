@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
   handleFormFieldValidation,
   validateFormWithInlineErrors,
@@ -14,7 +14,7 @@ const initialProducts = [
     name: "Laptop Pro 15",
     category: "Electronics",
     sku: "LP-001",
-    price: "$1,299",
+    price: "₹1,299",
     stock: 24,
     status: "Active",
   },
@@ -23,7 +23,7 @@ const initialProducts = [
     name: "USB-C Cable",
     category: "Accessories",
     sku: "USB-002",
-    price: "$12",
+    price: "₹12",
     stock: 450,
     status: "Active",
   },
@@ -32,7 +32,7 @@ const initialProducts = [
     name: "Wireless Mouse",
     category: "Accessories",
     sku: "MOU-003",
-    price: "$45",
+    price: "₹45",
     stock: 78,
     status: "Active",
   },
@@ -41,7 +41,7 @@ const initialProducts = [
     name: 'Monitor 27" 4K',
     category: "Electronics",
     sku: "MON-004",
-    price: "$499",
+    price: "₹499",
     stock: 12,
     status: "Low Stock",
   },
@@ -50,7 +50,7 @@ const initialProducts = [
     name: "Mechanical Keyboard",
     category: "Accessories",
     sku: "KEY-005",
-    price: "$129",
+    price: "₹129",
     stock: 5,
     status: "Low Stock",
   },
@@ -59,7 +59,7 @@ const initialProducts = [
     name: "Desk Lamp LED",
     category: "Lighting",
     sku: "LAMP-006",
-    price: "$35",
+    price: "₹35",
     stock: 0,
     status: "Out of Stock",
   },
@@ -68,7 +68,7 @@ const initialProducts = [
     name: "Office Chair Mesh",
     category: "Furniture",
     sku: "CHAIR-007",
-    price: "$250",
+    price: "₹250",
     stock: 8,
     status: "Low Stock",
   },
@@ -77,7 +77,7 @@ const initialProducts = [
     name: "Standing Desk",
     category: "Furniture",
     sku: "DESK-008",
-    price: "$650",
+    price: "₹650",
     stock: 3,
     status: "Low Stock",
   },
@@ -94,7 +94,7 @@ const columns = [
 
 const summary = [
   { title: "Total Products", value: "8", helper: "active products" },
-  { title: "Total Value", value: "$3.8M", helper: "inventory value" },
+  { title: "Total Value", value: "₹3.8M", helper: "inventory value" },
   { title: "Low Stock", value: "4", helper: "items need reorder" },
   { title: "Out of Stock", value: "1", helper: "discontinued items" },
 ];
@@ -197,7 +197,7 @@ function Products() {
                 onChange={handleChange}
                 required
               >
-                <option value="">Select…</option>
+                <option value="">Selectâ€¦</option>
                 {[
                   "Electronics",
                   "Accessories",
@@ -225,7 +225,7 @@ function Products() {
                 name="price"
                 value={form.price}
                 onChange={handleChange}
-                placeholder="$0.00"
+                placeholder="₹0.00"
               />
             </div>
             <div className="inv-form__field">
@@ -252,7 +252,7 @@ function Products() {
           </h3>
           <input
             className="inv-search"
-            placeholder="Search name / category / SKU…"
+            placeholder="Search name / category / SKUâ€¦"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

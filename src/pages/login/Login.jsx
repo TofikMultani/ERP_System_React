@@ -99,6 +99,11 @@ function Login() {
     });
   }
 
+  function handleForgotLinkClick(event) {
+    event.preventDefault();
+    openForgotPassword();
+  }
+
   function closeForgotPassword() {
     setIsForgotOpen(false);
     setForgotStep("request");
@@ -288,23 +293,19 @@ function Login() {
               <span>Remember me</span>
             </label>
 
-            <button
-              type="button"
+            <a
+              href="#"
               className="login-form__link"
-              onClick={openForgotPassword}
+              onClick={handleForgotLinkClick}
             >
               Forgot password?
-            </button>
+            </a>
           </div>
 
           <button type="submit">Sign In</button>
         </form>
 
-        <div className="login-card__footer">
-          <p>
-            Static ERP demo with role-based routing and localStorage session.
-          </p>
-        </div>
+        
       </section>
 
       {isForgotOpen ? (
