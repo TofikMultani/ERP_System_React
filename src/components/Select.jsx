@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 /**
  * Select Component - Reusable select field with label
  */
@@ -13,7 +15,8 @@ function Select({
   id,
   ...props
 }) {
-  const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const selectId = id || generatedId;
 
   return (
     <div className="input-group">

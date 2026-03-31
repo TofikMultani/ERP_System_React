@@ -232,6 +232,9 @@ function Login() {
     <main className="login-page">
       <section className="login-card">
         <div className="login-card__hero">
+          <a href="/" className="login-card__back-link">
+            ← Back to Home
+          </a>
           <div className="login-card__brand">ERP System</div>
           <h1>Sign in to your account</h1>
           <p>Access your ERP workspace with your business credentials.</p>
@@ -304,8 +307,6 @@ function Login() {
 
           <button type="submit">Sign In</button>
         </form>
-
-        
       </section>
 
       {isForgotOpen ? (

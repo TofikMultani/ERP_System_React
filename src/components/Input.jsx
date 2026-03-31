@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 /**
  * Input Component - Reusable input field with label and validation
  */
@@ -13,7 +15,8 @@ function Input({
   id,
   ...props
 }) {
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || generatedId;
 
   return (
     <div className="input-group">

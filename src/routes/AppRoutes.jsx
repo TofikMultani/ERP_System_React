@@ -50,11 +50,13 @@ import AssignTicket from "../pages/support/AssignTicket.jsx";
 import SupportReports from "../pages/support/Reports.jsx";
 import Profile from "../pages/profile/Profile.jsx";
 import Settings from "../pages/settings/Settings.jsx";
+import LandingPage from "../pages/landing/LandingPage.jsx";
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AdminLayout />}>
@@ -144,7 +146,6 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

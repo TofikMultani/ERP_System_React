@@ -186,12 +186,12 @@ function Stock() {
       {lowStockAlerts.length > 0 && (
         <div className="inv-panel inv-panel--alert">
           <h3 className="inv-panel__title">
-            âš  Low Stock Alerts ({lowStockAlerts.length})
+            ⚠ Low Stock Alerts ({lowStockAlerts.length})
           </h3>
           <div className="inv-alert-list">
             {lowStockAlerts.map((item) => (
               <div key={item.id} className="inv-alert-item">
-                <strong>{item.product}</strong> â€” Only {item.onHand} units on
+                <strong>{item.product}</strong> - Only {item.onHand} units on
                 hand (reorder at {item.reorderLevel})
               </div>
             ))}
