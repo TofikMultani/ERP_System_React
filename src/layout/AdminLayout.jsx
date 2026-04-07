@@ -19,6 +19,14 @@ function getModuleMeta(pathname) {
     };
   }
 
+  if (pathname.startsWith("/root-admin/payments")) {
+    return {
+      title: "Payment Provisioning",
+      description:
+        "Review completed payments and generate login credentials for paid customers.",
+    };
+  }
+
   const currentModule = pathname.split("/")[1] || "admin";
 
   const labels = {

@@ -3,6 +3,32 @@ const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const MODULE_KEY_TO_PATH = {
+  hr: '/hr',
+  sales: '/sales',
+  inventory: '/inventory',
+  finance: '/finance',
+  support: '/support',
+  it: '/it',
+};
+
+function normalizeAllowedModules(value) {
+  const modules = Array.isArray(value) ? value : [];
+  return [...new Set(modules.map((moduleKey) => String(moduleKey).toLowerCase()).filter(Boolean))];
+}
+
+function buildAllowedPaths(role, allowedModules) {
+  if (role !== 'client') {
+    return null;
+  }
+
+  const modulePaths = allowedModules
+    .map((moduleKey) => MODULE_KEY_TO_PATH[moduleKey])
+    .filter(Boolean);
+
+  return [...new Set([...modulePaths, '/profile'])];
+}
+
 // Register User
 const registerUser = async (req, res) => {
   try {
@@ -58,6 +84,15 @@ const loginUser = async (req, res) => {
     }
 
     const user = result.rows[0];
+    const allowedModules = normalizeAllowedModules(user.allowed_modules);
+    const allowedPaths = buildAllowedPaths(user.role, allowedModules);
+
+    if (user.role === 'client' && (!allowedPaths || !allowedPaths.length)) {
+      return res.status(401).json({
+        status: 'ERROR',
+        message: 'Your account is not provisioned with modules yet',
+      });
+    }
 
     // Compare passwords
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
@@ -83,6 +118,8 @@ const loginUser = async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
+        allowedModules,
+        allowedPaths,
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
@@ -94,13 +131,20 @@ const loginUser = async (req, res) => {
       status: 'OK',
       message: 'Login successful',
       token,
-      redirectTo: user.role === 'root-admin' ? '/root-admin' : `/${user.role}`,
+      redirectTo:
+        user.role === 'root-admin'
+          ? '/root-admin'
+          : user.role === 'client'
+            ? allowedPaths[0]
+            : `/${user.role}`,
       user: {
         id: user.id,
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
         role: user.role,
+        allowedModules,
+        allowedPaths,
       },
     });
   } catch (error) {
@@ -118,7 +162,7 @@ const getCurrentUser = async (req, res) => {
   try {
     const userId = req.user.id; // From JWT middleware
 
-    const result = await pool.query('SELECT id, email, first_name, last_name, role, is_active FROM users WHERE id = $1', [userId]);
+    const result = await pool.query('SELECT id, email, first_name, last_name, role, is_active, allowed_modules FROM users WHERE id = $1', [userId]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -127,9 +171,17 @@ const getCurrentUser = async (req, res) => {
       });
     }
 
+    const user = result.rows[0];
+    const allowedModules = normalizeAllowedModules(user.allowed_modules);
+    const allowedPaths = buildAllowedPaths(user.role, allowedModules);
+
     res.status(200).json({
       status: 'OK',
-      data: result.rows[0],
+      data: {
+        ...user,
+        allowedModules,
+        allowedPaths,
+      },
     });
   } catch (error) {
     console.error('Get user error:', error);

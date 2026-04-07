@@ -16,8 +16,8 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   clearStoredRole,
+  getAllowedPathsForRole,
   getStoredRole,
-  ROLE_ALLOWED_PATHS,
 } from "../utils/auth.js";
 import { getStoredProfile, PROFILE_UPDATED_EVENT } from "../utils/profile.js";
 
@@ -45,6 +45,12 @@ const navigationItems = [
     path: "/root-admin/requests",
     category: "main",
     icon: FileText,
+  },
+  {
+    label: "Payment Provisioning",
+    path: "/root-admin/payments",
+    category: "main",
+    icon: Wallet,
   },
   { label: "HR", path: "/hr", category: "modules", icon: BriefcaseBusiness },
   { label: "Sales", path: "/sales", category: "modules", icon: ShoppingCart },
@@ -121,6 +127,7 @@ const moduleChildNavigation = {
   "/root-admin": [
     { label: "Dashboard", path: "/root-admin" },
     { label: "Requests Management", path: "/root-admin/requests" },
+    { label: "Payment Provisioning", path: "/root-admin/payments" },
     { label: "Module Configuration", path: "/root-admin/modules" },
   ],
 };
@@ -133,7 +140,7 @@ function Sidebar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const userRole = getStoredRole() || "admin";
-  const allowedPaths = ROLE_ALLOWED_PATHS[userRole] || [];
+  const allowedPaths = getAllowedPathsForRole(userRole);
   const [, setProfileVersion] = useState(0);
   const profile = getStoredProfile(userRole);
   const roleLabel = userRole === "root-admin" ? "ROOT ADMIN" : userRole.toUpperCase();

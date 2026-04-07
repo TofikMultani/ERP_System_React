@@ -1,8 +1,10 @@
 /* eslint-disable no-undef */
 /* eslint-env node */
 const pool = require('../config/database');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const { sendApprovalMail } = require('../services/emailService');
+const { sendApprovalMail, sendCredentialsMail } = require('../services/emailService');
 const {
   createRazorpayOrder,
   verifyRazorpaySignature,
@@ -20,6 +22,25 @@ const VALID_STATUSES = new Set([
 const EMAIL_ACTIONS = {
   cancel: 'cancel',
   payment: 'payment',
+};
+
+const MODULE_LABEL_TO_KEY = {
+  hr: 'hr',
+  sales: 'sales',
+  inventory: 'inventory',
+  finance: 'finance',
+  it: 'it',
+  support: 'support',
+  'customer support': 'support',
+};
+
+const MODULE_KEY_TO_PATH = {
+  hr: '/hr',
+  sales: '/sales',
+  inventory: '/inventory',
+  finance: '/finance',
+  support: '/support',
+  it: '/it',
 };
 
 function mapRequestRow(row) {
@@ -42,6 +63,8 @@ function mapRequestRow(row) {
     paymentId: row.payment_id || '',
     paymentAmount: Number(row.payment_amount) || 0,
     paymentCompletedAt: row.payment_completed_at,
+    provisionedUserId: row.provisioned_user_id || null,
+    credentialsGeneratedAt: row.credentials_generated_at,
   };
 }
 
@@ -72,6 +95,42 @@ function verifyActionToken(token, expectedAction) {
   }
 
   return decoded;
+}
+
+function splitName(name) {
+  const cleanedName = String(name || '').trim();
+  if (!cleanedName) {
+    return {
+      firstName: 'ERP',
+      lastName: 'User',
+    };
+  }
+
+  const [firstName, ...rest] = cleanedName.split(/\s+/);
+  return {
+    firstName,
+    lastName: rest.join(' ') || 'User',
+  };
+}
+
+function generateTemporaryPassword() {
+  return crypto.randomBytes(9).toString('base64url');
+}
+
+function buildAllowedModuleKeys(modules) {
+  return [...new Set(
+    (Array.isArray(modules) ? modules : [])
+      .map((moduleName) => MODULE_LABEL_TO_KEY[String(moduleName).trim().toLowerCase()])
+      .filter(Boolean),
+  )];
+}
+
+function buildAllowedPaths(allowedModuleKeys) {
+  const modulePaths = (Array.isArray(allowedModuleKeys) ? allowedModuleKeys : [])
+    .map((moduleKey) => MODULE_KEY_TO_PATH[moduleKey])
+    .filter(Boolean);
+
+  return [...new Set([...modulePaths, '/profile'])];
 }
 
 async function buildPricing(modules) {
@@ -199,6 +258,31 @@ const getAccessRequests = async (req, res) => {
     res.status(500).json({
       status: 'ERROR',
       message: 'Error fetching access requests',
+      error: error.message,
+    });
+  }
+};
+
+const getPaymentProvisioningRequests = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+        SELECT *
+        FROM access_requests
+        WHERE status IN ('payment_pending', 'payment_done')
+        ORDER BY submitted_at DESC
+      `,
+    );
+
+    res.status(200).json({
+      status: 'OK',
+      data: result.rows.map(mapRequestRow),
+    });
+  } catch (error) {
+    console.error('Get payment provisioning requests error:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      message: 'Error fetching payment provisioning requests',
       error: error.message,
     });
   }
@@ -542,12 +626,159 @@ const verifyPaymentByActionToken = async (req, res) => {
   }
 };
 
+const generateCredentialsForRequest = async (req, res) => {
+  const { requestId } = req.params;
+
+  try {
+    const requestResult = await pool.query(
+      'SELECT * FROM access_requests WHERE id = $1',
+      [requestId],
+    );
+
+    if (!requestResult.rows.length) {
+      return res.status(404).json({
+        status: 'ERROR',
+        message: 'Access request not found',
+      });
+    }
+
+    const requestRow = requestResult.rows[0];
+
+    if (requestRow.status !== 'payment_done') {
+      return res.status(400).json({
+        status: 'ERROR',
+        message: 'Credentials can only be generated after payment is completed',
+      });
+    }
+
+    if (requestRow.credentials_generated_at) {
+      return res.status(409).json({
+        status: 'ERROR',
+        message: 'Credentials already generated for this request',
+      });
+    }
+
+    const allowedModuleKeys = buildAllowedModuleKeys(requestRow.modules);
+    const allowedPaths = buildAllowedPaths(allowedModuleKeys);
+
+    if (!allowedModuleKeys.length || !allowedPaths.length) {
+      return res.status(400).json({
+        status: 'ERROR',
+        message: 'No valid modules found for credential provisioning',
+      });
+    }
+
+    const temporaryPassword = generateTemporaryPassword();
+    const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+    const { firstName, lastName } = splitName(requestRow.requester_name);
+
+    await pool.query('BEGIN');
+
+    const userResult = await pool.query(
+      `
+        INSERT INTO users (
+          email,
+          password_hash,
+          first_name,
+          last_name,
+          role,
+          allowed_modules,
+          is_active,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, 'client', $5::jsonb, true, CURRENT_TIMESTAMP)
+        ON CONFLICT (email)
+        DO UPDATE SET
+          password_hash = EXCLUDED.password_hash,
+          first_name = EXCLUDED.first_name,
+          last_name = EXCLUDED.last_name,
+          role = 'client',
+          allowed_modules = EXCLUDED.allowed_modules,
+          is_active = true,
+          updated_at = CURRENT_TIMESTAMP
+        RETURNING id, email, role, first_name, last_name, allowed_modules
+      `,
+      [
+        requestRow.requester_email,
+        passwordHash,
+        firstName,
+        lastName,
+        JSON.stringify(allowedModuleKeys),
+      ],
+    );
+
+    const updatedRequestResult = await pool.query(
+      `
+        UPDATE access_requests
+        SET
+          provisioned_user_id = $2,
+          credentials_generated_at = CURRENT_TIMESTAMP,
+          review_note = COALESCE(review_note, '') || ' Credentials generated.',
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        RETURNING *
+      `,
+      [requestId, userResult.rows[0].id],
+    );
+
+    await pool.query('COMMIT');
+
+    const loginUrl = `${getFrontendBaseUrl()}/login`;
+    let emailSent = false;
+    let emailError = '';
+
+    try {
+      await sendCredentialsMail({
+        toEmail: requestRow.requester_email,
+        requesterName: requestRow.requester_name,
+        loginEmail: requestRow.requester_email,
+        generatedPassword: temporaryPassword,
+        modules: requestRow.modules,
+        loginUrl,
+      });
+      emailSent = true;
+    } catch (mailError) {
+      emailError = mailError.message || 'Unable to send credentials email';
+    }
+
+    return res.status(200).json({
+      status: 'OK',
+      message: emailSent
+        ? 'Credentials generated and email sent'
+        : 'Credentials generated but email could not be sent',
+      data: {
+        request: mapRequestRow(updatedRequestResult.rows[0]),
+        generatedEmail: requestRow.requester_email,
+        generatedPassword: temporaryPassword,
+        allowedModules: allowedModuleKeys,
+        allowedPaths,
+        emailSent,
+        emailError,
+      },
+    });
+  } catch (error) {
+    try {
+      await pool.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('Rollback failed:', rollbackError);
+    }
+
+    return res.status(500).json({
+      status: 'ERROR',
+      message: 'Error generating user credentials',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createAccessRequest,
   getAccessRequests,
+  getPaymentProvisioningRequests,
   updateAccessRequestStatus,
   getAccessRequestByActionToken,
   cancelAccessRequestByActionToken,
   createPaymentOrderByActionToken,
   verifyPaymentByActionToken,
+  generateCredentialsForRequest,
 };

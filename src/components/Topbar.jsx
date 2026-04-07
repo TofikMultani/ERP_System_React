@@ -2,9 +2,9 @@ import { Bell, CalendarDays, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  getAllowedPathsForRole,
   getRouteForRole,
   getStoredRole,
-  ROLE_ALLOWED_PATHS,
 } from "../utils/auth.js";
 import {
   filterNavigationItems,
@@ -23,7 +23,7 @@ function Topbar({ title, description }) {
   const location = useLocation();
   const navigate = useNavigate();
   const userRole = getStoredRole() || "admin";
-  const allowedPaths = ROLE_ALLOWED_PATHS[userRole] || [];
+  const allowedPaths = getAllowedPathsForRole(userRole);
   const [, setProfileVersion] = useState(0);
   const profile = getStoredProfile(userRole);
   const [searchQuery, setSearchQuery] = useState("");

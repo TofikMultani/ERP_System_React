@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   getRouteForRole,
-  storeRole,
+  storeAccessProfile,
   storeToken,
 } from "../../utils/auth.js";
 
@@ -101,9 +101,11 @@ function Login() {
         storeToken(data.token);
       }
 
-      if (data.user?.role) {
-        storeRole(data.user.role);
-      }
+      storeAccessProfile({
+        role: data.user?.role,
+        allowedPaths: data.user?.allowedPaths,
+        allowedModules: data.user?.allowedModules,
+      });
 
       const requestedPath = location.state?.from?.pathname;
       const destination =

@@ -1,8 +1,8 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import {
+  getAllowedPathsForRole,
   getStoredRole,
   getRouteForRole,
-  ROLE_ALLOWED_PATHS,
 } from "../utils/auth.js";
 
 /**
@@ -31,7 +31,7 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  const allowedPaths = ROLE_ALLOWED_PATHS[role] ?? [];
+  const allowedPaths = getAllowedPathsForRole(role);
   const isAllowed = allowedPaths.some(
     (path) =>
       location.pathname === path || location.pathname.startsWith(`${path}/`),

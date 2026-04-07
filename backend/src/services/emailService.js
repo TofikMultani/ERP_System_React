@@ -57,6 +57,48 @@ async function sendApprovalMail({ toEmail, requesterName, modules, amount, cance
   return { sent: true };
 }
 
+async function sendCredentialsMail({
+  toEmail,
+  requesterName,
+  loginEmail,
+  generatedPassword,
+  modules,
+  loginUrl,
+}) {
+  const transporter = getMailTransport();
+
+  if (!transporter) {
+    return { sent: false, reason: 'SMTP not configured' };
+  }
+
+  const moduleListItems = (Array.isArray(modules) ? modules : [])
+    .map((moduleName) => `<li>${moduleName}</li>`)
+    .join('');
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    to: toEmail,
+    subject: 'Your ERP login credentials',
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;max-width:680px;margin:0 auto;">
+        <h2 style="margin-bottom:8px;">Hello ${requesterName || 'there'},</h2>
+        <p>Your payment is confirmed and your ERP login is now ready.</p>
+        <p><strong>Login Email:</strong> ${loginEmail}</p>
+        <p><strong>Temporary Password:</strong> ${generatedPassword}</p>
+        <p>Enabled modules for your account:</p>
+        <ul>${moduleListItems || '<li>No modules listed</li>'}</ul>
+        <p style="margin-top:16px;">Please sign in and change your password after first login.</p>
+        <div style="margin-top:20px;">
+          <a href="${loginUrl}" style="background:#2563eb;color:#fff;text-decoration:none;padding:10px 14px;border-radius:8px;display:inline-block;">Login to ERP</a>
+        </div>
+      </div>
+    `,
+  });
+
+  return { sent: true };
+}
+
 module.exports = {
   sendApprovalMail,
+  sendCredentialsMail,
 };

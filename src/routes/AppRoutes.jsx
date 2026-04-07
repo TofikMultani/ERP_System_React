@@ -54,6 +54,7 @@ import Profile from "../pages/profile/Profile.jsx";
 import Settings from "../pages/settings/Settings.jsx";
 import LandingPage from "../pages/landing/LandingPage.jsx";
 import ModuleConfiguration from "../pages/root-admin/ModuleConfiguration.jsx";
+import PaymentProvisioning from "../pages/root-admin/PaymentProvisioning.jsx";
 import CancelRequestPage from "../pages/request-action/CancelRequestPage.jsx";
 import PaymentRequestPage from "../pages/request-action/PaymentRequestPage.jsx";
 
@@ -80,6 +81,10 @@ function AppRoutes() {
           <Route
             path="/root-admin/requests"
             element={<RequestManagement />}
+          />
+          <Route
+            path="/root-admin/payments"
+            element={<PaymentProvisioning />}
           />
           <Route
             path="/root-admin/dashboard"

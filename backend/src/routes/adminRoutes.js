@@ -13,10 +13,19 @@ router.get('/modules', moduleController.getModules);
 router.patch('/modules/:moduleKey', sanitizeInput, moduleController.updateModule);
 
 router.get('/access-requests', accessRequestController.getAccessRequests);
+router.get(
+  '/access-requests/payment-provisioning',
+  accessRequestController.getPaymentProvisioningRequests,
+);
 router.patch(
   '/access-requests/:requestId/status',
   sanitizeInput,
   accessRequestController.updateAccessRequestStatus,
+);
+router.post(
+  '/access-requests/:requestId/generate-credentials',
+  sanitizeInput,
+  accessRequestController.generateCredentialsForRequest,
 );
 
 module.exports = router;

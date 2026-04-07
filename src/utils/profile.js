@@ -51,6 +51,13 @@ const DEFAULT_PROFILES = {
     joinDate: "2024-04-01",
     phone: "+1-555-0007",
   },
+  client: {
+    name: "ERP Client User",
+    email: "client@erpsystem.com",
+    department: "Client Workspace",
+    joinDate: "2024-04-15",
+    phone: "+1-555-0008",
+  },
 };
 
 function readProfileMap() {
@@ -95,6 +102,7 @@ export function getRoleLabel(role) {
     finance: "Finance Manager",
     support: "Support Agent",
     it: "IT Specialist",
+    client: "Client User",
   };
 
   return roleMap[role] || role;

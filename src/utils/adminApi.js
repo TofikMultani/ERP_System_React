@@ -83,6 +83,26 @@ export async function patchAdminAccessRequestStatus(requestId, payload) {
   return result.data;
 }
 
+export async function fetchAdminPaymentProvisioningRequests() {
+  const result = await apiRequest(`/admin/access-requests/payment-provisioning`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function generateAdminAccessCredentials(requestId) {
+  const result = await apiRequest(
+    `/admin/access-requests/${encodeURIComponent(requestId)}/generate-credentials`,
+    {
+      method: "POST",
+      headers: authHeaders(),
+    },
+  );
+
+  return result.data;
+}
+
 export async function fetchActionRequestByToken(token) {
   const result = await apiRequest(
     `/access-requests/action/${encodeURIComponent(token)}`,

@@ -87,6 +87,7 @@ async function ensureUsersTable() {
       first_name VARCHAR(100) NOT NULL DEFAULT '',
       last_name VARCHAR(100) NOT NULL DEFAULT '',
       role VARCHAR(50) NOT NULL DEFAULT 'user',
+      allowed_modules JSONB NOT NULL DEFAULT '[]'::jsonb,
       is_active BOOLEAN NOT NULL DEFAULT true,
       last_login_at TIMESTAMP,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -102,6 +103,9 @@ async function ensureUsersTable() {
   );
   await pool.query(
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) NOT NULL DEFAULT 'user';`,
+  );
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_modules JSONB NOT NULL DEFAULT '[]'::jsonb;`,
   );
   await pool.query(
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;`,
@@ -180,6 +184,8 @@ async function ensureAccessRequestsTable() {
       payment_signature VARCHAR(255),
       payment_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
       payment_completed_at TIMESTAMP,
+      provisioned_user_id INTEGER,
+      credentials_generated_at TIMESTAMP,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -236,6 +242,12 @@ async function ensureAccessRequestsTable() {
     `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS payment_completed_at TIMESTAMP;`,
   );
   await pool.query(
+    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS provisioned_user_id INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS credentials_generated_at TIMESTAMP;`,
+  );
+  await pool.query(
     `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
   );
   await pool.query(
@@ -244,6 +256,9 @@ async function ensureAccessRequestsTable() {
 
   await pool.query(
     `CREATE INDEX IF NOT EXISTS idx_access_requests_status ON access_requests(status);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_access_requests_provisioned_user_id ON access_requests(provisioned_user_id);`,
   );
   await pool.query(
     `CREATE INDEX IF NOT EXISTS idx_access_requests_submitted_at ON access_requests(submitted_at DESC);`,
