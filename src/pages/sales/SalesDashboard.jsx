@@ -13,11 +13,7 @@ import {
   Legend,
 } from "recharts";
 
-const monthlyData = [
-  { month: "January", revenue: 45000, orders: 12 },
-  { month: "February", revenue: 67000, orders: 15 },
-  { month: "March", revenue: 92500, orders: 18 },
-];
+const monthlyData = [];
 
 function SalesDashboard() {
   const customers = usePersistentSnapshot("erp_sales_customers", []);
@@ -104,6 +100,7 @@ function SalesDashboard() {
               <Bar dataKey="orders" fill="#3b82f6" name="Orders" />
             </BarChart>
           </ResponsiveContainer>
+          {!monthlyData.length ? <p className="root-admin-dashboard__empty-state">No sales trend data yet.</p> : null}
         </div>
 
         <div className="sales-panel">
@@ -124,6 +121,7 @@ function SalesDashboard() {
               />
             </LineChart>
           </ResponsiveContainer>
+          {!monthlyData.length ? <p className="root-admin-dashboard__empty-state">No order trend data yet.</p> : null}
         </div>
 
         <div className="sales-panel">

@@ -8,71 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialCandidates = [
-  {
-    id: 1,
-    name: "Rahul Tiwari",
-    role: "Backend Developer",
-    dept: "Engineering",
-    applied: "01 Mar 2026",
-    stage: "Technical",
-    status: "In Progress",
-  },
-  {
-    id: 2,
-    name: "Sonal Gupta",
-    role: "HR Executive",
-    dept: "HR",
-    applied: "03 Mar 2026",
-    stage: "HR Round",
-    status: "In Progress",
-  },
-  {
-    id: 3,
-    name: "Mohit Sinha",
-    role: "Sales Manager",
-    dept: "Sales",
-    applied: "05 Mar 2026",
-    stage: "Offer",
-    status: "Selected",
-  },
-  {
-    id: 4,
-    name: "Isha Malhotra",
-    role: "UI Designer",
-    dept: "Engineering",
-    applied: "06 Mar 2026",
-    stage: "Screening",
-    status: "In Progress",
-  },
-  {
-    id: 5,
-    name: "Deepak Sharma",
-    role: "IT Support",
-    dept: "IT",
-    applied: "08 Mar 2026",
-    stage: "Rejected",
-    status: "Rejected",
-  },
-  {
-    id: 6,
-    name: "Pooja Menon",
-    role: "Financial Analyst",
-    dept: "Finance",
-    applied: "10 Mar 2026",
-    stage: "Technical",
-    status: "In Progress",
-  },
-  {
-    id: 7,
-    name: "Ajay Reddy",
-    role: "Support Executive",
-    dept: "Support",
-    applied: "11 Mar 2026",
-    stage: "HR Round",
-    status: "In Progress",
-  },
-];
+const initialCandidates = [];
 
 const columns = [
   { header: "Candidate", accessor: "name" },
@@ -84,10 +20,10 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total Applicants", value: "7", helper: "active pipeline" },
-  { title: "Selected", value: "1", helper: "offers extended" },
-  { title: "In Progress", value: "5", helper: "across stages" },
-  { title: "Open Positions", value: "9", helper: "to be filled" },
+  { title: "Total Applicants", value: "0", helper: "active pipeline" },
+  { title: "Selected", value: "0", helper: "offers extended" },
+  { title: "In Progress", value: "0", helper: "across stages" },
+  { title: "Open Positions", value: "0", helper: "to be filled" },
 ];
 
 const emptyForm = {

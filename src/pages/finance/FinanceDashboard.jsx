@@ -16,19 +16,9 @@ import {
   Cell,
 } from "recharts";
 
-const expenseData = [
-  { category: "Salaries", amount: 450000 },
-  { category: "Operations", amount: 125000 },
-  { category: "Marketing", amount: 75000 },
-  { category: "Utilities", amount: 35000 },
-  { category: "Others", amount: 40000 },
-];
+const expenseData = [];
 
-const monthlyData = [
-  { month: "January", income: 450000, expenses: 385000 },
-  { month: "February", income: 520000, expenses: 410000 },
-  { month: "March", income: 615000, expenses: 445000 },
-];
+const monthlyData = [];
 
 const COLORS = ["#5a3df0", "#3b82f6", "#10b981", "#fbbf24", "#ef4444"];
 
@@ -108,6 +98,7 @@ function FinanceDashboard() {
               <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
             </BarChart>
           </ResponsiveContainer>
+          {!monthlyData.length ? <p className="root-admin-dashboard__empty-state">No finance trend data yet.</p> : null}
         </div>
 
         <div className="finance-panel">
@@ -132,6 +123,7 @@ function FinanceDashboard() {
               <Tooltip formatter={(value) => `₹${value}`} />
             </PieChart>
           </ResponsiveContainer>
+          {!expenseData.length ? <p className="root-admin-dashboard__empty-state">No expense breakdown data yet.</p> : null}
         </div>
 
         <div className="finance-panel">
@@ -157,6 +149,7 @@ function FinanceDashboard() {
               />
             </LineChart>
           </ResponsiveContainer>
+          {!monthlyData.length ? <p className="root-admin-dashboard__empty-state">No profit trend data yet.</p> : null}
         </div>
       </div>
     </div>

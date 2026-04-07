@@ -103,6 +103,7 @@ function Login() {
 
       storeAccessProfile({
         role: data.user?.role,
+        email: data.user?.email,
         allowedPaths: data.user?.allowedPaths,
         allowedModules: data.user?.allowedModules,
       });

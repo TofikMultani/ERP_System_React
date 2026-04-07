@@ -13,12 +13,7 @@ import {
   Legend,
 } from "recharts";
 
-const systemsData = [
-  { week: "Week 1", uptime: 99.8, incidents: 2 },
-  { week: "Week 2", uptime: 99.9, incidents: 1 },
-  { week: "Week 3", uptime: 99.7, incidents: 3 },
-  { week: "Week 4", uptime: 99.95, incidents: 1 },
-];
+const systemsData = [];
 
 function ITDashboard() {
   const systems = usePersistentSnapshot("erp_it_systems", []);

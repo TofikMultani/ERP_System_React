@@ -8,48 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialExpenses = [
-  {
-    id: 1,
-    date: "2026-03-10",
-    category: "Salaries",
-    description: "Monthly payroll",
-    amount: "₹450,000",
-    status: "Approved",
-  },
-  {
-    id: 2,
-    date: "2026-03-08",
-    category: "Operations",
-    description: "Office rent",
-    amount: "₹125,000",
-    status: "Approved",
-  },
-  {
-    id: 3,
-    date: "2026-03-07",
-    category: "Marketing",
-    description: "Digital ad campaign",
-    amount: "₹75,000",
-    status: "Pending",
-  },
-  {
-    id: 4,
-    date: "2026-03-05",
-    category: "Utilities",
-    description: "Electricity & water",
-    amount: "₹28,000",
-    status: "Approved",
-  },
-  {
-    id: 5,
-    date: "2026-03-03",
-    category: "Others",
-    description: "Office supplies",
-    amount: "₹12,500",
-    status: "Rejected",
-  },
-];
+const initialExpenses = [];
 
 function Expenses() {
   const [expenses, setExpenses] = usePersistentState(

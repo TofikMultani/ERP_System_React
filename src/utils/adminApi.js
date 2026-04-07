@@ -144,3 +144,40 @@ export async function verifyPaymentByToken(token, payload) {
 
   return result.data;
 }
+
+export async function fetchMyUsers() {
+  const result = await apiRequest(`/users/my-users`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function createMyUser(payload) {
+  const result = await apiRequest(`/users/my-users`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function updateMyUser(userId, payload) {
+  const result = await apiRequest(`/users/my-users/${encodeURIComponent(userId)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function deleteMyUser(userId) {
+  const result = await apiRequest(`/users/my-users/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  return result.data;
+}

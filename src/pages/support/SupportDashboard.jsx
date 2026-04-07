@@ -13,18 +13,9 @@ import {
   Legend,
 } from "recharts";
 
-const ticketData = [
-  { month: "January", open: 25, resolved: 18, pending: 7 },
-  { month: "February", open: 32, resolved: 28, pending: 4 },
-  { month: "March", open: 28, resolved: 32, pending: -4 },
-];
+const ticketData = [];
 
-const resolutionData = [
-  { name: "Within 24hrs", value: 45 },
-  { name: "Within 48hrs", value: 30 },
-  { name: "Within 72hrs", value: 15 },
-  { name: "Beyond 72hrs", value: 10 },
-];
+const resolutionData = [];
 
 function SupportDashboard() {
   const openTickets = ticketsData.filter(
@@ -89,6 +80,7 @@ function SupportDashboard() {
               />
             </LineChart>
           </ResponsiveContainer>
+          {!ticketData.length ? <p className="root-admin-dashboard__empty-state">No support trend data yet.</p> : null}
         </div>
 
         <div className="support-panel">
@@ -102,6 +94,7 @@ function SupportDashboard() {
               <Bar dataKey="value" fill="#6366f1" />
             </BarChart>
           </ResponsiveContainer>
+          {!resolutionData.length ? <p className="root-admin-dashboard__empty-state">No resolution distribution data yet.</p> : null}
         </div>
       </div>
     </div>

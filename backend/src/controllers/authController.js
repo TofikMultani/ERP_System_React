@@ -18,7 +18,7 @@ function normalizeAllowedModules(value) {
 }
 
 function buildAllowedPaths(role, allowedModules) {
-  if (role !== 'client') {
+  if (role !== 'client' && role !== 'sub-user') {
     return null;
   }
 
@@ -26,7 +26,23 @@ function buildAllowedPaths(role, allowedModules) {
     .map((moduleKey) => MODULE_KEY_TO_PATH[moduleKey])
     .filter(Boolean);
 
+  if (role === 'client') {
+    return [...new Set([...modulePaths, '/my-users', '/profile'])];
+  }
+
   return [...new Set([...modulePaths, '/profile'])];
+}
+
+function getPrimaryRoute(role, allowedPaths) {
+  if (!Array.isArray(allowedPaths) || !allowedPaths.length) {
+    return '/';
+  }
+
+  if (role === 'client' || role === 'sub-user') {
+    return allowedPaths.find((path) => path !== '/profile' && path !== '/my-users') || '/profile';
+  }
+
+  return allowedPaths[0];
 }
 
 // Register User
@@ -87,7 +103,7 @@ const loginUser = async (req, res) => {
     const allowedModules = normalizeAllowedModules(user.allowed_modules);
     const allowedPaths = buildAllowedPaths(user.role, allowedModules);
 
-    if (user.role === 'client' && (!allowedPaths || !allowedPaths.length)) {
+    if ((user.role === 'client' || user.role === 'sub-user') && (!allowedPaths || !allowedPaths.length)) {
       return res.status(401).json({
         status: 'ERROR',
         message: 'Your account is not provisioned with modules yet',
@@ -134,9 +150,7 @@ const loginUser = async (req, res) => {
       redirectTo:
         user.role === 'root-admin'
           ? '/root-admin'
-          : user.role === 'client'
-            ? allowedPaths[0]
-            : `/${user.role}`,
+          : getPrimaryRoute(user.role, allowedPaths) || `/${user.role}`,
       user: {
         id: user.id,
         email: user.email,

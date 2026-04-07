@@ -58,6 +58,13 @@ const DEFAULT_PROFILES = {
     joinDate: "2024-04-15",
     phone: "+1-555-0008",
   },
+  "sub-user": {
+    name: "Sub User",
+    email: "subuser@erpsystem.com",
+    department: "Allocated Module",
+    joinDate: "2024-04-20",
+    phone: "+1-555-0009",
+  },
 };
 
 function readProfileMap() {
@@ -103,6 +110,7 @@ export function getRoleLabel(role) {
     support: "Support Agent",
     it: "IT Specialist",
     client: "Client User",
+    "sub-user": "Sub User",
   };
 
   return roleMap[role] || role;

@@ -8,48 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialOrders = [
-  {
-    id: "ORD-001",
-    customer: "ABC Corporation",
-    date: "2026-03-10",
-    amount: "₹85,000",
-    status: "Delivered",
-    items: 5,
-  },
-  {
-    id: "ORD-002",
-    customer: "XYZ Ltd",
-    date: "2026-03-09",
-    amount: "₹42,500",
-    status: "Processing",
-    items: 3,
-  },
-  {
-    id: "ORD-003",
-    customer: "Global Tech",
-    date: "2026-03-08",
-    amount: "₹128,000",
-    status: "Shipped",
-    items: 8,
-  },
-  {
-    id: "ORD-004",
-    customer: "Premier Solutions",
-    date: "2026-03-07",
-    amount: "₹95,000",
-    status: "Delivered",
-    items: 6,
-  },
-  {
-    id: "ORD-005",
-    customer: "ABC Corporation",
-    date: "2026-03-06",
-    amount: "₹72,500",
-    status: "Processing",
-    items: 4,
-  },
-];
+const initialOrders = [];
 
 function Orders() {
   const [orders, setOrders] = usePersistentState(

@@ -8,56 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialDepts = [
-  {
-    id: 1,
-    name: "Engineering",
-    head: "Ananya Sharma",
-    employees: 74,
-    budget: "₹420,000",
-    location: "Floor 3",
-  },
-  {
-    id: 2,
-    name: "HR",
-    head: "Rohan Mehta",
-    employees: 22,
-    budget: "₹110,000",
-    location: "Floor 1",
-  },
-  {
-    id: 3,
-    name: "Finance",
-    head: "Divya Rao",
-    employees: 31,
-    budget: "₹180,000",
-    location: "Floor 2",
-  },
-  {
-    id: 4,
-    name: "Sales",
-    head: "Arjun Patel",
-    employees: 48,
-    budget: "₹260,000",
-    location: "Floor 2",
-  },
-  {
-    id: 5,
-    name: "IT",
-    head: "Sneha Joshi",
-    employees: 40,
-    budget: "₹200,000",
-    location: "Floor 4",
-  },
-  {
-    id: 6,
-    name: "Support",
-    head: "Neha Kapoor",
-    employees: 33,
-    budget: "₹140,000",
-    location: "Floor 1",
-  },
-];
+const initialDepts = [];
 
 const columns = [
   { header: "Department", accessor: "name" },
@@ -129,7 +80,7 @@ function Departments() {
       </div>
 
       <div className="hr-cards">
-        {initialDepts.map((d) => (
+        {depts.map((d) => (
           <Card
             key={d.id}
             title={d.name}

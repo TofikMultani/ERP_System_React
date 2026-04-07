@@ -8,58 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialPOs = [
-  {
-    id: 1,
-    poNumber: "PO-2026-001",
-    supplier: "TechSource Global",
-    items: 15,
-    amount: "₹18,500",
-    date: "05 Mar 2026",
-    dueDate: "20 Mar 2026",
-    status: "Delivered",
-  },
-  {
-    id: 2,
-    poNumber: "PO-2026-002",
-    supplier: "Direct Electronics Inc",
-    items: 8,
-    amount: "₹12,300",
-    date: "07 Mar 2026",
-    dueDate: "22 Mar 2026",
-    status: "In Transit",
-  },
-  {
-    id: 3,
-    poNumber: "PO-2026-003",
-    supplier: "Premium Office Ltd",
-    items: 6,
-    amount: "₹4,200",
-    date: "08 Mar 2026",
-    dueDate: "25 Mar 2026",
-    status: "Pending",
-  },
-  {
-    id: 4,
-    poNumber: "PO-2026-004",
-    supplier: "Asian Components Co",
-    items: 20,
-    amount: "₹8,900",
-    date: "10 Mar 2026",
-    dueDate: "28 Mar 2026",
-    status: "Pending",
-  },
-  {
-    id: 5,
-    poNumber: "PO-2026-005",
-    supplier: "Green Supply Partners",
-    items: 12,
-    amount: "₹6,400",
-    date: "11 Mar 2026",
-    dueDate: "26 Mar 2026",
-    status: "Confirmed",
-  },
-];
+const initialPOs = [];
 
 const columns = [
   { header: "PO Number", accessor: "poNumber" },
@@ -72,10 +21,10 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total POs", value: "5", helper: "this month" },
-  { title: "Pending", value: "2", helper: "awaiting confirmation" },
-  { title: "In Transit", value: "1", helper: "on the way" },
-  { title: "Total Value", value: "₹50.3k", helper: "outstanding orders" },
+  { title: "Total POs", value: "0", helper: "this month" },
+  { title: "Pending", value: "0", helper: "awaiting confirmation" },
+  { title: "In Transit", value: "0", helper: "on the way" },
+  { title: "Total Value", value: "₹0", helper: "outstanding orders" },
 ];
 
 const emptyForm = {

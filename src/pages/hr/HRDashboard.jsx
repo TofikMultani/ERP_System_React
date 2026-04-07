@@ -13,14 +13,7 @@ import {
   YAxis,
 } from "recharts";
 
-const headcountData = [
-  { month: "Jan", count: 224 },
-  { month: "Feb", count: 229 },
-  { month: "Mar", count: 235 },
-  { month: "Apr", count: 238 },
-  { month: "May", count: 244 },
-  { month: "Jun", count: 248 },
-];
+const headcountData = [];
 
 const recentColumns = [
   { header: "Name", accessor: "name" },
@@ -136,6 +129,9 @@ function HRDashboard() {
               />
             </LineChart>
           </ResponsiveContainer>
+            {!headcountData.length ? (
+              <p className="root-admin-dashboard__empty-state">No headcount trend data yet.</p>
+            ) : null}
         </div>
 
         <div className="hr-panel">
@@ -169,6 +165,9 @@ function HRDashboard() {
               <Bar dataKey="employees" fill="#5a3df0" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          {!deptData.length ? (
+            <p className="root-admin-dashboard__empty-state">No department data yet.</p>
+          ) : null}
         </div>
       </div>
 

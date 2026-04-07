@@ -8,50 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialCategories = [
-  {
-    id: 1,
-    name: "Electronics",
-    description: "Computers, tablets, smartphones",
-    productCount: 3,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Accessories",
-    description: "Cables, adapters, peripherals",
-    productCount: 3,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Furniture",
-    description: "Desks, chairs, tables",
-    productCount: 2,
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Lighting",
-    description: "Lamps, bulbs, fixtures",
-    productCount: 1,
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Software",
-    description: "Operating systems, applications",
-    productCount: 0,
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "Consumables",
-    description: "Paper, ink, cleaning supplies",
-    productCount: 0,
-    status: "Inactive",
-  },
-];
+const initialCategories = [];
 
 const columns = [
   { header: "Category", accessor: "name" },
@@ -61,10 +18,10 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total Categories", value: "6", helper: "active + inactive" },
-  { title: "Active", value: "5", helper: "categories" },
-  { title: "Total Products", value: "9", helper: "across all categories" },
-  { title: "Avg per Category", value: "1.5", helper: "products" },
+  { title: "Total Categories", value: "0", helper: "active + inactive" },
+  { title: "Active", value: "0", helper: "categories" },
+  { title: "Total Products", value: "0", helper: "across all categories" },
+  { title: "Avg per Category", value: "0", helper: "products" },
 ];
 
 const emptyForm = { name: "", description: "" };

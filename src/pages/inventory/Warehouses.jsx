@@ -8,53 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialWarehouses = [
-  {
-    id: 1,
-    name: "Main Warehouse",
-    location: "New York, NY",
-    capacity: 5000,
-    occupied: 3240,
-    manager: "David Park",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Secondary Hub",
-    location: "Los Angeles, CA",
-    capacity: 3000,
-    occupied: 1850,
-    manager: "Emma Davis",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Cold Storage Unit",
-    location: "Chicago, IL",
-    capacity: 1500,
-    occupied: 980,
-    manager: "Robert Brown",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Distribution Point",
-    location: "Atlanta, GA",
-    capacity: 2500,
-    occupied: 1200,
-    manager: "Lisa Anderson",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Archive Storage",
-    location: "Houston, TX",
-    capacity: 1000,
-    occupied: 450,
-    manager: "John Martinez",
-    status: "Inactive",
-  },
-];
+const initialWarehouses = [];
 
 const columns = [
   { header: "Warehouse Name", accessor: "name" },
@@ -66,10 +20,10 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total Warehouses", value: "5", helper: "across multiple cities" },
-  { title: "Total Capacity", value: "13k units", helper: "combined" },
-  { title: "Current Stock", value: "7.7k units", helper: "59% utilization" },
-  { title: "Available Space", value: "5.3k units", helper: "41% available" },
+  { title: "Total Warehouses", value: "0", helper: "across multiple cities" },
+  { title: "Total Capacity", value: "0 units", helper: "combined" },
+  { title: "Current Stock", value: "0 units", helper: "0% utilization" },
+  { title: "Available Space", value: "0 units", helper: "0% available" },
 ];
 
 const emptyForm = { name: "", location: "", capacity: "", manager: "" };

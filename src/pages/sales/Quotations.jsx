@@ -8,53 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialQuotations = [
-  {
-    id: "QT-001",
-    customer: "ABC Corporation",
-    date: "2026-03-08",
-    expiryDate: "2026-04-08",
-    amount: "₹120,000",
-    status: "Approved",
-    conversion: "Converted",
-  },
-  {
-    id: "QT-002",
-    customer: "Global Tech",
-    date: "2026-03-07",
-    expiryDate: "2026-04-07",
-    amount: "₹85,000",
-    status: "Pending",
-    conversion: "-",
-  },
-  {
-    id: "QT-003",
-    customer: "New Client Inc",
-    date: "2026-03-05",
-    expiryDate: "2026-04-05",
-    amount: "₹200,000",
-    status: "Sent",
-    conversion: "-",
-  },
-  {
-    id: "QT-004",
-    customer: "XYZ Ltd",
-    date: "2026-02-28",
-    expiryDate: "2026-03-28",
-    amount: "₹65,000",
-    status: "Expired",
-    conversion: "-",
-  },
-  {
-    id: "QT-005",
-    customer: "Premier Solutions",
-    date: "2026-03-06",
-    expiryDate: "2026-04-06",
-    amount: "₹150,000",
-    status: "Approved",
-    conversion: "Pending",
-  },
-];
+const initialQuotations = [];
 
 function Quotations() {
   const [quotations, setQuotations] = usePersistentState(

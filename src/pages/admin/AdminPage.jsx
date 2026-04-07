@@ -16,23 +16,9 @@ import { ticketsData } from "../../utils/supportData.js";
 
 // â”€â”€ Static data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const revenueData = [
-  { month: "Jan", revenue: 62000 },
-  { month: "Feb", revenue: 78000 },
-  { month: "Mar", revenue: 91000 },
-  { month: "Apr", revenue: 85000 },
-  { month: "May", revenue: 105000 },
-  { month: "Jun", revenue: 97000 },
-];
+const revenueData = [];
 
-const ordersData = [
-  { month: "Jan", orders: 320 },
-  { month: "Feb", orders: 410 },
-  { month: "Mar", orders: 375 },
-  { month: "Apr", orders: 490 },
-  { month: "May", orders: 530 },
-  { month: "Jun", orders: 460 },
-];
+const ordersData = [];
 
 const employeeColumns = [
   { header: "Name", accessor: "name" },
@@ -213,6 +199,9 @@ function AdminPage() {
               />
             </BarChart>
           </ResponsiveContainer>
+          {!convertedRevenueData.length ? (
+            <p className="root-admin-dashboard__empty-state">No revenue chart data yet.</p>
+          ) : null}
         </div>
 
         {/* Line chart â€” Monthly Orders */}
@@ -256,6 +245,9 @@ function AdminPage() {
               />
             </LineChart>
           </ResponsiveContainer>
+          {!ordersData.length ? (
+            <p className="root-admin-dashboard__empty-state">No order chart data yet.</p>
+          ) : null}
         </div>
       </section>
 

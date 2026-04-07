@@ -19,6 +19,42 @@ function formatLabel(segment) {
     .join(" ");
 }
 
+function getTopbarMeta(pathname) {
+  if (pathname.startsWith("/root-admin/requests")) {
+    return {
+      title: "Requests Management",
+      description:
+        "Review landing page workspace requests and approve or reject them.",
+    };
+  }
+
+  if (pathname.startsWith("/root-admin/modules")) {
+    return {
+      title: "Module Configuration",
+      description:
+        "Activate or deactivate modules and manage per-module pricing for approvals.",
+    };
+  }
+
+  if (pathname.startsWith("/root-admin/payments")) {
+    return {
+      title: "Payment Provisioning",
+      description:
+        "Review completed payments and generate login credentials for paid customers.",
+    };
+  }
+
+  if (pathname.startsWith("/my-users")) {
+    return {
+      title: "My Users",
+      description:
+        "Manage the sub-users created for your requested ERP modules.",
+    };
+  }
+
+  return null;
+}
+
 function Topbar({ title, description }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -26,6 +62,7 @@ function Topbar({ title, description }) {
   const allowedPaths = getAllowedPathsForRole(userRole);
   const [, setProfileVersion] = useState(0);
   const profile = getStoredProfile(userRole);
+  const meta = getTopbarMeta(location.pathname);
   const [searchQuery, setSearchQuery] = useState("");
 
   const searchItems = filterNavigationItems(
@@ -94,8 +131,8 @@ function Topbar({ title, description }) {
               </span>
             ))}
           </div>
-          <h2 className="topbar__title">{title}</h2>
-          <p className="topbar__description">{description}</p>
+          <h2 className="topbar__title">{meta?.title || title}</h2>
+          <p className="topbar__description">{meta?.description || description}</p>
         </div>
 
         <div className="topbar__actions">
@@ -155,9 +192,7 @@ function Topbar({ title, description }) {
             </div>
             <div className="topbar__profile-info">
               <div className="topbar__profile-name">{profile.name}</div>
-              <div className="topbar__profile-role">
-                {formatLabel(userRole)}
-              </div>
+              <div className="topbar__profile-role">{formatLabel(userRole)}</div>
             </div>
           </Link>
         </div>

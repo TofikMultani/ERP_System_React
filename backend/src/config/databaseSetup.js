@@ -85,9 +85,12 @@ async function ensureUsersTable() {
       email VARCHAR(255) UNIQUE NOT NULL,
       password_hash VARCHAR(255) NOT NULL,
       first_name VARCHAR(100) NOT NULL DEFAULT '',
+      visible_password VARCHAR(255),
       last_name VARCHAR(100) NOT NULL DEFAULT '',
       role VARCHAR(50) NOT NULL DEFAULT 'user',
       allowed_modules JSONB NOT NULL DEFAULT '[]'::jsonb,
+      parent_user_id INTEGER,
+      assigned_module VARCHAR(50),
       is_active BOOLEAN NOT NULL DEFAULT true,
       last_login_at TIMESTAMP,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -99,6 +102,9 @@ async function ensureUsersTable() {
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(100) NOT NULL DEFAULT '';`,
   );
   await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS visible_password VARCHAR(255);`,
+  );
+  await pool.query(
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(100) NOT NULL DEFAULT '';`,
   );
   await pool.query(
@@ -106,6 +112,12 @@ async function ensureUsersTable() {
   );
   await pool.query(
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_modules JSONB NOT NULL DEFAULT '[]'::jsonb;`,
+  );
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS parent_user_id INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_module VARCHAR(50);`,
   );
   await pool.query(
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;`,
@@ -120,6 +132,12 @@ async function ensureUsersTable() {
 
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);`);
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_users_parent_user_id ON users(parent_user_id);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_users_assigned_module ON users(assigned_module);`,
+  );
 }
 
 async function ensureModuleCatalogTable() {

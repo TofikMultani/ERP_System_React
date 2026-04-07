@@ -8,53 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialInvoices = [
-  {
-    id: "INV-001",
-    customer: "ABC Corporation",
-    date: "2026-03-05",
-    dueDate: "2026-03-20",
-    amount: "₹85,000",
-    status: "Paid",
-    paymentDate: "2026-03-18",
-  },
-  {
-    id: "INV-002",
-    customer: "XYZ Ltd",
-    date: "2026-03-06",
-    dueDate: "2026-03-21",
-    amount: "₹42,500",
-    status: "Pending",
-    paymentDate: "-",
-  },
-  {
-    id: "INV-003",
-    customer: "Global Tech",
-    date: "2026-02-28",
-    dueDate: "2026-03-14",
-    amount: "₹128,000",
-    status: "Overdue",
-    paymentDate: "-",
-  },
-  {
-    id: "INV-004",
-    customer: "Premier Solutions",
-    date: "2026-03-02",
-    dueDate: "2026-03-17",
-    amount: "₹95,000",
-    status: "Paid",
-    paymentDate: "2026-03-15",
-  },
-  {
-    id: "INV-005",
-    customer: "ABC Corporation",
-    date: "2026-03-08",
-    dueDate: "2026-03-23",
-    amount: "₹72,500",
-    status: "Pending",
-    paymentDate: "-",
-  },
-];
+const initialInvoices = [];
 
 function Invoices() {
   const [invoices, setInvoices] = usePersistentState(

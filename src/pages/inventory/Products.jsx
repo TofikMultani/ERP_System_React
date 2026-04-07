@@ -8,80 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialProducts = [
-  {
-    id: 1,
-    name: "Laptop Pro 15",
-    category: "Electronics",
-    sku: "LP-001",
-    price: "₹1,299",
-    stock: 24,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "USB-C Cable",
-    category: "Accessories",
-    sku: "USB-002",
-    price: "₹12",
-    stock: 450,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Wireless Mouse",
-    category: "Accessories",
-    sku: "MOU-003",
-    price: "₹45",
-    stock: 78,
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: 'Monitor 27" 4K',
-    category: "Electronics",
-    sku: "MON-004",
-    price: "₹499",
-    stock: 12,
-    status: "Low Stock",
-  },
-  {
-    id: 5,
-    name: "Mechanical Keyboard",
-    category: "Accessories",
-    sku: "KEY-005",
-    price: "₹129",
-    stock: 5,
-    status: "Low Stock",
-  },
-  {
-    id: 6,
-    name: "Desk Lamp LED",
-    category: "Lighting",
-    sku: "LAMP-006",
-    price: "₹35",
-    stock: 0,
-    status: "Out of Stock",
-  },
-  {
-    id: 7,
-    name: "Office Chair Mesh",
-    category: "Furniture",
-    sku: "CHAIR-007",
-    price: "₹250",
-    stock: 8,
-    status: "Low Stock",
-  },
-  {
-    id: 8,
-    name: "Standing Desk",
-    category: "Furniture",
-    sku: "DESK-008",
-    price: "₹650",
-    stock: 3,
-    status: "Low Stock",
-  },
-];
+const initialProducts = [];
 
 const columns = [
   { header: "Product Name", accessor: "name" },
@@ -93,10 +20,10 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total Products", value: "8", helper: "active products" },
-  { title: "Total Value", value: "₹3.8M", helper: "inventory value" },
-  { title: "Low Stock", value: "4", helper: "items need reorder" },
-  { title: "Out of Stock", value: "1", helper: "discontinued items" },
+  { title: "Total Products", value: "0", helper: "active products" },
+  { title: "Total Value", value: "₹0", helper: "inventory value" },
+  { title: "Low Stock", value: "0", helper: "items need reorder" },
+  { title: "Out of Stock", value: "0", helper: "discontinued items" },
 ];
 
 const emptyForm = { name: "", category: "", sku: "", price: "", stock: "" };

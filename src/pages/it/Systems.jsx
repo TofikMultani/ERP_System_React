@@ -8,48 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialSystems = [
-  {
-    id: 1,
-    name: "Email Server",
-    ip: "192.168.1.10",
-    status: "Operational",
-    uptime: "99.9%",
-    lastCheck: "2026-03-10 14:30",
-  },
-  {
-    id: 2,
-    name: "Database Server",
-    ip: "192.168.1.11",
-    status: "Operational",
-    uptime: "99.95%",
-    lastCheck: "2026-03-10 14:30",
-  },
-  {
-    id: 3,
-    name: "Web Server",
-    ip: "192.168.1.12",
-    status: "Operational",
-    uptime: "99.8%",
-    lastCheck: "2026-03-10 14:30",
-  },
-  {
-    id: 4,
-    name: "File Server",
-    ip: "192.168.1.13",
-    status: "Maintenance",
-    uptime: "98.5%",
-    lastCheck: "2026-03-10 14:25",
-  },
-  {
-    id: 5,
-    name: "Backup Server",
-    ip: "192.168.1.14",
-    status: "Operational",
-    uptime: "99.7%",
-    lastCheck: "2026-03-10 14:30",
-  },
-];
+const initialSystems = [];
 
 function Systems() {
   const [systems, setSystems] = usePersistentState(

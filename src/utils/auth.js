@@ -2,6 +2,7 @@ export const USER_ROLE_STORAGE_KEY = "erp_user_role";
 export const USER_TOKEN_STORAGE_KEY = "erp_auth_token";
 export const USER_ALLOWED_PATHS_STORAGE_KEY = "erp_allowed_paths";
 export const USER_ALLOWED_MODULES_STORAGE_KEY = "erp_allowed_modules";
+export const USER_EMAIL_STORAGE_KEY = "erp_user_email";
 
 export const moduleOptions = [
   { value: "admin", label: "Admin", route: "/admin" },
@@ -28,6 +29,20 @@ export function getStoredToken() {
 
 export function storeToken(token) {
   localStorage.setItem(USER_TOKEN_STORAGE_KEY, token);
+}
+
+export function getStoredUserEmail() {
+  return localStorage.getItem(USER_EMAIL_STORAGE_KEY) || "";
+}
+
+export function storeUserEmail(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) {
+    localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
+    return;
+  }
+
+  localStorage.setItem(USER_EMAIL_STORAGE_KEY, normalizedEmail);
 }
 
 function safeParseArray(value) {
@@ -59,10 +74,12 @@ export function storeAllowedModules(modules) {
   localStorage.setItem(USER_ALLOWED_MODULES_STORAGE_KEY, JSON.stringify(normalized));
 }
 
-export function storeAccessProfile({ role, allowedPaths, allowedModules }) {
+export function storeAccessProfile({ role, email, allowedPaths, allowedModules }) {
   if (role) {
     storeRole(role);
   }
+
+  storeUserEmail(email);
 
   storeAllowedPaths(allowedPaths);
   storeAllowedModules(allowedModules);
@@ -73,10 +90,19 @@ export function clearStoredRole() {
   localStorage.removeItem(USER_TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_ALLOWED_PATHS_STORAGE_KEY);
   localStorage.removeItem(USER_ALLOWED_MODULES_STORAGE_KEY);
+  localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
 }
 
 export function getRouteForRole(role) {
   const resolvedPaths = getAllowedPathsForRole(role);
+  const preferredPath = resolvedPaths.find(
+    (path) => path !== "/profile" && path !== "/my-users",
+  );
+
+  if (preferredPath) {
+    return preferredPath;
+  }
+
   if (resolvedPaths.length > 0) {
     return resolvedPaths[0];
   }
@@ -112,11 +138,12 @@ export const ROLE_ALLOWED_PATHS = {
   finance: ["/finance", "/profile"],
   support: ["/support", "/profile"],
   it: ["/it", "/profile"],
-  client: ["/profile"],
+  client: ["/my-users", "/profile"],
+  "sub-user": ["/profile"],
 };
 
 export function getAllowedPathsForRole(role) {
-  if (role === "client") {
+  if (role === "client" || role === "sub-user") {
     const stored = getStoredAllowedPaths();
     if (stored.length > 0) {
       return stored;

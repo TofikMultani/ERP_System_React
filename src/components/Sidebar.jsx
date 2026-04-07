@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Settings,
   ShoppingCart,
+  Users,
   Wallet,
   Wrench,
 } from "lucide-react";
@@ -19,7 +20,7 @@ import {
   getAllowedPathsForRole,
   getStoredRole,
 } from "../utils/auth.js";
-import { getStoredProfile, PROFILE_UPDATED_EVENT } from "../utils/profile.js";
+import { getRoleLabel, getStoredProfile, PROFILE_UPDATED_EVENT } from "../utils/profile.js";
 
 const navigationItems = [
   {
@@ -51,6 +52,12 @@ const navigationItems = [
     path: "/root-admin/payments",
     category: "main",
     icon: Wallet,
+  },
+  {
+    label: "My Users",
+    path: "/my-users",
+    category: "main",
+    icon: Users,
   },
   { label: "HR", path: "/hr", category: "modules", icon: BriefcaseBusiness },
   { label: "Sales", path: "/sales", category: "modules", icon: ShoppingCart },
@@ -143,7 +150,7 @@ function Sidebar() {
   const allowedPaths = getAllowedPathsForRole(userRole);
   const [, setProfileVersion] = useState(0);
   const profile = getStoredProfile(userRole);
-  const roleLabel = userRole === "root-admin" ? "ROOT ADMIN" : userRole.toUpperCase();
+  const roleLabel = getRoleLabel(userRole).toUpperCase();
 
   useEffect(() => {
     function handleProfileUpdate() {

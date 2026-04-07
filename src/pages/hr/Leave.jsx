@@ -8,74 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialLeaves = [
-  {
-    id: 1,
-    name: "Arjun Patel",
-    dept: "Sales",
-    type: "Casual",
-    from: "10 Mar 2026",
-    to: "14 Mar 2026",
-    days: 5,
-    reason: "Family function",
-    status: "Approved",
-  },
-  {
-    id: 2,
-    name: "Neha Kapoor",
-    dept: "Support",
-    type: "Sick",
-    from: "12 Mar 2026",
-    to: "12 Mar 2026",
-    days: 1,
-    reason: "Fever",
-    status: "Approved",
-  },
-  {
-    id: 3,
-    name: "Karan Verma",
-    dept: "Sales",
-    type: "Casual",
-    from: "13 Mar 2026",
-    to: "15 Mar 2026",
-    days: 3,
-    reason: "Personal",
-    status: "Pending",
-  },
-  {
-    id: 4,
-    name: "Vikram Singh",
-    dept: "Engineering",
-    type: "Earned",
-    from: "20 Mar 2026",
-    to: "25 Mar 2026",
-    days: 6,
-    reason: "Vacation",
-    status: "Pending",
-  },
-  {
-    id: 5,
-    name: "Divya Rao",
-    dept: "Finance",
-    type: "Sick",
-    from: "11 Mar 2026",
-    to: "11 Mar 2026",
-    days: 1,
-    reason: "Doctor appointment",
-    status: "Approved",
-  },
-  {
-    id: 6,
-    name: "Amit Kumar",
-    dept: "Engineering",
-    type: "Maternity",
-    from: "01 Apr 2026",
-    to: "30 Jun 2026",
-    days: 91,
-    reason: "Maternity leave",
-    status: "Approved",
-  },
-];
+const initialLeaves = [];
 
 const columns = [
   { header: "Employee", accessor: "name" },
@@ -89,10 +22,10 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total Leaves", value: "6", helper: "this month" },
-  { title: "Approved", value: "4", helper: "leaves approved" },
-  { title: "Pending", value: "2", helper: "awaiting approval" },
-  { title: "Avg Leave Days", value: "3.2", helper: "per employee" },
+  { title: "Total Leaves", value: "0", helper: "this month" },
+  { title: "Approved", value: "0", helper: "leaves approved" },
+  { title: "Pending", value: "0", helper: "awaiting approval" },
+  { title: "Avg Leave Days", value: "0.0", helper: "per employee" },
 ];
 
 const emptyForm = {

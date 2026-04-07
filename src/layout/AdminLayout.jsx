@@ -27,6 +27,14 @@ function getModuleMeta(pathname) {
     };
   }
 
+  if (pathname.startsWith("/my-users")) {
+    return {
+      title: "My Users",
+      description:
+        "Create, update, and delete sub-users for the modules allocated to your account.",
+    };
+  }
+
   const currentModule = pathname.split("/")[1] || "admin";
 
   const labels = {
@@ -40,6 +48,7 @@ function getModuleMeta(pathname) {
     it: "IT",
     profile: "Profile",
     settings: "Settings",
+    "my-users": "My Users",
   };
 
   const descriptions = {
@@ -55,6 +64,7 @@ function getModuleMeta(pathname) {
     it: "Oversee systems, assets, maintenance schedules, and uptime.",
     profile: "Review account identity, role, and contact information.",
     settings: "Configure currency, language, and dashboard preferences.",
+    "my-users": "Manage sub-users assigned to your requested modules.",
   };
 
   return {

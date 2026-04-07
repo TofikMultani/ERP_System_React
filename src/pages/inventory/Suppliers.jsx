@@ -8,62 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialSuppliers = [
-  {
-    id: 1,
-    name: "TechSource Global",
-    contact: "Mike Johnson",
-    email: "mike@techsource.io",
-    phone: "+1-415-789-2345",
-    city: "San Francisco",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Direct Electronics Inc",
-    contact: "Sarah Chen",
-    email: "sales@directelec.com",
-    phone: "+1-206-555-0123",
-    city: "Seattle",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Premium Office Ltd",
-    contact: "James Wilson",
-    email: "procurement@premoff.co.uk",
-    phone: "+44-20-7946-0958",
-    city: "London",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Asian Components Co",
-    contact: "Li Wei",
-    email: "export@asiancomp.cn",
-    phone: "+86-10-6849-1234",
-    city: "Beijing",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Furniture Plus Group",
-    contact: "Maria Garcia",
-    email: "ventas@furniplus.es",
-    phone: "+34-91-123-4567",
-    city: "Madrid",
-    status: "Inactive",
-  },
-  {
-    id: 6,
-    name: "Green Supply Partners",
-    contact: "Alex Kumar",
-    email: "contact@greensupply.in",
-    phone: "+91-11-4060-1234",
-    city: "Delhi",
-    status: "Active",
-  },
-];
+const initialSuppliers = [];
 
 const columns = [
   { header: "Supplier Name", accessor: "name" },
@@ -75,10 +20,10 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total Suppliers", value: "6", helper: "active + inactive" },
-  { title: "Active", value: "5", helper: "suppliers" },
-  { title: "Countries", value: "5", helper: "global reach" },
-  { title: "Avg Lead Time", value: "14 days", helper: "delivery" },
+  { title: "Total Suppliers", value: "0", helper: "active + inactive" },
+  { title: "Active", value: "0", helper: "suppliers" },
+  { title: "Countries", value: "0", helper: "global reach" },
+  { title: "Avg Lead Time", value: "0 days", helper: "delivery" },
 ];
 
 const emptyForm = { name: "", contact: "", email: "", phone: "", city: "" };

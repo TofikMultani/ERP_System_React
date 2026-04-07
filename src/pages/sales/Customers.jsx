@@ -8,62 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialCustomers = [
-  {
-    id: 1,
-    name: "ABC Corporation",
-    email: "contact@abc.com",
-    phone: "+1-555-1001",
-    status: "Active",
-    totalOrders: 12,
-    totalValue: "₹450,000",
-  },
-  {
-    id: 2,
-    name: "XYZ Ltd",
-    email: "info@xyz.com",
-    phone: "+1-555-1002",
-    status: "Active",
-    totalOrders: 8,
-    totalValue: "₹320,000",
-  },
-  {
-    id: 3,
-    name: "Global Tech",
-    email: "sales@globaltech.com",
-    phone: "+1-555-1003",
-    status: "Inactive",
-    totalOrders: 5,
-    totalValue: "₹180,000",
-  },
-  {
-    id: 4,
-    name: "Premier Solutions",
-    email: "hello@premier.com",
-    phone: "+1-555-1004",
-    status: "Active",
-    totalOrders: 15,
-    totalValue: "₹610,000",
-  },
-  {
-    id: 5,
-    name: "Innovate Inc",
-    email: "support@innovate.com",
-    phone: "+1-555-1005",
-    status: "Active",
-    totalOrders: 9,
-    totalValue: "₹290,000",
-  },
-  {
-    id: 6,
-    name: "Enterprise Plus",
-    email: "contact@entplus.com",
-    phone: "+1-555-1006",
-    status: "Pending",
-    totalOrders: 2,
-    totalValue: "₹65,000",
-  },
-];
+const initialCustomers = [];
 
 function Customers() {
   const [customers, setCustomers] = usePersistentState(
@@ -173,7 +118,7 @@ function Customers() {
         />
         <Card
           title="Avg Order Value"
-          value={`₹${Math.round(customers.reduce((sum, c) => sum + parseInt(c.totalValue.replace("₹", "").replace(",", "")), 0) / customers.length / 1000)}K`}
+          value={`₹${Math.round(customers.reduce((sum, c) => sum + parseInt(c.totalValue.replace("₹", "").replace(",", "")), 0) / Math.max(customers.length, 1) / 1000)}K`}
           helper="Per customer"
         />
       </div>

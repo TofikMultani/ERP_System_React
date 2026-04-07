@@ -141,6 +141,11 @@ const APP_NAVIGATION_ITEMS = [
     path: "/root-admin/payments",
     keywords: ["root admin", "payments", "credentials"],
   },
+  {
+    label: "My Users",
+    path: "/my-users",
+    keywords: ["users", "sub users", "credentials"],
+  },
   { label: "Profile", path: "/profile", keywords: ["account", "user"] },
   {
     label: "Settings",

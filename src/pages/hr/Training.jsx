@@ -8,74 +8,7 @@ import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialPrograms = [
-  {
-    id: 1,
-    title: "React Fundamentals",
-    dept: "Engineering",
-    trainer: "Amit Kumar",
-    startDate: "15 Mar 2026",
-    endDate: "20 Mar 2026",
-    seats: 20,
-    enrolled: 18,
-    status: "Upcoming",
-  },
-  {
-    id: 2,
-    title: "Leadership Skills",
-    dept: "All",
-    trainer: "Rohan Mehta",
-    startDate: "10 Mar 2026",
-    endDate: "12 Mar 2026",
-    seats: 30,
-    enrolled: 28,
-    status: "Ongoing",
-  },
-  {
-    id: 3,
-    title: "Advanced Excel",
-    dept: "Finance",
-    trainer: "Divya Rao",
-    startDate: "01 Mar 2026",
-    endDate: "05 Mar 2026",
-    seats: 15,
-    enrolled: 15,
-    status: "Completed",
-  },
-  {
-    id: 4,
-    title: "Customer Handling",
-    dept: "Support",
-    trainer: "Neha Kapoor",
-    startDate: "22 Mar 2026",
-    endDate: "24 Mar 2026",
-    seats: 25,
-    enrolled: 10,
-    status: "Upcoming",
-  },
-  {
-    id: 5,
-    title: "Cybersecurity Basics",
-    dept: "IT",
-    trainer: "Sneha Joshi",
-    startDate: "25 Mar 2026",
-    endDate: "26 Mar 2026",
-    seats: 20,
-    enrolled: 14,
-    status: "Upcoming",
-  },
-  {
-    id: 6,
-    title: "Sales Negotiation",
-    dept: "Sales",
-    trainer: "Arjun Patel",
-    startDate: "05 Mar 2026",
-    endDate: "06 Mar 2026",
-    seats: 20,
-    enrolled: 20,
-    status: "Completed",
-  },
-];
+const initialPrograms = [];
 
 const columns = [
   { header: "Program", accessor: "title" },
@@ -89,10 +22,10 @@ const columns = [
 ];
 
 const summary = [
-  { title: "Total Programs", value: "6", helper: "this quarter" },
-  { title: "Ongoing", value: "1", helper: "in progress" },
-  { title: "Upcoming", value: "3", helper: "scheduled" },
-  { title: "Completed", value: "2", helper: "this month" },
+  { title: "Total Programs", value: "0", helper: "this quarter" },
+  { title: "Ongoing", value: "0", helper: "in progress" },
+  { title: "Upcoming", value: "0", helper: "scheduled" },
+  { title: "Completed", value: "0", helper: "this month" },
 ];
 
 const emptyForm = {

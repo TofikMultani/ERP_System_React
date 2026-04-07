@@ -1,10 +1,44 @@
 import { useEffect, useState } from "react";
 
 export const PERSISTENT_STATE_UPDATED_EVENT = "erp-persistent-state-updated";
+const USER_EMAIL_STORAGE_KEY = "erp_user_email";
+const USER_ROLE_STORAGE_KEY = "erp_user_role";
+
+function getScopedStorageKey(storageKey) {
+  try {
+    const email =
+      (localStorage.getItem(USER_EMAIL_STORAGE_KEY) || "")
+        .trim()
+        .toLowerCase();
+    const role = (localStorage.getItem(USER_ROLE_STORAGE_KEY) || "guest").trim();
+    const identityScope = email || `role:${role || "guest"}`;
+
+    return `erp_scope:${identityScope}:${storageKey}`;
+  } catch {
+    return `erp_scope:guest:${storageKey}`;
+  }
+}
+
+function getUnseededInitialValue(initialValue) {
+  const resolved =
+    typeof initialValue === "function" ? initialValue() : initialValue;
+
+  if (Array.isArray(resolved)) {
+    return [];
+  }
+
+  if (resolved && typeof resolved === "object") {
+    return {};
+  }
+
+  return resolved;
+}
 
 export function getStoredPersistentState(storageKey, initialValue) {
+  const scopedStorageKey = getScopedStorageKey(storageKey);
+
   try {
-    const storedValue = localStorage.getItem(storageKey);
+    const storedValue = localStorage.getItem(scopedStorageKey);
     if (storedValue !== null) {
       return JSON.parse(storedValue);
     }
@@ -12,7 +46,7 @@ export function getStoredPersistentState(storageKey, initialValue) {
     // Fall back to the provided initial value.
   }
 
-  return typeof initialValue === "function" ? initialValue() : initialValue;
+  return getUnseededInitialValue(initialValue);
 }
 
 export function usePersistentState(storageKey, initialValue) {
@@ -21,11 +55,13 @@ export function usePersistentState(storageKey, initialValue) {
   );
 
   useEffect(() => {
+    const scopedStorageKey = getScopedStorageKey(storageKey);
+
     try {
-      localStorage.setItem(storageKey, JSON.stringify(state));
+      localStorage.setItem(scopedStorageKey, JSON.stringify(state));
       window.dispatchEvent(
         new CustomEvent(PERSISTENT_STATE_UPDATED_EVENT, {
-          detail: { storageKey },
+          detail: { storageKey, scopedStorageKey },
         }),
       );
     } catch {

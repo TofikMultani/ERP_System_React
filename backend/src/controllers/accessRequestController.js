@@ -130,7 +130,7 @@ function buildAllowedPaths(allowedModuleKeys) {
     .map((moduleKey) => MODULE_KEY_TO_PATH[moduleKey])
     .filter(Boolean);
 
-  return [...new Set([...modulePaths, '/profile'])];
+  return [...new Set([...modulePaths, '/my-users', '/profile'])];
 }
 
 async function buildPricing(modules) {
@@ -679,6 +679,7 @@ const generateCredentialsForRequest = async (req, res) => {
         INSERT INTO users (
           email,
           password_hash,
+          visible_password,
           first_name,
           last_name,
           role,
@@ -686,10 +687,11 @@ const generateCredentialsForRequest = async (req, res) => {
           is_active,
           updated_at
         )
-        VALUES ($1, $2, $3, $4, 'client', $5::jsonb, true, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, 'client', $6::jsonb, true, CURRENT_TIMESTAMP)
         ON CONFLICT (email)
         DO UPDATE SET
           password_hash = EXCLUDED.password_hash,
+          visible_password = EXCLUDED.visible_password,
           first_name = EXCLUDED.first_name,
           last_name = EXCLUDED.last_name,
           role = 'client',
@@ -701,6 +703,7 @@ const generateCredentialsForRequest = async (req, res) => {
       [
         requestRow.requester_email,
         passwordHash,
+        temporaryPassword,
         firstName,
         lastName,
         JSON.stringify(allowedModuleKeys),

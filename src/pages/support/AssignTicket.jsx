@@ -3,54 +3,15 @@ import Card from "../../components/Card.jsx";
 import Button from "../../components/Button.jsx";
 import Select from "../../components/Select.jsx";
 
-const unassignedTickets = [
-  {
-    id: "TKT-006",
-    subject: "Billing discrepancy in invoice",
-    customer: "Nexa Retail",
-    priority: "High",
-    category: "Billing",
-  },
-  {
-    id: "TKT-007",
-    subject: "Unable to export monthly report",
-    customer: "BlueWave Pvt Ltd",
-    priority: "Medium",
-    category: "Reporting",
-  },
-  {
-    id: "TKT-008",
-    subject: "Warehouse sync delay issue",
-    customer: "Prime Logistics",
-    priority: "Critical",
-    category: "Integration",
-  },
-  {
-    id: "TKT-009",
-    subject: "Need help with user permissions",
-    customer: "Vertex Solutions",
-    priority: "Low",
-    category: "Access",
-  },
-];
+const unassignedTickets = [];
 
-const agentOptions = [
-  { value: "sarah-johnson", label: "Sarah Johnson - Billing" },
-  { value: "mike-wilson", label: "Mike Wilson - Technical" },
-  { value: "emily-brown", label: "Emily Brown - Reporting" },
-  { value: "david-lee", label: "David Lee - Integrations" },
-];
+const agentOptions = [];
 
-const queueOptions = [
-  { value: "level-1", label: "Level 1 Support" },
-  { value: "level-2", label: "Level 2 Support" },
-  { value: "billing", label: "Billing Desk" },
-  { value: "technical", label: "Technical Desk" },
-];
+const queueOptions = [];
 
 function AssignTicket() {
-  const [selectedAgent, setSelectedAgent] = useState(agentOptions[0].value);
-  const [selectedQueue, setSelectedQueue] = useState(queueOptions[0].value);
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [selectedQueue, setSelectedQueue] = useState("");
 
   return (
     <div className="support-page">
@@ -62,9 +23,9 @@ function AssignTicket() {
       </div>
 
       <div className="support-cards">
-        <Card title="Unassigned Tickets" value="14" helper="Needs routing" />
-        <Card title="Escalations" value="3" helper="Priority attention" />
-        <Card title="Available Agents" value="9" helper="Online now" />
+        <Card title="Unassigned Tickets" value="0" helper="Needs routing" />
+        <Card title="Escalations" value="0" helper="Priority attention" />
+        <Card title="Available Agents" value="0" helper="Online now" />
         <Card
           title="Average Queue Time"
           value="18 min"
@@ -132,6 +93,13 @@ function AssignTicket() {
                   </td>
                 </tr>
               ))}
+              {!unassignedTickets.length ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "1.5rem" }}>
+                    No tickets available.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>

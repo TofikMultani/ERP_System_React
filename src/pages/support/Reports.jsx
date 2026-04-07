@@ -1,49 +1,16 @@
 import Card from "../../components/Card.jsx";
 
-const reportData = [
-  {
-    agent: "Sarah Johnson",
-    tickets: 45,
-    resolved: 42,
-    avg_time: "3.2 hrs",
-    satisfaction: 4.8,
-  },
-  {
-    agent: "Mike Wilson",
-    tickets: 38,
-    resolved: 35,
-    avg_time: "4.1 hrs",
-    satisfaction: 4.6,
-  },
-  {
-    agent: "Emily Brown",
-    tickets: 52,
-    resolved: 50,
-    avg_time: "2.8 hrs",
-    satisfaction: 4.9,
-  },
-  {
-    agent: "David Lee",
-    tickets: 35,
-    resolved: 32,
-    avg_time: "5.2 hrs",
-    satisfaction: 4.4,
-  },
-  {
-    agent: "Lisa Anderson",
-    tickets: 48,
-    resolved: 46,
-    avg_time: "3.5 hrs",
-    satisfaction: 4.7,
-  },
-];
+const reportData = [];
 
 function SupportReports() {
   const totalTickets = reportData.reduce((sum, r) => sum + r.tickets, 0);
   const totalResolved = reportData.reduce((sum, r) => sum + r.resolved, 0);
-  const avgSatisfaction = (
-    reportData.reduce((sum, r) => sum + r.satisfaction, 0) / reportData.length
-  ).toFixed(1);
+  const avgSatisfaction = reportData.length
+    ? (
+        reportData.reduce((sum, r) => sum + r.satisfaction, 0) /
+        reportData.length
+      ).toFixed(1)
+    : "0.0";
 
   return (
     <div className="support-page">
@@ -105,6 +72,9 @@ function SupportReports() {
             </tbody>
           </table>
         </div>
+        {!reportData.length ? (
+          <p className="root-admin-dashboard__empty-state">No support report data yet.</p>
+        ) : null}
       </div>
     </div>
   );

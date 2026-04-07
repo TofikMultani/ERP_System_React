@@ -57,6 +57,7 @@ import ModuleConfiguration from "../pages/root-admin/ModuleConfiguration.jsx";
 import PaymentProvisioning from "../pages/root-admin/PaymentProvisioning.jsx";
 import CancelRequestPage from "../pages/request-action/CancelRequestPage.jsx";
 import PaymentRequestPage from "../pages/request-action/PaymentRequestPage.jsx";
+import MyUsers from "../pages/my-users/MyUsers.jsx";
 
 function AppRoutes() {
   return (
@@ -165,6 +166,7 @@ function AppRoutes() {
 
           {/* Profile Page */}
           <Route path="/profile" element={<Profile />} />
+          <Route path="/my-users" element={<MyUsers />} />
 
           {/* Settings Page */}
           <Route path="/settings" element={<Settings />} />
