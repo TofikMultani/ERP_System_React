@@ -82,3 +82,45 @@ export async function patchAdminAccessRequestStatus(requestId, payload) {
 
   return result.data;
 }
+
+export async function fetchActionRequestByToken(token) {
+  const result = await apiRequest(
+    `/access-requests/action/${encodeURIComponent(token)}`,
+  );
+
+  return result.data;
+}
+
+export async function cancelRequestByToken(token) {
+  const result = await apiRequest(
+    `/access-requests/action/${encodeURIComponent(token)}/cancel`,
+    {
+      method: "POST",
+    },
+  );
+
+  return result.data;
+}
+
+export async function createPaymentOrderByToken(token) {
+  const result = await apiRequest(
+    `/access-requests/action/${encodeURIComponent(token)}/create-order`,
+    {
+      method: "POST",
+    },
+  );
+
+  return result.data;
+}
+
+export async function verifyPaymentByToken(token, payload) {
+  const result = await apiRequest(
+    `/access-requests/action/${encodeURIComponent(token)}/verify-payment`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return result.data;
+}

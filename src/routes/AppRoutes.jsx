@@ -54,12 +54,16 @@ import Profile from "../pages/profile/Profile.jsx";
 import Settings from "../pages/settings/Settings.jsx";
 import LandingPage from "../pages/landing/LandingPage.jsx";
 import ModuleConfiguration from "../pages/root-admin/ModuleConfiguration.jsx";
+import CancelRequestPage from "../pages/request-action/CancelRequestPage.jsx";
+import PaymentRequestPage from "../pages/request-action/PaymentRequestPage.jsx";
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/request-action/cancel" element={<CancelRequestPage />} />
+      <Route path="/request-action/payment" element={<PaymentRequestPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AdminLayout />}>

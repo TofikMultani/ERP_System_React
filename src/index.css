@@ -1857,6 +1857,21 @@ a {
   gap: 0.4rem;
 }
 
+.root-admin-request__contact {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.root-admin-request__contact strong {
+  color: var(--color-text);
+  font-size: 0.86rem;
+}
+
+.root-admin-request__contact span {
+  color: var(--color-text-soft);
+  font-size: 0.8rem;
+}
+
 .root-admin-request__module-tags span,
 .root-admin-modal__module-chips span {
   padding: 0.34rem 0.62rem;
@@ -2004,6 +2019,12 @@ a {
   justify-content: flex-end;
   gap: 0.65rem;
   margin-top: 0.4rem;
+}
+
+.root-admin-modal__decision-locked {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-weight: 600;
 }
 
 .root-admin-requests-page {

@@ -167,7 +167,7 @@ async function ensureAccessRequestsTable() {
       requester_phone VARCHAR(50) NOT NULL,
       company_name VARCHAR(255) NOT NULL,
       modules JSONB NOT NULL DEFAULT '[]'::jsonb,
-      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      status VARCHAR(30) NOT NULL DEFAULT 'pending',
       submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       reviewed_at TIMESTAMP,
       reviewed_by VARCHAR(255),
@@ -175,6 +175,11 @@ async function ensureAccessRequestsTable() {
       pricing_breakdown JSONB NOT NULL DEFAULT '[]'::jsonb,
       total_estimated_cost NUMERIC(12,2) NOT NULL DEFAULT 0,
       inactive_requested_modules JSONB NOT NULL DEFAULT '[]'::jsonb,
+      payment_order_id VARCHAR(255),
+      payment_id VARCHAR(255),
+      payment_signature VARCHAR(255),
+      payment_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      payment_completed_at TIMESTAMP,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -196,7 +201,7 @@ async function ensureAccessRequestsTable() {
     `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS modules JSONB NOT NULL DEFAULT '[]'::jsonb;`,
   );
   await pool.query(
-    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'pending';`,
+    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS status VARCHAR(30) NOT NULL DEFAULT 'pending';`,
   );
   await pool.query(
     `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
@@ -214,6 +219,21 @@ async function ensureAccessRequestsTable() {
   );
   await pool.query(
     `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS inactive_requested_modules JSONB NOT NULL DEFAULT '[]'::jsonb;`,
+  );
+  await pool.query(
+    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS payment_order_id VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS payment_id VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS payment_signature VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS payment_amount NUMERIC(12,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS payment_completed_at TIMESTAMP;`,
   );
   await pool.query(
     `ALTER TABLE access_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,

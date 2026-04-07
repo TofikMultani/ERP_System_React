@@ -10,13 +10,17 @@ import {
 
 const ACCESS_REQUEST_STATUS = {
   pending: "pending",
-  approved: "approved",
+  paymentPending: "payment_pending",
+  paymentDone: "payment_done",
+  cancelled: "cancelled",
   rejected: "rejected",
 };
 
 const statusOptions = [
   { value: ACCESS_REQUEST_STATUS.pending, label: "Pending" },
-  { value: ACCESS_REQUEST_STATUS.approved, label: "Approved" },
+  { value: ACCESS_REQUEST_STATUS.paymentPending, label: "Payment Pending" },
+  { value: ACCESS_REQUEST_STATUS.paymentDone, label: "Payment Done" },
+  { value: ACCESS_REQUEST_STATUS.cancelled, label: "Cancelled" },
   { value: ACCESS_REQUEST_STATUS.rejected, label: "Rejected" },
 ];
 
@@ -26,8 +30,14 @@ function buildStatusCounts(requests) {
     pending: requests.filter(
       (request) => request.status === ACCESS_REQUEST_STATUS.pending,
     ).length,
-    approved: requests.filter(
-      (request) => request.status === ACCESS_REQUEST_STATUS.approved,
+    paymentPending: requests.filter(
+      (request) => request.status === ACCESS_REQUEST_STATUS.paymentPending,
+    ).length,
+    paymentDone: requests.filter(
+      (request) => request.status === ACCESS_REQUEST_STATUS.paymentDone,
+    ).length,
+    cancelled: requests.filter(
+      (request) => request.status === ACCESS_REQUEST_STATUS.cancelled,
     ).length,
     rejected: requests.filter(
       (request) => request.status === ACCESS_REQUEST_STATUS.rejected,
@@ -91,6 +101,16 @@ function RootAdminDashboard() {
           title="Pending Review"
           value={statusCounts.pending}
           helper="Awaiting root admin decision"
+        />
+        <Card
+          title="Payment Pending"
+          value={statusCounts.paymentPending}
+          helper="Approved and awaiting payment"
+        />
+        <Card
+          title="Payment Done"
+          value={statusCounts.paymentDone}
+          helper="Payment completed requests"
         />
         <Card
           title="Active Modules"

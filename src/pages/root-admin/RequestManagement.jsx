@@ -12,20 +12,35 @@ import {
 const ACCESS_REQUEST_STATUS = {
   pending: "pending",
   approved: "approved",
+  paymentPending: "payment_pending",
+  paymentDone: "payment_done",
+  cancelled: "cancelled",
   rejected: "rejected",
 };
 
 const statusOptions = [
   { value: "all", label: "All Requests" },
   { value: ACCESS_REQUEST_STATUS.pending, label: "Pending" },
-  { value: ACCESS_REQUEST_STATUS.approved, label: "Approved" },
+  { value: ACCESS_REQUEST_STATUS.paymentPending, label: "Payment Pending" },
+  { value: ACCESS_REQUEST_STATUS.paymentDone, label: "Payment Done" },
+  { value: ACCESS_REQUEST_STATUS.cancelled, label: "Cancelled" },
   { value: ACCESS_REQUEST_STATUS.rejected, label: "Rejected" },
 ];
 
 const statusVariantMap = {
   [ACCESS_REQUEST_STATUS.pending]: "warning",
-  [ACCESS_REQUEST_STATUS.approved]: "success",
+  [ACCESS_REQUEST_STATUS.paymentPending]: "warning",
+  [ACCESS_REQUEST_STATUS.paymentDone]: "success",
+  [ACCESS_REQUEST_STATUS.cancelled]: "secondary",
   [ACCESS_REQUEST_STATUS.rejected]: "danger",
+};
+
+const statusLabelMap = {
+  [ACCESS_REQUEST_STATUS.pending]: "Pending",
+  [ACCESS_REQUEST_STATUS.paymentPending]: "Payment Pending",
+  [ACCESS_REQUEST_STATUS.paymentDone]: "Payment Done",
+  [ACCESS_REQUEST_STATUS.cancelled]: "Cancelled",
+  [ACCESS_REQUEST_STATUS.rejected]: "Rejected",
 };
 
 function formatDateTime(value) {
@@ -212,7 +227,7 @@ function RequestManagement() {
       accessor: "status",
       render: (status) => (
         <Badge variant={statusVariantMap[status] || "secondary"} size="sm">
-          {status}
+          {statusLabelMap[status] || status}
         </Badge>
       ),
     },
@@ -367,7 +382,7 @@ function RequestManagement() {
                       variant={statusVariantMap[selectedRequest.status] || "secondary"}
                       size="sm"
                     >
-                      {selectedRequest.status}
+                      {statusLabelMap[selectedRequest.status] || selectedRequest.status}
                     </Badge>
                   </strong>
                 </div>
@@ -455,7 +470,7 @@ function RequestManagement() {
                 </>
               ) : (
                 <p className="root-admin-modal__decision-locked">
-                  This request has already been {selectedRequest.status}.
+                  This request has already been {statusLabelMap[selectedRequest.status] || selectedRequest.status}.
                 </p>
               )}
             </div>
