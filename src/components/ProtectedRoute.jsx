@@ -28,7 +28,7 @@ function ProtectedRoute({ children }) {
 
   // Not authenticated → back to login
   if (!role) {
-    return <Navigate to="/" replace state={{ from: location }} />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   const allowedPaths = ROLE_ALLOWED_PATHS[role] ?? [];

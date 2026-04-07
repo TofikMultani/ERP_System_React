@@ -48,9 +48,12 @@ import SupportDashboard from "../pages/support/SupportDashboard.jsx";
 import Tickets from "../pages/support/Tickets.jsx";
 import AssignTicket from "../pages/support/AssignTicket.jsx";
 import SupportReports from "../pages/support/Reports.jsx";
+import RootAdminDashboard from "../pages/root-admin/RootAdminDashboard.jsx";
+import RequestManagement from "../pages/root-admin/RequestManagement.jsx";
 import Profile from "../pages/profile/Profile.jsx";
 import Settings from "../pages/settings/Settings.jsx";
 import LandingPage from "../pages/landing/LandingPage.jsx";
+import ModuleConfiguration from "../pages/root-admin/ModuleConfiguration.jsx";
 
 function AppRoutes() {
   return (
@@ -64,6 +67,19 @@ function AppRoutes() {
           <Route
             path="/admin/dashboard"
             element={<Navigate to="/admin" replace />}
+          />
+          <Route path="/root-admin" element={<RootAdminDashboard />} />
+          <Route
+            path="/root-admin/modules"
+            element={<ModuleConfiguration />}
+          />
+          <Route
+            path="/root-admin/requests"
+            element={<RequestManagement />}
+          />
+          <Route
+            path="/root-admin/dashboard"
+            element={<Navigate to="/root-admin" replace />}
           />
 
           <Route path="/hr" element={<HRLayout />}>

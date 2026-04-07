@@ -1,4 +1,4 @@
-function Table({ columns, rows, onEdit, onDelete }) {
+function Table({ columns, rows, onEdit, onDelete, renderActions }) {
   const normalizedColumns = columns.map((column, index) => {
     if (typeof column === "string") {
       return {
@@ -19,7 +19,7 @@ function Table({ columns, rows, onEdit, onDelete }) {
   };
 
   const hasActions =
-    typeof onEdit === "function" || typeof onDelete === "function";
+    typeof onEdit === "function" || typeof onDelete === "function" || typeof renderActions === "function";
 
   return (
     <div className="erp-table-wrapper">
@@ -48,6 +48,7 @@ function Table({ columns, rows, onEdit, onDelete }) {
                 {hasActions && (
                   <td className="erp-table__actions-cell">
                     <div className="erp-table__actions">
+                      {typeof renderActions === "function" && renderActions(row, rowIndex)}
                       {typeof onEdit === "function" && (
                         <button
                           type="button"

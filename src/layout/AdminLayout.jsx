@@ -3,10 +3,27 @@ import Sidebar from "../components/Sidebar.jsx";
 import Topbar from "../components/Topbar.jsx";
 
 function getModuleMeta(pathname) {
+  if (pathname.startsWith("/root-admin/requests")) {
+    return {
+      title: "Requests Management",
+      description:
+        "Review landing page workspace requests and approve or reject them.",
+    };
+  }
+
+  if (pathname.startsWith("/root-admin/modules")) {
+    return {
+      title: "Module Configuration",
+      description:
+        "Activate or deactivate modules and manage per-module pricing for approvals.",
+    };
+  }
+
   const currentModule = pathname.split("/")[1] || "admin";
 
   const labels = {
     admin: "Dashboard",
+    "root-admin": "Root Admin",
     hr: "HR",
     sales: "Sales",
     inventory: "Inventory",
@@ -20,6 +37,8 @@ function getModuleMeta(pathname) {
   const descriptions = {
     admin:
       "Track company-wide metrics, orders, people, and operational health.",
+    "root-admin":
+      "Review landing-page access requests and approve or reject requested modules.",
     hr: "Manage workforce operations, attendance, payroll, and talent programs.",
     sales: "Review pipeline, customers, orders, quotations, and collections.",
     inventory: "Control products, warehouses, stock levels, and suppliers.",

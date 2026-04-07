@@ -1,24 +1,21 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-
-const MODULE_OPTIONS = [
-  "HR",
-  "Sales",
-  "Inventory",
-  "Finance",
-  "Customer Support",
-  "IT",
-];
+import {
+  fetchPublicModules,
+  submitAccessRequest,
+} from "../../utils/adminApi.js";
 
 const INITIAL_FORM = {
   fullName: "",
   email: "",
+  phone: "",
   companyName: "",
 };
 
 const INITIAL_ERRORS = {
   fullName: "",
   email: "",
+  phone: "",
   companyName: "",
   modules: "",
 };
@@ -38,6 +35,7 @@ const INITIAL_CONTACT_ERRORS = {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^[0-9+()\-\s]{7,}$/;
 const NAME_REGEX = /^[A-Za-z][A-Za-z\s.'-]*$/;
 
 function validateFormValues(formValues, selectedModules) {
@@ -49,6 +47,12 @@ function validateFormValues(formValues, selectedModules) {
 
   if (!EMAIL_REGEX.test(formValues.email.trim())) {
     nextErrors.email = "Please enter a valid work email address.";
+  }
+
+  if (!formValues.phone.trim()) {
+    nextErrors.phone = "Phone number is required.";
+  } else if (!PHONE_REGEX.test(formValues.phone.trim())) {
+    nextErrors.phone = "Please enter a valid phone number.";
   }
 
   if (formValues.companyName.trim().length < 2) {
@@ -95,6 +99,9 @@ function validateContactFormValues(contactValues) {
 }
 
 function LandingPage() {
+  const [moduleCatalog, setModuleCatalog] = useState([]);
+  const activeModuleOptions = moduleCatalog.map((moduleItem) => moduleItem.label);
+
   const [formValues, setFormValues] = useState(INITIAL_FORM);
   const [selectedModules, setSelectedModules] = useState([]);
   const [errors, setErrors] = useState(INITIAL_ERRORS);
@@ -125,6 +132,29 @@ function LandingPage() {
     },
     [],
   );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadModules() {
+      try {
+        const modules = await fetchPublicModules();
+        if (isMounted) {
+          setModuleCatalog(modules);
+        }
+      } catch {
+        if (isMounted) {
+          showToast("danger", "Unable to load modules right now.");
+        }
+      }
+    }
+
+    loadModules();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleFieldChange = (fieldName, value) => {
     setFormValues((prev) => ({ ...prev, [fieldName]: value }));
@@ -164,14 +194,18 @@ function LandingPage() {
 
     try {
       setIsSubmitting(true);
-      await new Promise((resolve) => {
-        setTimeout(resolve, 900);
+      await submitAccessRequest({
+        requesterName: formValues.fullName,
+        requesterEmail: formValues.email,
+        requesterPhone: formValues.phone,
+        companyName: formValues.companyName,
+        modules: selectedModules,
       });
 
       setFormValues(INITIAL_FORM);
       setSelectedModules([]);
       setErrors(INITIAL_ERRORS);
-      showToast("success", "Workspace request submitted successfully.");
+      showToast("success", "Workspace request sent to Root Admin for review.");
     } catch {
       showToast("danger", "Something went wrong.");
     } finally {
@@ -259,14 +293,14 @@ function LandingPage() {
           </p>
 
           <div className="landing-module-pills" aria-label="Available Modules">
-            {MODULE_OPTIONS.map((moduleName) => (
+            {activeModuleOptions.map((moduleName) => (
               <span key={moduleName}>{moduleName}</span>
             ))}
           </div>
 
           <div className="landing-hero__stats">
             <article>
-              <h3>6</h3>
+              <h3>{activeModuleOptions.length}</h3>
               <p>Core Modules</p>
             </article>
             <article>
@@ -474,6 +508,21 @@ function LandingPage() {
             ) : null}
           </label>
 
+          <label className="landing-form__field" data-error={errors.phone || undefined}>
+            <span>Phone Number</span>
+            <input
+              type="tel"
+              name="phone"
+              value={formValues.phone}
+              onChange={(event) => handleFieldChange("phone", event.target.value)}
+              aria-invalid={Boolean(errors.phone)}
+              required
+            />
+            {errors.phone ? (
+              <small className="landing-form__error">{errors.phone}</small>
+            ) : null}
+          </label>
+
           <label
             className="landing-form__field"
             data-error={errors.companyName || undefined}
@@ -497,14 +546,14 @@ function LandingPage() {
           <div className="landing-request-form__modules">
             <p>Total Available Modules</p>
             <ul>
-              {MODULE_OPTIONS.map((moduleName) => (
+              {activeModuleOptions.map((moduleName) => (
                 <li key={moduleName}>{moduleName}</li>
               ))}
             </ul>
 
             <p>Select Required Modules</p>
             <div className="landing-request-form__checkbox-grid">
-              {MODULE_OPTIONS.map((moduleName) => (
+              {activeModuleOptions.map((moduleName) => (
                 <label key={moduleName} className="landing-checkbox">
                   <input
                     type="checkbox"
@@ -515,6 +564,11 @@ function LandingPage() {
                 </label>
               ))}
             </div>
+            {!activeModuleOptions.length ? (
+              <small className="landing-form__error">
+                No modules are active right now. Please contact Root Admin.
+              </small>
+            ) : null}
             {errors.modules ? (
               <small className="landing-form__error">{errors.modules}</small>
             ) : null}

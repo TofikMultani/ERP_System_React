@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getRouteForRole, moduleOptions, storeRole } from "../../utils/auth.js";
+import {
+  getRouteForRole,
+  storeRole,
+  storeToken,
+} from "../../utils/auth.js";
 
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 function Login() {
   const navigate = useNavigate();
@@ -10,10 +15,11 @@ function Login() {
   const [formValues, setFormValues] = useState({
     email: "",
     password: "",
-    module: "",
     rememberMe: true,
   });
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [forgotStep, setForgotStep] = useState("request");
   const [resetCode, setResetCode] = useState("");
@@ -58,31 +64,59 @@ function Login() {
       nextErrors.password = "Password must be at least 6 characters.";
     }
 
-    if (!formValues.module) {
-      nextErrors.module = "Select a module to continue.";
-    }
-
     setErrors(nextErrors);
 
     return Object.keys(nextErrors).length === 0;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    storeRole(formValues.module);
+    setIsSubmitting(true);
+    setSubmitError("");
 
-    const requestedPath = location.state?.from?.pathname;
-    const destination =
-      requestedPath && requestedPath !== "/"
-        ? requestedPath
-        : getRouteForRole(formValues.module);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formValues.email.trim(),
+          password: formValues.password,
+        }),
+      });
 
-    navigate(destination, { replace: true });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed.");
+      }
+
+      if (data.token) {
+        storeToken(data.token);
+      }
+
+      if (data.user?.role) {
+        storeRole(data.user.role);
+      }
+
+      const requestedPath = location.state?.from?.pathname;
+      const destination =
+        requestedPath && requestedPath !== "/"
+          ? requestedPath
+          : data.redirectTo || getRouteForRole(data.user?.role);
+
+      navigate(destination, { replace: true });
+    } catch (error) {
+      setSubmitError(error.message || "Unable to sign in right now.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function openForgotPassword() {
@@ -267,24 +301,6 @@ function Login() {
             {errors.password ? <small>{errors.password}</small> : null}
           </label>
 
-          <label className="login-form__field">
-            <span>Select Module</span>
-            <select
-              name="module"
-              value={formValues.module}
-              onChange={handleChange}
-              aria-invalid={Boolean(errors.module)}
-            >
-              <option value="">Choose a module</option>
-              {moduleOptions.map((module) => (
-                <option key={module.value} value={module.value}>
-                  {module.label}
-                </option>
-              ))}
-            </select>
-            {errors.module ? <small>{errors.module}</small> : null}
-          </label>
-
           <div className="login-form__meta">
             <label className="login-form__checkbox">
               <input
@@ -305,7 +321,11 @@ function Login() {
             </a>
           </div>
 
-          <button type="submit">Sign In</button>
+          {submitError ? <p className="login-form__error">{submitError}</p> : null}
+
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Signing In..." : "Sign In"}
+          </button>
         </form>
       </section>
 

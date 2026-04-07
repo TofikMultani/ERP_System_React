@@ -2,9 +2,11 @@ import {
   Boxes,
   BriefcaseBusiness,
   CircleUserRound,
+  FileText,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
+  ShieldCheck,
   Settings,
   ShoppingCart,
   Wallet,
@@ -25,6 +27,24 @@ const navigationItems = [
     path: "/admin",
     category: "main",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Root Admin",
+    path: "/root-admin",
+    category: "main",
+    icon: ShieldCheck,
+  },
+  {
+    label: "Module Configuration",
+    path: "/root-admin/modules",
+    category: "main",
+    icon: Settings,
+  },
+  {
+    label: "Requests Management",
+    path: "/root-admin/requests",
+    category: "main",
+    icon: FileText,
   },
   { label: "HR", path: "/hr", category: "modules", icon: BriefcaseBusiness },
   { label: "Sales", path: "/sales", category: "modules", icon: ShoppingCart },
@@ -98,6 +118,11 @@ const moduleChildNavigation = {
     { label: "Assign Ticket", path: "/support/assign-ticket" },
     { label: "Reports", path: "/support/reports" },
   ],
+  "/root-admin": [
+    { label: "Dashboard", path: "/root-admin" },
+    { label: "Requests Management", path: "/root-admin/requests" },
+    { label: "Module Configuration", path: "/root-admin/modules" },
+  ],
 };
 
 function isSectionActive(pathname, basePath) {
@@ -111,6 +136,7 @@ function Sidebar() {
   const allowedPaths = ROLE_ALLOWED_PATHS[userRole] || [];
   const [, setProfileVersion] = useState(0);
   const profile = getStoredProfile(userRole);
+  const roleLabel = userRole === "root-admin" ? "ROOT ADMIN" : userRole.toUpperCase();
 
   useEffect(() => {
     function handleProfileUpdate() {
@@ -134,7 +160,7 @@ function Sidebar() {
 
   function handleLogout() {
     clearStoredRole();
-    navigate("/", { replace: true });
+    navigate("/login", { replace: true });
   }
 
   return (
@@ -149,7 +175,7 @@ function Sidebar() {
           <div>
             <div className="sidebar__logo-text">ERP System</div>
             <div className="sidebar__logo-sub">{profile.name}</div>
-            <div className="sidebar__logo-meta">{userRole.toUpperCase()}</div>
+            <div className="sidebar__logo-meta">{roleLabel}</div>
           </div>
         </div>
       </button>
