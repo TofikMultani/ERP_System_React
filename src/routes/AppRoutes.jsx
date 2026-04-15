@@ -130,7 +130,7 @@ function AppRoutes() {
             <Route path="documents/new" element={<DocumentForm />} />
             <Route path="training" element={<Training />} />
             <Route path="training/new" element={<TrainingForm />} />
-            <Route path="training/:programId/edit" element={<TrainingForm />} />
+            <Route path="training/:trainingCode/edit" element={<TrainingForm />} />
             <Route path="reports" element={<HRReports />} />
           </Route>
 

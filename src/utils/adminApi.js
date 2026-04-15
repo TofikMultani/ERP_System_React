@@ -370,6 +370,51 @@ export async function deleteRecruitmentCandidate(candidateCode) {
   return result.data;
 }
 
+export async function fetchTrainingPrograms() {
+  const result = await apiRequest(`/training`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function fetchNextTrainingCode() {
+  const result = await apiRequest(`/training/next-code`, {
+    headers: authHeaders(),
+  });
+
+  return result.data?.trainingCode || "";
+}
+
+export async function createTrainingProgram(payload) {
+  const result = await apiRequest(`/training`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function updateTrainingProgram(trainingCode, payload) {
+  const result = await apiRequest(`/training/${encodeURIComponent(trainingCode)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function deleteTrainingProgram(trainingCode) {
+  const result = await apiRequest(`/training/${encodeURIComponent(trainingCode)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  return result.data;
+}
+
 export async function fetchHrDocuments() {
   const result = await apiRequest(`/hr-documents`, {
     headers: authHeaders(),

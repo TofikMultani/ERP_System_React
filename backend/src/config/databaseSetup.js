@@ -709,6 +709,104 @@ async function ensureHrDocumentsTable() {
   );
 }
 
+async function ensureTrainingProgramsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS training_programs (
+      id BIGSERIAL PRIMARY KEY,
+      training_code VARCHAR(60) UNIQUE NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      department VARCHAR(180) NOT NULL,
+      trainer_name VARCHAR(255) NOT NULL,
+      training_mode VARCHAR(80) NOT NULL DEFAULT 'Online',
+      provider_name VARCHAR(255),
+      location VARCHAR(255),
+      start_date DATE NOT NULL,
+      end_date DATE NOT NULL,
+      duration_hours NUMERIC(8,2) NOT NULL DEFAULT 0,
+      total_seats INTEGER NOT NULL DEFAULT 0,
+      enrolled_count INTEGER NOT NULL DEFAULT 0,
+      budget NUMERIC(14,2),
+      status VARCHAR(80) NOT NULL DEFAULT 'Upcoming',
+      description TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS training_code VARCHAR(60);`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS title VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS department VARCHAR(180);`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS trainer_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS training_mode VARCHAR(80) NOT NULL DEFAULT 'Online';`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS provider_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS location VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS start_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS end_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS duration_hours NUMERIC(8,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS total_seats INTEGER NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS enrolled_count INTEGER NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS budget NUMERIC(14,2);`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Upcoming';`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS description TEXT;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS created_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS updated_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE training_programs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_training_programs_code ON training_programs(training_code);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_training_programs_department ON training_programs(department);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_training_programs_status ON training_programs(status);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_training_programs_start_date ON training_programs(start_date DESC);`,
+  );
+}
+
 async function ensurePayrollRecordsTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS payroll_records (
@@ -902,6 +1000,7 @@ async function initializeDatabase() {
   await ensureLeaveRequestsTable();
   await ensureRecruitmentCandidatesTable();
   await ensureHrDocumentsTable();
+  await ensureTrainingProgramsTable();
   await ensurePayrollRecordsTable();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
