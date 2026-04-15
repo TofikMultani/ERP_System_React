@@ -923,6 +923,244 @@ async function ensurePayrollRecordsTable() {
   );
 }
 
+async function ensureInventoryTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS inventory_products (
+      id BIGSERIAL PRIMARY KEY,
+      product_code VARCHAR(60) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      category VARCHAR(180) NOT NULL,
+      sku VARCHAR(120) UNIQUE NOT NULL,
+      unit_price NUMERIC(14,2) NOT NULL DEFAULT 0,
+      stock_qty INTEGER NOT NULL DEFAULT 0,
+      reorder_level INTEGER NOT NULL DEFAULT 0,
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      description TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS inventory_categories (
+      id BIGSERIAL PRIMARY KEY,
+      category_code VARCHAR(60) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      parent_category VARCHAR(255),
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS inventory_stock (
+      id BIGSERIAL PRIMARY KEY,
+      stock_code VARCHAR(60) UNIQUE NOT NULL,
+      product_name VARCHAR(255) NOT NULL,
+      sku VARCHAR(120) NOT NULL,
+      warehouse_name VARCHAR(255) NOT NULL,
+      on_hand INTEGER NOT NULL DEFAULT 0,
+      reserved_qty INTEGER NOT NULL DEFAULT 0,
+      reorder_level INTEGER NOT NULL DEFAULT 0,
+      reorder_qty INTEGER NOT NULL DEFAULT 0,
+      last_counted_at DATE,
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS inventory_suppliers (
+      id BIGSERIAL PRIMARY KEY,
+      supplier_code VARCHAR(60) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      contact_person VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(50),
+      city VARCHAR(120),
+      country VARCHAR(120),
+      gst_number VARCHAR(120),
+      payment_terms VARCHAR(180),
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS inventory_warehouses (
+      id BIGSERIAL PRIMARY KEY,
+      warehouse_code VARCHAR(60) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      location VARCHAR(255) NOT NULL,
+      capacity INTEGER NOT NULL DEFAULT 0,
+      occupied INTEGER NOT NULL DEFAULT 0,
+      manager_name VARCHAR(255),
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS purchase_orders (
+      id BIGSERIAL PRIMARY KEY,
+      po_number VARCHAR(60) UNIQUE NOT NULL,
+      supplier_name VARCHAR(255) NOT NULL,
+      warehouse_name VARCHAR(255) NOT NULL,
+      items_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+      amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+      order_date DATE NOT NULL,
+      due_date DATE NOT NULL,
+      status VARCHAR(80) NOT NULL DEFAULT 'Pending',
+      notes TEXT,
+      pdf_generated_at TIMESTAMP,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS inventory_adjustments (
+      id BIGSERIAL PRIMARY KEY,
+      adjustment_code VARCHAR(60) UNIQUE NOT NULL,
+      adjustment_date DATE NOT NULL,
+      product_name VARCHAR(255) NOT NULL,
+      warehouse_name VARCHAR(255) NOT NULL,
+      adjustment_type VARCHAR(120) NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 0,
+      reason TEXT,
+      approved_by VARCHAR(255),
+      status VARCHAR(80) NOT NULL DEFAULT 'Pending',
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS product_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS category VARCHAR(180);`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS sku VARCHAR(120);`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS unit_price NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS stock_qty INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS reorder_level INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Active';`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS description TEXT;`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS category_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS description TEXT;`);
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS parent_category VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Active';`);
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE inventory_categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS stock_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS sku VARCHAR(120);`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS warehouse_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS on_hand INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS reserved_qty INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS reorder_level INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS reorder_qty INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS last_counted_at DATE;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Active';`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS supplier_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS contact_person VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS city VARCHAR(120);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS country VARCHAR(120);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS gst_number VARCHAR(120);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS payment_terms VARCHAR(180);`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Active';`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE inventory_suppliers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS warehouse_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS location VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS capacity INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS occupied INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS manager_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Active';`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS po_number VARCHAR(60);`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS supplier_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS warehouse_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS items_json JSONB NOT NULL DEFAULT '[]'::jsonb;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS amount NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS order_date DATE;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS due_date DATE;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS pdf_generated_at TIMESTAMP;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS adjustment_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS adjustment_date DATE;`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS warehouse_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS adjustment_type VARCHAR(120);`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS quantity INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS reason TEXT;`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS approved_by VARCHAR(255);`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_products_code ON inventory_products(product_code);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_products_sku ON inventory_products(sku);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_inventory_products_category ON inventory_products(category);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_categories_code ON inventory_categories(category_code);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_stock_code ON inventory_stock(stock_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_inventory_stock_sku ON inventory_stock(sku);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_suppliers_code ON inventory_suppliers(supplier_code);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_warehouses_code ON inventory_warehouses(warehouse_code);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_purchase_orders_number ON purchase_orders(po_number);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_adjustments_code ON inventory_adjustments(adjustment_code);`);
+}
+
 async function seedDemoUsers() {
   const seededUsers = [];
 
@@ -1002,6 +1240,7 @@ async function initializeDatabase() {
   await ensureHrDocumentsTable();
   await ensureTrainingProgramsTable();
   await ensurePayrollRecordsTable();
+  await ensureInventoryTables();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
 

@@ -27,12 +27,19 @@ import DocumentForm from "../pages/hr/DocumentForm.jsx";
 import TrainingForm from "../pages/hr/TrainingForm.jsx";
 import HRReports from "../pages/hr/Reports.jsx";
 import Products from "../pages/inventory/Products.jsx";
+import ProductForm from "../pages/inventory/ProductsForm.jsx";
 import Categories from "../pages/inventory/Categories.jsx";
+import CategoryForm from "../pages/inventory/CategoriesForm.jsx";
 import Stock from "../pages/inventory/Stock.jsx";
+import StockForm from "../pages/inventory/StockForm.jsx";
 import Suppliers from "../pages/inventory/Suppliers.jsx";
+import SupplierForm from "../pages/inventory/SuppliersForm.jsx";
 import Warehouses from "../pages/inventory/Warehouses.jsx";
+import WarehouseForm from "../pages/inventory/WarehousesForm.jsx";
 import PurchaseOrders from "../pages/inventory/PurchaseOrders.jsx";
+import PurchaseOrderForm from "../pages/inventory/PurchaseOrdersForm.jsx";
 import Adjustments from "../pages/inventory/Adjustments.jsx";
+import AdjustmentForm from "../pages/inventory/AdjustmentsForm.jsx";
 import InventoryReports from "../pages/inventory/Reports.jsx";
 import SalesDashboard from "../pages/sales/SalesDashboard.jsx";
 import Customers from "../pages/sales/Customers.jsx";
@@ -137,12 +144,29 @@ function AppRoutes() {
           <Route path="/inventory" element={<InventoryLayout />}>
             <Route index element={<Products />} />
             <Route path="products" element={<Products />} />
+            <Route path="products/new" element={<ProductForm />} />
+            <Route path="products/:productCode/edit" element={<ProductForm />} />
             <Route path="categories" element={<Categories />} />
+            <Route path="categories/new" element={<CategoryForm />} />
+            <Route path="categories/:categoryCode/edit" element={<CategoryForm />} />
             <Route path="stock" element={<Stock />} />
+            <Route path="stock/new" element={<StockForm />} />
+            <Route path="stock/:stockCode/edit" element={<StockForm />} />
             <Route path="suppliers" element={<Suppliers />} />
+            <Route path="suppliers/new" element={<SupplierForm />} />
+            <Route path="suppliers/:supplierCode/edit" element={<SupplierForm />} />
             <Route path="warehouses" element={<Warehouses />} />
+            <Route path="warehouses/new" element={<WarehouseForm />} />
+            <Route path="warehouses/:warehouseCode/edit" element={<WarehouseForm />} />
             <Route path="purchase-orders" element={<PurchaseOrders />} />
+            <Route path="purchase-orders/new" element={<PurchaseOrderForm />} />
+            <Route
+              path="purchase-orders/:poNumber/edit"
+              element={<PurchaseOrderForm />}
+            />
             <Route path="adjustments" element={<Adjustments />} />
+            <Route path="adjustments/new" element={<AdjustmentForm />} />
+            <Route path="adjustments/:adjustmentCode/edit" element={<AdjustmentForm />} />
             <Route path="reports" element={<InventoryReports />} />
           </Route>
 

@@ -1,6 +1,14 @@
-﻿import Card from "../../components/Card.jsx";
+import { useEffect, useMemo, useState } from "react";
+import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
-import { usePersistentSnapshot } from "../../utils/persistentState.js";
+import {
+  fetchInventoryAdjustments,
+  fetchInventoryCategories,
+  fetchInventoryProducts,
+  fetchInventoryPurchaseOrders,
+  fetchInventorySuppliers,
+  fetchInventoryWarehouses,
+} from "../../utils/inventoryApi.js";
 import {
   Bar,
   BarChart,
@@ -13,227 +21,238 @@ import {
   YAxis,
 } from "recharts";
 
-const categoryBreakdownColumns = [
+const categoryColumns = [
   { header: "Category", accessor: "category" },
-  { header: "Items", accessor: "items" },
-  { header: "Total Value", accessor: "value" },
-  { header: "Avg Price", accessor: "avgPrice" },
-  { header: "Reorder Rate", accessor: "reorderRate" },
+  { header: "Products", accessor: "products" },
+  { header: "Stock Units", accessor: "stockUnits" },
+  { header: "Inventory Value", accessor: "inventoryValue" },
+  { header: "Low Stock Items", accessor: "lowStock" },
 ];
 
+function toNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
-function parseNumber(value) {
-  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+function formatCurrency(value) {
+  return `₹${toNumber(value).toLocaleString()}`;
+}
+
+function getMonthKey(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function Reports() {
-  const products = usePersistentSnapshot("erp_inventory_products", []);
-  const categories = usePersistentSnapshot("erp_inventory_categories", []);
-  const warehouses = usePersistentSnapshot("erp_inventory_warehouses", []);
-  const purchaseOrders = usePersistentSnapshot("erp_inventory_purchase_orders", []);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [adjustments, setAdjustments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const categoryAgg = products.reduce((accumulator, product) => {
-    const category = product.category || "Uncategorized";
-    if (!accumulator[category]) {
-      accumulator[category] = { items: 0, value: 0, stock: 0 };
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  async function loadReports() {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      const [productRows, categoryRows, warehouseRows, poRows, supplierRows, adjustmentRows] =
+        await Promise.all([
+          fetchInventoryProducts(),
+          fetchInventoryCategories(),
+          fetchInventoryWarehouses(),
+          fetchInventoryPurchaseOrders(),
+          fetchInventorySuppliers(),
+          fetchInventoryAdjustments(),
+        ]);
+
+      setProducts(Array.isArray(productRows) ? productRows : []);
+      setCategories(Array.isArray(categoryRows) ? categoryRows : []);
+      setWarehouses(Array.isArray(warehouseRows) ? warehouseRows : []);
+      setPurchaseOrders(Array.isArray(poRows) ? poRows : []);
+      setSuppliers(Array.isArray(supplierRows) ? supplierRows : []);
+      setAdjustments(Array.isArray(adjustmentRows) ? adjustmentRows : []);
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to load inventory reports from database.");
+    } finally {
+      setIsLoading(false);
     }
-    const price = parseNumber(product.price);
-    const stock = parseNumber(product.stock);
-    accumulator[category].items += 1;
-    accumulator[category].stock += stock;
-    accumulator[category].value += price * stock;
-    return accumulator;
-  }, {});
+  }
 
-  const categoryValueData = Object.entries(categoryAgg).map(([category, data]) => ({
-    category,
-    value: data.value,
-  }));
+  const reportData = useMemo(() => {
+    const totalInventoryValue = products.reduce(
+      (sum, product) => sum + toNumber(product.unitPrice) * toNumber(product.stockQty),
+      0,
+    );
 
-  const totalStock = products.reduce(
-    (sum, product) => sum + parseNumber(product.stock),
-    0,
-  );
-  const weeklySlice = [0.7, 0.82, 0.91, 1].map((ratio, index) => ({
-    week: `Week ${index + 1}`,
-    total: Math.round(totalStock * ratio),
-  }));
-  const stockTrendData = weeklySlice;
+    const lowStockItems = products.filter(
+      (product) => toNumber(product.stockQty) <= toNumber(product.reorderLevel),
+    ).length;
 
-  const warehouseUtilData = warehouses.map((warehouse) => {
-    const capacity = Math.max(parseNumber(warehouse.capacity), 1);
-    const occupied = parseNumber(warehouse.occupied);
-    return {
-      warehouse: warehouse.name || "Warehouse",
-      utilization: Math.round((occupied / capacity) * 100),
-    };
-  });
+    const monthlyPurchaseMap = purchaseOrders.reduce((accumulator, po) => {
+      const monthKey = getMonthKey(po.orderDate);
+      if (!monthKey) {
+        return accumulator;
+      }
 
-  const categoryBreakdownRows = Object.entries(categoryAgg).map(
-    ([category, data], index) => ({
+      accumulator[monthKey] = (accumulator[monthKey] || 0) + toNumber(po.amount);
+      return accumulator;
+    }, {});
+
+    const purchaseMonths = Object.keys(monthlyPurchaseMap)
+      .sort((left, right) => left.localeCompare(right))
+      .slice(-6);
+
+    const purchaseTrend = purchaseMonths.map((month) => ({
+      month: month.slice(5),
+      amount: monthlyPurchaseMap[month] || 0,
+    }));
+
+    const warehouseUtilization = warehouses.map((warehouse) => {
+      const capacity = Math.max(toNumber(warehouse.capacity), 1);
+      const occupied = toNumber(warehouse.occupied);
+      return {
+        warehouse: warehouse.name || "Warehouse",
+        utilization: Math.round((occupied / capacity) * 100),
+      };
+    });
+
+    const categoryMap = products.reduce((accumulator, product) => {
+      const category = product.category || "Uncategorized";
+      if (!accumulator[category]) {
+        accumulator[category] = {
+          products: 0,
+          stockUnits: 0,
+          inventoryValue: 0,
+          lowStock: 0,
+        };
+      }
+
+      accumulator[category].products += 1;
+      accumulator[category].stockUnits += toNumber(product.stockQty);
+      accumulator[category].inventoryValue += toNumber(product.unitPrice) * toNumber(product.stockQty);
+      if (toNumber(product.stockQty) <= toNumber(product.reorderLevel)) {
+        accumulator[category].lowStock += 1;
+      }
+
+      return accumulator;
+    }, {});
+
+    const categoryRows = Object.entries(categoryMap).map(([category, data], index) => ({
       id: index + 1,
       category,
-      items: data.items,
-      value: `₹${data.value.toLocaleString()}`,
-      avgPrice: `₹${Math.round(data.value / Math.max(data.stock, 1)).toLocaleString()}`,
-      reorderRate: data.stock < 25 ? "High" : data.stock < 100 ? "Medium" : "Low",
-    }),
-  );
+      products: data.products,
+      stockUnits: data.stockUnits,
+      inventoryValue: formatCurrency(data.inventoryValue),
+      lowStock: data.lowStock,
+    }));
 
-  const totalInventoryValue = products.reduce((sum, product) => {
-    const price = parseNumber(product.price);
-    const stock = parseNumber(product.stock);
-    return sum + price * stock;
-  }, 0);
+    const pendingPos = purchaseOrders.filter((po) => po.status === "Pending").length;
+    const activeSuppliers = suppliers.filter((supplier) => supplier.status === "Active").length;
+    const approvedAdjustments = adjustments.filter(
+      (adjustment) => String(adjustment.status || "").toLowerCase() === "approved",
+    ).length;
+    const activeCategories = categories.filter(
+      (category) => String(category.status || "").toLowerCase() === "active",
+    ).length;
 
-  const avgStockLevel = products.length
-    ? `${Math.round(totalStock / products.length)} units`
-    : "0 units";
+    const summary = [
+      {
+        title: "Inventory Value",
+        value: formatCurrency(totalInventoryValue),
+        helper: "price × stock across products",
+      },
+      {
+        title: "Low Stock Items",
+        value: lowStockItems,
+        helper: "items at or below reorder level",
+      },
+      {
+        title: "Pending POs",
+        value: pendingPos,
+        helper: "awaiting procurement flow",
+      },
+      {
+        title: "Active Suppliers",
+        value: activeSuppliers,
+        helper: "available vendor partners",
+      },
+      {
+        title: "Active Categories",
+        value: activeCategories,
+        helper: "product classification groups",
+      },
+      {
+        title: "Approved Adjustments",
+        value: approvedAdjustments,
+        helper: "confirmed stock corrections",
+      },
+    ];
 
-  const stockTurnover = `${(
-    purchaseOrders.length / Math.max(products.length, 1)
-  ).toFixed(1)}x/year`;
-
-  const inventoryAccuracy = `${(
-    100 -
-    (products.filter((product) => parseNumber(product.stock) === 0).length /
-      Math.max(products.length, 1)) *
-      100
-  ).toFixed(1)}%`;
-
-  const summary = [
-    {
-      title: "Total Inventory Value",
-      value: `₹${(totalInventoryValue / 100000).toFixed(2)}L`,
-      helper: "Based on price × stock",
-    },
-    { title: "Avg Stock Level", value: avgStockLevel, helper: "Per product" },
-    { title: "Stock Turnover", value: stockTurnover, helper: "POs to products ratio" },
-    { title: "Inventory Accuracy", value: inventoryAccuracy, helper: "In-stock coverage" },
-  ];
+    return {
+      summary,
+      purchaseTrend,
+      warehouseUtilization,
+      categoryRows,
+    };
+  }, [products, categories, warehouses, purchaseOrders, suppliers, adjustments]);
 
   return (
     <div className="inv-page">
       <div className="inv-page__header">
         <div>
           <h2>Inventory Reports</h2>
-          <p>Consolidated analytics and inventory performance metrics.</p>
+          <p>Dynamic analytics from products, stock, suppliers, purchase orders, and adjustments.</p>
         </div>
-        <button className="inv-btn">Export Report</button>
+        <button type="button" className="inv-btn" onClick={loadReports}>
+          Refresh Report
+        </button>
       </div>
 
-      <div className="inv-cards">
-        {summary.map((c) => (
-          <Card key={c.title} {...c} />
+      <div className="inv-cards inv-cards--compact">
+        {reportData.summary.map((card) => (
+          <Card key={card.title} {...card} />
         ))}
       </div>
 
+      {errorMessage && <p className="hr-inline-error">{errorMessage}</p>}
+
       <div className="inv-charts">
         <div className="inv-panel">
-          <h3 className="inv-panel__title">Stock Trend (4 weeks)</h3>
+          <h3 className="inv-panel__title">Purchase Value Trend (6 months)</h3>
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart
-              data={stockTrendData}
-              margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(20,33,61,0.08)"
-              />
-              <XAxis
-                dataKey="week"
-                tick={{ fontSize: 12, fill: "#69708a" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 12, fill: "#69708a" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                formatter={(v) => `${v} units`}
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "1px solid rgba(20,33,61,0.1)",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="#5a3df0"
-                strokeWidth={2.5}
-                dot={{ r: 4, fill: "#5a3df0", strokeWidth: 0 }}
-              />
+            <LineChart data={isLoading ? [] : reportData.purchaseTrend} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,33,61,0.08)" />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#69708a" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: "#69708a" }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ borderRadius: "12px", border: "1px solid rgba(20,33,61,0.1)" }} />
+              <Line type="monotone" dataKey="amount" stroke="#5a3df0" strokeWidth={2.5} dot={{ r: 4, fill: "#5a3df0", strokeWidth: 0 }} />
             </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="inv-panel">
-          <h3 className="inv-panel__title">Value by Category</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart
-              data={categoryValueData}
-              margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(20,33,61,0.08)"
-              />
-              <XAxis
-                dataKey="category"
-                tick={{ fontSize: 11, fill: "#69708a" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 12, fill: "#69708a" }}
-                tickFormatter={(v) => `₹${v / 100}k`}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                formatter={(v) => `₹${v}`}
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "1px solid rgba(20,33,61,0.1)",
-                }}
-              />
-              <Bar dataKey="value" fill="#5a3df0" radius={[6, 6, 0, 0]} />
-            </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className="inv-panel">
           <h3 className="inv-panel__title">Warehouse Utilization</h3>
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart
-              data={warehouseUtilData}
-              margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(20,33,61,0.08)"
-              />
-              <XAxis
-                dataKey="warehouse"
-                tick={{ fontSize: 11, fill: "#69708a" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                domain={[0, 100]}
-                tick={{ fontSize: 12, fill: "#69708a" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                formatter={(v) => `${v}%`}
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "1px solid rgba(20,33,61,0.1)",
-                }}
-              />
+            <BarChart data={isLoading ? [] : reportData.warehouseUtilization} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,33,61,0.08)" />
+              <XAxis dataKey="warehouse" tick={{ fontSize: 12, fill: "#69708a" }} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "#69708a" }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(value) => `${value}%`} contentStyle={{ borderRadius: "12px", border: "1px solid rgba(20,33,61,0.1)" }} />
               <Bar dataKey="utilization" fill="#5a3df0" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -242,11 +261,8 @@ function Reports() {
 
       <div className="inv-panel">
         <h3 className="inv-panel__title">Category Breakdown</h3>
-        <Table
-          columns={categoryBreakdownColumns}
-          rows={categoryBreakdownRows}
-        />
-        {!categoryBreakdownRows.length ? (
+        <Table columns={categoryColumns} rows={isLoading ? [] : reportData.categoryRows} />
+        {!isLoading && !reportData.categoryRows.length ? (
           <p className="root-admin-dashboard__empty-state">No category breakdown data yet.</p>
         ) : null}
       </div>
