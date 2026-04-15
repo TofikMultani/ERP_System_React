@@ -1,16 +1,11 @@
-import { useState } from "react";
-import {
-  handleFormFieldValidation,
-  validateFormWithInlineErrors,
-} from "../../utils/formValidation.js";
-import { usePersistentState } from "../../utils/persistentState.js";
-import { deleteRowById } from "../../utils/tableActions.js";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { fetchLeaves } from "../../utils/adminApi.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
-const initialLeaves = [];
-
 const columns = [
+  { header: "Leave Code", accessor: "leaveCode" },
   { header: "Employee", accessor: "name" },
   { header: "Department", accessor: "dept" },
   { header: "Type", accessor: "type" },
@@ -21,59 +16,49 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const emptyForm = {
-  name: "",
-  dept: "",
-  type: "Casual",
-  from: "",
-  to: "",
-  days: "",
-  reason: "",
-};
-
 function Leave() {
-  const [leaves, setLeaves] = usePersistentState("erp_hr_leave", initialLeaves);
-  const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const navigate = useNavigate();
+  const [leaves, setLeaves] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  function handleChange(e) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  useEffect(() => {
+    loadLeaves();
+  }, []);
+
+  async function loadLeaves() {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      const data = await fetchLeaves();
+      setLeaves(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to load leave records from database.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  const filteredLeaves = leaves.filter((leave) => {
+    const matchesStatus =
+      statusFilter === "All" ||
+      String(leave.status).toLowerCase() === statusFilter.toLowerCase();
 
-    const formElement = e.currentTarget;
-    if (!validateFormWithInlineErrors(formElement)) {
-      return;
+    if (!matchesStatus) {
+      return false;
     }
-    if (editingId !== null) {
-      setLeaves((previousRows) =>
-        previousRows.map((item) =>
-          String(item.id) === String(editingId) ? { ...item, ...form } : item,
-        ),
-      );
-    } else {
-      setLeaves((prev) => [
-        ...prev,
-        { ...form, id: prev.length + 1, status: "Pending" },
-      ]);
-    }
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowForm(false);
-  }
 
-  const handleEdit = (row) => {
-    setEditingId(row.id);
-    setForm({ ...emptyForm, ...row });
-    setShowForm(true);
-  };
-  const handleDelete = (row) => deleteRowById(setLeaves, row, "leave request");
+    return `${leave.leaveCode} ${leave.employeeId} ${leave.name} ${leave.dept} ${leave.type} ${leave.status}`
+      .toLowerCase()
+      .includes(search.toLowerCase());
+  });
 
   const approvedCount = leaves.filter((leave) => leave.status === "Approved").length;
   const pendingCount = leaves.filter((leave) => leave.status === "Pending").length;
+  const rejectedCount = leaves.filter((leave) => leave.status === "Rejected").length;
   const avgLeaveDays = leaves.length
     ? (
         leaves.reduce((sum, leave) => sum + (Number(leave.days) || 0), 0) /
@@ -82,130 +67,69 @@ function Leave() {
     : "0.0";
 
   const summary = [
-    { title: "Total Leaves", value: leaves.length, helper: "this month" },
-    { title: "Approved", value: approvedCount, helper: "leaves approved" },
+    { title: "Total Leaves", value: leaves.length, helper: "all leave records" },
+    { title: "Approved", value: approvedCount, helper: "approved requests" },
     { title: "Pending", value: pendingCount, helper: "awaiting approval" },
-    { title: "Avg Leave Days", value: avgLeaveDays, helper: "per employee" },
+    { title: "Rejected", value: rejectedCount, helper: "rejected requests" },
+    { title: "Avg Leave Days", value: avgLeaveDays, helper: "days per request" },
   ];
+
+  function handleEdit(row) {
+    navigate(`/hr/leave/${encodeURIComponent(row.leaveCode)}/edit`);
+  }
 
   return (
     <div className="hr-page">
       <div className="hr-page__header">
         <div>
           <h2>Leave Management</h2>
-          <p>Apply and track employee leave requests.</p>
+          <p>Track leave requests from database records.</p>
         </div>
-        <button className="hr-btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Cancel" : "+ Apply Leave"}
+        <button
+          type="button"
+          className="hr-btn"
+          onClick={() => navigate("/hr/leave/new")}
+        >
+          + Add Leave
         </button>
       </div>
 
-      <div className="hr-cards">
-        {summary.map((c) => (
-          <Card key={c.title} {...c} />
+      <div className="hr-cards hr-cards--compact">
+        {summary.map((card) => (
+          <Card key={card.title} {...card} />
         ))}
       </div>
 
-      {showForm && (
-        <form
-          className="hr-form hr-panel"
-          onSubmit={handleSubmit}
-          noValidate
-          onChange={handleFormFieldValidation}
-        >
-          <h3 className="hr-panel__title">Leave Application</h3>
-          <div className="hr-form__grid">
-            <div className="hr-form__field">
-              <label>Employee Name</label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                placeholder="Full name"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Department</label>
-              <select
-                name="dept"
-                value={form.dept}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select…</option>
-                {["Engineering", "HR", "Finance", "Sales", "IT", "Support"].map(
-                  (d) => (
-                    <option key={d}>{d}</option>
-                  ),
-                )}
-              </select>
-            </div>
-            <div className="hr-form__field">
-              <label>Leave Type</label>
-              <select name="type" value={form.type} onChange={handleChange}>
-                <option>Casual</option>
-                <option>Sick</option>
-                <option>Earned</option>
-                <option>Maternity</option>
-                <option>Paternity</option>
-              </select>
-            </div>
-            <div className="hr-form__field">
-              <label>From</label>
-              <input
-                type="date"
-                name="from"
-                value={form.from}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>To</label>
-              <input
-                type="date"
-                name="to"
-                value={form.to}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Number of Days</label>
-              <input
-                type="number"
-                name="days"
-                value={form.days}
-                onChange={handleChange}
-                required
-                min="1"
-              />
-            </div>
-            <div className="hr-form__field hr-form__field--full">
-              <label>Reason</label>
-              <input
-                name="reason"
-                value={form.reason}
-                onChange={handleChange}
-                placeholder="Brief reason…"
-              />
-            </div>
-          </div>
-          <button type="submit" className="hr-btn hr-btn--submit">
-            Submit Application
-          </button>
-        </form>
-      )}
-
       <div className="hr-panel">
-        <h3 className="hr-panel__title">Leave Records</h3>
-        <Table
-          columns={columns}
-          rows={leaves}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <div className="hr-panel__toolbar">
+          <h3 className="hr-panel__title">Leave Records ({filteredLeaves.length})</h3>
+          <div className="hr-actions-row">
+            <div className="hr-filter-group">
+              {["All", "Pending", "Approved", "Rejected"].map((filterValue) => (
+                <button
+                  key={filterValue}
+                  type="button"
+                  className={`hr-filter-btn ${
+                    statusFilter === filterValue ? "hr-filter-btn--active" : ""
+                  }`}
+                  onClick={() => setStatusFilter(filterValue)}
+                >
+                  {filterValue}
+                </button>
+              ))}
+            </div>
+            <input
+              className="hr-search"
+              placeholder="Search code / employee / dept / type / status…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+        </div>
+
+        {errorMessage && <p className="hr-inline-error">{errorMessage}</p>}
+
+        <Table columns={columns} rows={isLoading ? [] : filteredLeaves} onEdit={handleEdit} />
       </div>
     </div>
   );

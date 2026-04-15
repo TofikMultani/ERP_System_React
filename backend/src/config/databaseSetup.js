@@ -432,6 +432,79 @@ async function ensureDepartmentsTable() {
   );
 }
 
+async function ensureLeaveRequestsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS leave_requests (
+      id BIGSERIAL PRIMARY KEY,
+      leave_code VARCHAR(60) UNIQUE NOT NULL,
+      employee_id VARCHAR(50) NOT NULL,
+      employee_name VARCHAR(255) NOT NULL,
+      department VARCHAR(180) NOT NULL,
+      leave_type VARCHAR(100) NOT NULL,
+      start_date DATE NOT NULL,
+      end_date DATE NOT NULL,
+      total_days INTEGER NOT NULL DEFAULT 0,
+      reason TEXT,
+      status VARCHAR(80) NOT NULL DEFAULT 'Pending',
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS leave_code VARCHAR(60);`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50);`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS employee_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS department VARCHAR(180);`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS leave_type VARCHAR(100);`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS start_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS end_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS total_days INTEGER NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(`ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS reason TEXT;`);
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS created_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS updated_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_leave_requests_code ON leave_requests(leave_code);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_leave_requests_employee_id ON leave_requests(employee_id);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_leave_requests_status ON leave_requests(status);`,
+  );
+}
+
 async function seedDemoUsers() {
   const seededUsers = [];
 
@@ -506,6 +579,7 @@ async function initializeDatabase() {
   await ensureAccessRequestsTable();
   await ensureEmployeesTable();
   await ensureDepartmentsTable();
+  await ensureLeaveRequestsTable();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
 

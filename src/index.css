@@ -2229,6 +2229,24 @@ a {
   gap: 1rem;
 }
 
+.hr-cards--compact {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.hr-cards--compact .erp-card {
+  padding: 0.95rem 1rem 1.05rem;
+}
+
+.hr-cards--compact .erp-card__value {
+  font-size: clamp(1.25rem, 1.5vw, 1.6rem);
+  margin-top: 0.55rem;
+}
+
+.hr-cards--compact .erp-card__helper {
+  margin-top: 0.4rem;
+}
+
 /* two-col charts row */
 .hr-charts {
   display: grid;
@@ -2503,6 +2521,10 @@ a {
   }
 
   .hr-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hr-cards--compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2937,6 +2959,10 @@ a {
   }
 
   .hr-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hr-cards--compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

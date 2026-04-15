@@ -287,3 +287,40 @@ export async function deleteDepartment(departmentCode) {
 
   return result.data;
 }
+
+export async function fetchLeaves() {
+  const result = await apiRequest(`/leaves`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function createLeave(payload) {
+  const result = await apiRequest(`/leaves`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function updateLeave(leaveCode, payload) {
+  const result = await apiRequest(`/leaves/${encodeURIComponent(leaveCode)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function deleteLeave(leaveCode) {
+  const result = await apiRequest(`/leaves/${encodeURIComponent(leaveCode)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  return result.data;
+}

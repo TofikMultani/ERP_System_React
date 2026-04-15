@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 import { usePersistentSnapshot } from "../../utils/persistentState.js";
+import { fetchEmployees, fetchLeaves } from "../../utils/adminApi.js";
 import {
   Bar,
   BarChart,
@@ -34,9 +36,30 @@ const recentColumns = [
 ];
 
 function HRDashboard() {
-  const employees = usePersistentSnapshot("erp_hr_employees", []);
-  const leaves = usePersistentSnapshot("erp_hr_leave", []);
+  const [employees, setEmployees] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
   const recruitment = usePersistentSnapshot("erp_hr_recruitment", []);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      setErrorMessage("");
+
+      try {
+        const [employeeRows, leaveRows] = await Promise.all([
+          fetchEmployees(),
+          fetchLeaves(),
+        ]);
+
+        setEmployees(Array.isArray(employeeRows) ? employeeRows : []);
+        setLeaves(Array.isArray(leaveRows) ? leaveRows : []);
+      } catch (error) {
+        setErrorMessage(error.message || "Unable to load dashboard data from database.");
+      }
+    }
+
+    loadDashboardData();
+  }, []);
 
   const joinMonthMap = employees.reduce((accumulator, employee) => {
     const month = getMonthLabel(employee.joined || employee.applied);
@@ -112,6 +135,8 @@ function HRDashboard() {
         <h2>HR Dashboard</h2>
         <p>Organisation-wide workforce overview.</p>
       </div>
+
+      {errorMessage ? <p className="hr-inline-error">{errorMessage}</p> : null}
 
       <div className="hr-cards">
         {cards.map((c) => (
