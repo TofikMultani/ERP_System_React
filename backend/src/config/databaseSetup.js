@@ -505,6 +505,122 @@ async function ensureLeaveRequestsTable() {
   );
 }
 
+async function ensurePayrollRecordsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS payroll_records (
+      id BIGSERIAL PRIMARY KEY,
+      payroll_code VARCHAR(60) UNIQUE NOT NULL,
+      employee_id VARCHAR(50) NOT NULL,
+      employee_name VARCHAR(255) NOT NULL,
+      department VARCHAR(180) NOT NULL,
+      role_designation VARCHAR(180) NOT NULL,
+      pay_month VARCHAR(20) NOT NULL,
+      basic_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
+      hra NUMERIC(14,2) NOT NULL DEFAULT 0,
+      allowances NUMERIC(14,2) NOT NULL DEFAULT 0,
+      overtime_pay NUMERIC(14,2) NOT NULL DEFAULT 0,
+      bonus NUMERIC(14,2) NOT NULL DEFAULT 0,
+      gross_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
+      tax NUMERIC(14,2) NOT NULL DEFAULT 0,
+      provident_fund NUMERIC(14,2) NOT NULL DEFAULT 0,
+      other_deductions NUMERIC(14,2) NOT NULL DEFAULT 0,
+      total_deductions NUMERIC(14,2) NOT NULL DEFAULT 0,
+      net_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
+      payment_date DATE,
+      status VARCHAR(80) NOT NULL DEFAULT 'Pending',
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS payroll_code VARCHAR(60);`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50);`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS employee_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS department VARCHAR(180);`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS role_designation VARCHAR(180);`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS pay_month VARCHAR(20);`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS basic_salary NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS hra NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS allowances NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS overtime_pay NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS bonus NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS gross_salary NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS tax NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS provident_fund NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS other_deductions NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS total_deductions NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS net_salary NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS payment_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`,
+  );
+  await pool.query(`ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS created_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS updated_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_payroll_records_code ON payroll_records(payroll_code);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_payroll_records_employee_id ON payroll_records(employee_id);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_payroll_records_pay_month ON payroll_records(pay_month);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_payroll_records_status ON payroll_records(status);`,
+  );
+}
+
 async function seedDemoUsers() {
   const seededUsers = [];
 
@@ -580,6 +696,7 @@ async function initializeDatabase() {
   await ensureEmployeesTable();
   await ensureDepartmentsTable();
   await ensureLeaveRequestsTable();
+  await ensurePayrollRecordsTable();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
 

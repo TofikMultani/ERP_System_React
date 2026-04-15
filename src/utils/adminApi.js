@@ -324,3 +324,58 @@ export async function deleteLeave(leaveCode) {
 
   return result.data;
 }
+
+export async function fetchPayrollRecords() {
+  const result = await apiRequest(`/payroll`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function fetchNextPayrollCode() {
+  const result = await apiRequest(`/payroll/next-code`, {
+    headers: authHeaders(),
+  });
+
+  return result.data?.payrollCode || "";
+}
+
+export async function createPayrollRecord(payload) {
+  const result = await apiRequest(`/payroll`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function updatePayrollRecord(payrollCode, payload) {
+  const result = await apiRequest(`/payroll/${encodeURIComponent(payrollCode)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function deletePayrollRecord(payrollCode) {
+  const result = await apiRequest(`/payroll/${encodeURIComponent(payrollCode)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  return result.data;
+}
+
+export async function generatePayrollForMonth(payload) {
+  const result = await apiRequest(`/payroll/generate-month`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
