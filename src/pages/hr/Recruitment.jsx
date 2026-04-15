@@ -1,86 +1,105 @@
-import { useState } from "react";
-import {
-  handleFormFieldValidation,
-  validateFormWithInlineErrors,
-} from "../../utils/formValidation.js";
-import { usePersistentState } from "../../utils/persistentState.js";
-import { deleteRowById } from "../../utils/tableActions.js";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
-
-const initialCandidates = [];
+import {
+  deleteRecruitmentCandidate,
+  fetchRecruitmentCandidates,
+} from "../../utils/adminApi.js";
+import { formatCurrency } from "./recruitmentFormUtils.js";
 
 const columns = [
-  { header: "Candidate", accessor: "name" },
-  { header: "Role", accessor: "role" },
-  { header: "Department", accessor: "dept" },
-  { header: "Applied", accessor: "applied" },
+  { header: "Candidate Code", accessor: "candidateCode" },
+  { header: "Candidate", accessor: "candidateName" },
+  { header: "Role", accessor: "roleTitle" },
+  { header: "Department", accessor: "department" },
+  { header: "Source", accessor: "source" },
+  {
+    header: "Expected CTC",
+    accessor: "expectedCtc",
+    render: (value) => formatCurrency(value),
+  },
+  { header: "Applied", accessor: "applicationDate" },
   { header: "Stage", accessor: "stage" },
   { header: "Status", accessor: "status" },
 ];
 
-const emptyForm = {
-  name: "",
-  role: "",
-  dept: "",
-  applied: "",
-  stage: "Screening",
-};
-
 function Recruitment() {
-  const [candidates, setCandidates] = usePersistentState(
-    "erp_hr_recruitment",
-    initialCandidates,
-  );
-  const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const navigate = useNavigate();
+  const [candidates, setCandidates] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  function handleChange(e) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  useEffect(() => {
+    loadCandidates();
+  }, []);
+
+  async function loadCandidates() {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      const data = await fetchRecruitmentCandidates();
+      setCandidates(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to load recruitment records from database.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  const filteredCandidates = candidates.filter((candidate) => {
+    const matchesStatus =
+      statusFilter === "All" ||
+      String(candidate.status || "").toLowerCase() === statusFilter.toLowerCase();
 
-    const formElement = e.currentTarget;
-    if (!validateFormWithInlineErrors(formElement)) {
+    if (!matchesStatus) {
+      return false;
+    }
+
+    return `${candidate.candidateCode} ${candidate.candidateName} ${candidate.email} ${candidate.department} ${candidate.roleTitle} ${candidate.source} ${candidate.stage} ${candidate.status}`
+      .toLowerCase()
+      .includes(search.toLowerCase());
+  });
+
+  function handleEdit(row) {
+    navigate(`/hr/recruitment/${encodeURIComponent(row.candidateCode)}/edit`);
+  }
+
+  async function handleDelete(row) {
+    const shouldDelete = window.confirm(
+      `Delete candidate ${row.candidateCode} - ${row.candidateName}?`,
+    );
+
+    if (!shouldDelete) {
       return;
     }
-    if (editingId !== null) {
-      setCandidates((previousRows) =>
-        previousRows.map((item) =>
-          String(item.id) === String(editingId) ? { ...item, ...form } : item,
-        ),
-      );
-    } else {
-      setCandidates((prev) => [
-        ...prev,
-        { ...form, id: prev.length + 1, status: "In Progress" },
-      ]);
-    }
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowForm(false);
-  }
 
-  const handleEdit = (row) => {
-    setEditingId(row.id);
-    setForm({ ...emptyForm, ...row });
-    setShowForm(true);
-  };
-  const handleDelete = (row) => deleteRowById(setCandidates, row, "candidate");
+    try {
+      await deleteRecruitmentCandidate(row.candidateCode);
+      await loadCandidates();
+    } catch (error) {
+      window.alert(error.message || "Unable to delete recruitment candidate from database.");
+    }
+  }
 
   const selectedCount = candidates.filter(
     (candidate) => candidate.status === "Selected",
   ).length;
-  const inProgressCount = candidates.filter(
-    (candidate) => candidate.status === "In Progress",
+  const inPipelineCount = candidates.filter((candidate) =>
+    ["In Progress", "Interview Scheduled", "Offer Released", "On Hold"].includes(
+      String(candidate.status),
+    ),
+  ).length;
+  const rejectedCount = candidates.filter(
+    (candidate) => candidate.status === "Rejected",
   ).length;
   const openPositions = new Set(
     candidates
       .filter((candidate) => candidate.status !== "Selected")
-      .map((candidate) => candidate.role)
+      .map((candidate) => candidate.roleTitle)
       .filter(Boolean),
   ).size;
 
@@ -92,10 +111,11 @@ function Recruitment() {
     },
     { title: "Selected", value: selectedCount, helper: "offers extended" },
     {
-      title: "In Progress",
-      value: inProgressCount,
+      title: "In Pipeline",
+      value: inPipelineCount,
       helper: "across stages",
     },
+    { title: "Rejected", value: rejectedCount, helper: "closed profiles" },
     { title: "Open Positions", value: openPositions, helper: "to be filled" },
   ];
 
@@ -104,95 +124,63 @@ function Recruitment() {
       <div className="hr-page__header">
         <div>
           <h2>Recruitment</h2>
-          <p>Manage applicants and hiring pipeline.</p>
+          <p>Track candidate pipeline, hiring stages, and outcomes from database records.</p>
         </div>
-        <button className="hr-btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Cancel" : "+ Add Candidate"}
+        <button
+          type="button"
+          className="hr-btn"
+          onClick={() => navigate("/hr/recruitment/new")}
+        >
+          + Add Candidate
         </button>
       </div>
 
-      <div className="hr-cards">
+      <div className="hr-cards hr-cards--compact">
         {summary.map((c) => (
           <Card key={c.title} {...c} />
         ))}
       </div>
 
-      {showForm && (
-        <form
-          className="hr-form hr-panel"
-          onSubmit={handleSubmit}
-          noValidate
-          onChange={handleFormFieldValidation}
-        >
-          <h3 className="hr-panel__title">New Candidate</h3>
-          <div className="hr-form__grid">
-            <div className="hr-form__field">
-              <label>Candidate Name</label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                placeholder="Full name"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Applied Role</label>
-              <input
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Backend Developer"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Department</label>
-              <select
-                name="dept"
-                value={form.dept}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select…</option>
-                {["Engineering", "HR", "Finance", "Sales", "IT", "Support"].map(
-                  (d) => (
-                    <option key={d}>{d}</option>
-                  ),
-                )}
-              </select>
-            </div>
-            <div className="hr-form__field">
-              <label>Application Date</label>
-              <input
-                type="date"
-                name="applied"
-                value={form.applied}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Current Stage</label>
-              <select name="stage" value={form.stage} onChange={handleChange}>
-                <option>Screening</option>
-                <option>Technical</option>
-                <option>HR Round</option>
-                <option>Offer</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" className="hr-btn hr-btn--submit">
-            Add Candidate
-          </button>
-        </form>
-      )}
-
       <div className="hr-panel">
-        <h3 className="hr-panel__title">Candidate Pipeline</h3>
+        <div className="hr-panel__toolbar">
+          <h3 className="hr-panel__title">Candidate Pipeline ({filteredCandidates.length})</h3>
+          <div className="hr-actions-row">
+            <div className="hr-filter-group">
+              {[
+                "All",
+                "In Progress",
+                "Interview Scheduled",
+                "Offer Released",
+                "Selected",
+                "Rejected",
+                "On Hold",
+              ].map((filterValue) => (
+                <button
+                  key={filterValue}
+                  type="button"
+                  className={`hr-filter-btn ${
+                    statusFilter === filterValue ? "hr-filter-btn--active" : ""
+                  }`}
+                  onClick={() => setStatusFilter(filterValue)}
+                >
+                  {filterValue}
+                </button>
+              ))}
+            </div>
+            <input
+              className="hr-search"
+              placeholder="Search code / candidate / role / stage / status…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+        </div>
+
+        {errorMessage && <p className="hr-inline-error">{errorMessage}</p>}
+
         <Table
           columns={columns}
-          rows={candidates}
+          rows={isLoading ? [] : filteredCandidates}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

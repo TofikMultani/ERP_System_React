@@ -325,6 +325,51 @@ export async function deleteLeave(leaveCode) {
   return result.data;
 }
 
+export async function fetchRecruitmentCandidates() {
+  const result = await apiRequest(`/recruitment`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function fetchNextCandidateCode() {
+  const result = await apiRequest(`/recruitment/next-code`, {
+    headers: authHeaders(),
+  });
+
+  return result.data?.candidateCode || "";
+}
+
+export async function createRecruitmentCandidate(payload) {
+  const result = await apiRequest(`/recruitment`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function updateRecruitmentCandidate(candidateCode, payload) {
+  const result = await apiRequest(`/recruitment/${encodeURIComponent(candidateCode)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function deleteRecruitmentCandidate(candidateCode) {
+  const result = await apiRequest(`/recruitment/${encodeURIComponent(candidateCode)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  return result.data;
+}
+
 export async function fetchPayrollRecords() {
   const result = await apiRequest(`/payroll`, {
     headers: authHeaders(),

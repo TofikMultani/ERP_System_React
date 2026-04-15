@@ -6,7 +6,6 @@ const APP_NAVIGATION_ITEMS = [
   { label: "Leave", path: "/hr/leave", keywords: ["hr", "vacation"] },
   { label: "Payroll", path: "/hr/payroll", keywords: ["hr", "salary"] },
   { label: "Recruitment", path: "/hr/recruitment", keywords: ["hr", "hiring"] },
-  { label: "Performance", path: "/hr/performance", keywords: ["hr", "review"] },
   { label: "Documents", path: "/hr/documents", keywords: ["hr", "files"] },
   { label: "Training", path: "/hr/training", keywords: ["hr", "learning"] },
   { label: "HR Reports", path: "/hr/reports", keywords: ["hr", "analytics"] },

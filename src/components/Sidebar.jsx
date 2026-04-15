@@ -87,7 +87,6 @@ const moduleChildNavigation = {
     { label: "Leave", path: "/hr/leave" },
     { label: "Payroll", path: "/hr/payroll" },
     { label: "Recruitment", path: "/hr/recruitment" },
-    { label: "Performance", path: "/hr/performance" },
     { label: "Documents", path: "/hr/documents" },
     { label: "Training", path: "/hr/training" },
     { label: "Reports", path: "/hr/reports" },

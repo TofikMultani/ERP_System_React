@@ -505,6 +505,112 @@ async function ensureLeaveRequestsTable() {
   );
 }
 
+async function ensureRecruitmentCandidatesTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS recruitment_candidates (
+      id BIGSERIAL PRIMARY KEY,
+      candidate_code VARCHAR(60) UNIQUE NOT NULL,
+      candidate_name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(60) NOT NULL,
+      department VARCHAR(180) NOT NULL,
+      role_title VARCHAR(180) NOT NULL,
+      source VARCHAR(120),
+      experience_years NUMERIC(6,2) NOT NULL DEFAULT 0,
+      current_ctc NUMERIC(14,2),
+      expected_ctc NUMERIC(14,2),
+      notice_period_days INTEGER NOT NULL DEFAULT 0,
+      application_date DATE NOT NULL,
+      interview_date DATE,
+      stage VARCHAR(100) NOT NULL DEFAULT 'Screening',
+      status VARCHAR(80) NOT NULL DEFAULT 'In Progress',
+      recruiter_name VARCHAR(255),
+      remarks TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS candidate_code VARCHAR(60);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS candidate_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS email VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS phone VARCHAR(60);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS department VARCHAR(180);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS role_title VARCHAR(180);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS source VARCHAR(120);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS experience_years NUMERIC(6,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS current_ctc NUMERIC(14,2);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS expected_ctc NUMERIC(14,2);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS notice_period_days INTEGER NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS application_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS interview_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS stage VARCHAR(100) NOT NULL DEFAULT 'Screening';`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'In Progress';`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS recruiter_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS remarks TEXT;`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS created_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS updated_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE recruitment_candidates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_recruitment_candidates_code ON recruitment_candidates(candidate_code);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_recruitment_candidates_email ON recruitment_candidates(email);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_recruitment_candidates_status ON recruitment_candidates(status);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_recruitment_candidates_stage ON recruitment_candidates(stage);`,
+  );
+}
+
 async function ensurePayrollRecordsTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS payroll_records (
@@ -696,6 +802,7 @@ async function initializeDatabase() {
   await ensureEmployeesTable();
   await ensureDepartmentsTable();
   await ensureLeaveRequestsTable();
+  await ensureRecruitmentCandidatesTable();
   await ensurePayrollRecordsTable();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
