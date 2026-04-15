@@ -84,7 +84,6 @@ const moduleChildNavigation = {
     { label: "Dashboard", path: "/hr" },
     { label: "Employees", path: "/hr/employees" },
     { label: "Departments", path: "/hr/departments" },
-    { label: "Attendance", path: "/hr/attendance" },
     { label: "Leave", path: "/hr/leave" },
     { label: "Payroll", path: "/hr/payroll" },
     { label: "Recruitment", path: "/hr/recruitment" },

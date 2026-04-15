@@ -236,3 +236,54 @@ export async function importEmployees(payload) {
 
   return result.data;
 }
+
+export async function fetchDepartments() {
+  const result = await apiRequest(`/departments`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function fetchNextDepartmentCode() {
+  const result = await apiRequest(`/departments/next-code`, {
+    headers: authHeaders(),
+  });
+
+  return result.data?.code || "";
+}
+
+export async function createDepartment(payload) {
+  const result = await apiRequest(`/departments`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function updateDepartment(departmentCode, payload) {
+  const result = await apiRequest(
+    `/departments/${encodeURIComponent(departmentCode)}`,
+    {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return result.data;
+}
+
+export async function deleteDepartment(departmentCode) {
+  const result = await apiRequest(
+    `/departments/${encodeURIComponent(departmentCode)}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(),
+    },
+  );
+
+  return result.data;
+}

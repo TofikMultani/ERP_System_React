@@ -3,7 +3,6 @@ const APP_NAVIGATION_ITEMS = [
   { label: "HR Dashboard", path: "/hr", keywords: ["hr", "people"] },
   { label: "Employees", path: "/hr/employees", keywords: ["hr", "staff"] },
   { label: "Departments", path: "/hr/departments", keywords: ["hr", "teams"] },
-  { label: "Attendance", path: "/hr/attendance", keywords: ["hr", "presence"] },
   { label: "Leave", path: "/hr/leave", keywords: ["hr", "vacation"] },
   { label: "Payroll", path: "/hr/payroll", keywords: ["hr", "salary"] },
   { label: "Recruitment", path: "/hr/recruitment", keywords: ["hr", "hiring"] },

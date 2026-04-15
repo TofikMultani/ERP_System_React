@@ -14,7 +14,7 @@ import Employees from "../pages/hr/Employees.jsx";
 import EmployeeForm from "../pages/hr/EmployeeForm.jsx";
 import EmployeeDetails from "../pages/hr/EmployeeDetails.jsx";
 import Departments from "../pages/hr/Departments.jsx";
-import Attendance from "../pages/hr/Attendance.jsx";
+import DepartmentForm from "../pages/hr/DepartmentForm.jsx";
 import Leave from "../pages/hr/Leave.jsx";
 import Payroll from "../pages/hr/Payroll.jsx";
 import Recruitment from "../pages/hr/Recruitment.jsx";
@@ -105,7 +105,11 @@ function AppRoutes() {
               element={<EmployeeForm />}
             />
             <Route path="departments" element={<Departments />} />
-            <Route path="attendance" element={<Attendance />} />
+            <Route path="departments/new" element={<DepartmentForm />} />
+            <Route
+              path="departments/:departmentCode/edit"
+              element={<DepartmentForm />}
+            />
             <Route path="leave" element={<Leave />} />
             <Route path="payroll" element={<Payroll />} />
             <Route path="recruitment" element={<Recruitment />} />

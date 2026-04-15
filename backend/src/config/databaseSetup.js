@@ -361,6 +361,77 @@ async function ensureEmployeesTable() {
   );
 }
 
+async function ensureDepartmentsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS departments (
+      id BIGSERIAL PRIMARY KEY,
+      department_code VARCHAR(50) UNIQUE NOT NULL,
+      name VARCHAR(180) NOT NULL,
+      head_name VARCHAR(255) NOT NULL,
+      head_email VARCHAR(255),
+      head_phone VARCHAR(50),
+      employee_count INTEGER NOT NULL DEFAULT 0,
+      annual_budget NUMERIC(14,2),
+      location VARCHAR(180),
+      description TEXT,
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS department_code VARCHAR(50);`,
+  );
+  await pool.query(`ALTER TABLE departments ADD COLUMN IF NOT EXISTS name VARCHAR(180);`);
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS head_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS head_email VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS head_phone VARCHAR(50);`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS employee_count INTEGER NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS annual_budget NUMERIC(14,2);`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS location VARCHAR(180);`,
+  );
+  await pool.query(`ALTER TABLE departments ADD COLUMN IF NOT EXISTS description TEXT;`);
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Active';`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS created_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS updated_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE departments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_departments_code ON departments(department_code);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_departments_name ON departments(name);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_departments_status ON departments(status);`,
+  );
+}
+
 async function seedDemoUsers() {
   const seededUsers = [];
 
@@ -434,6 +505,7 @@ async function initializeDatabase() {
   await ensureModuleCatalogTable();
   await ensureAccessRequestsTable();
   await ensureEmployeesTable();
+  await ensureDepartmentsTable();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
 

@@ -1,164 +1,105 @@
-﻿import { useState } from "react";
-import {
-  handleFormFieldValidation,
-  validateFormWithInlineErrors,
-} from "../../utils/formValidation.js";
-import { usePersistentState } from "../../utils/persistentState.js";
-import { deleteRowById } from "../../utils/tableActions.js";
-import Card from "../../components/Card.jsx";
+﻿import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { deleteDepartment, fetchDepartments } from "../../utils/adminApi.js";
 import Table from "../../components/Table.jsx";
 
-const initialDepts = [];
-
 const columns = [
+  { header: "Code", accessor: "code" },
   { header: "Department", accessor: "name" },
   { header: "Head", accessor: "head" },
+  { header: "Head Email", accessor: "headEmail" },
   { header: "Employees", accessor: "employees" },
   { header: "Budget", accessor: "budget" },
   { header: "Location", accessor: "location" },
+  { header: "Status", accessor: "status" },
 ];
 
-const emptyForm = {
-  name: "",
-  head: "",
-  employees: "",
-  budget: "",
-  location: "",
-};
-
 function Departments() {
-  const [depts, setDepts] = usePersistentState(
-    "erp_hr_departments",
-    initialDepts,
+  const navigate = useNavigate();
+  const [depts, setDepts] = useState([]);
+  const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    loadDepartments();
+  }, []);
+
+  async function loadDepartments() {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      const data = await fetchDepartments();
+      setDepts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to load departments from database.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const filteredDepartments = depts.filter((department) =>
+    `${department.code} ${department.name} ${department.head} ${department.location}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
   );
-  const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-
-  function handleChange(e) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    const formElement = e.currentTarget;
-    if (!validateFormWithInlineErrors(formElement)) {
-      return;
-    }
-    if (editingId !== null) {
-      setDepts((previousRows) =>
-        previousRows.map((item) =>
-          String(item.id) === String(editingId) ? { ...item, ...form } : item,
-        ),
-      );
-    } else {
-      setDepts((prev) => [...prev, { ...form, id: prev.length + 1 }]);
-    }
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowForm(false);
-  }
 
   const handleEdit = (row) => {
-    setEditingId(row.id);
-    setForm({ ...emptyForm, ...row });
-    setShowForm(true);
+    navigate(`/hr/departments/${encodeURIComponent(row.code)}/edit`);
   };
-  const handleDelete = (row) => deleteRowById(setDepts, row, "department");
+
+  async function handleDelete(row) {
+    const shouldDelete = window.confirm(
+      `Delete department ${row.code} - ${row.name}?`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteDepartment(row.code);
+      await loadDepartments();
+    } catch (error) {
+      window.alert(error.message || "Unable to delete department from database.");
+    }
+  }
 
   return (
     <div className="hr-page">
       <div className="hr-page__header">
         <div>
           <h2>Departments</h2>
-          <p>Manage organisational structure and budget allocation.</p>
+          <p>Manage departments from database records.</p>
         </div>
-        <button className="hr-btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Cancel" : "+ Add Department"}
+        <button
+          type="button"
+          className="hr-btn"
+          onClick={() => navigate("/hr/departments/new")}
+        >
+          + Add Department
         </button>
       </div>
 
-      <div className="hr-cards">
-        {depts.map((d) => (
-          <Card
-            key={d.id}
-            title={d.name}
-            value={String(d.employees)}
-            helper={`Head: ${d.head}`}
-          />
-        ))}
-      </div>
-
-      {showForm && (
-        <form
-          className="hr-form hr-panel"
-          onSubmit={handleSubmit}
-          noValidate
-          onChange={handleFormFieldValidation}
-        >
-          <h3 className="hr-panel__title">New Department</h3>
-          <div className="hr-form__grid">
-            <div className="hr-form__field">
-              <label>Department Name</label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Marketing"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Department Head</label>
-              <input
-                name="head"
-                value={form.head}
-                onChange={handleChange}
-                required
-                placeholder="Full name"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Employees</label>
-              <input
-                type="number"
-                name="employees"
-                value={form.employees}
-                onChange={handleChange}
-                placeholder="0"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Annual Budget</label>
-              <input
-                name="budget"
-                value={form.budget}
-                onChange={handleChange}
-                placeholder="₹0"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Location</label>
-              <input
-                name="location"
-                value={form.location}
-                onChange={handleChange}
-                placeholder="e.g. Floor 2"
-              />
-            </div>
-          </div>
-          <button type="submit" className="hr-btn hr-btn--submit">
-            Save Department
-          </button>
-        </form>
-      )}
-
       <div className="hr-panel">
-        <h3 className="hr-panel__title">All Departments</h3>
+        <div className="hr-panel__toolbar">
+          <h3 className="hr-panel__title">
+            All Departments ({filteredDepartments.length})
+          </h3>
+          <input
+            className="hr-search"
+            placeholder="Search code / name / head / location…"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+
+        {errorMessage && <p className="hr-inline-error">{errorMessage}</p>}
+
         <Table
           columns={columns}
-          rows={depts}
+          rows={isLoading ? [] : filteredDepartments}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
