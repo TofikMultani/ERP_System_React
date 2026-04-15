@@ -23,6 +23,8 @@ import Recruitment from "../pages/hr/Recruitment.jsx";
 import RecruitmentForm from "../pages/hr/RecruitmentForm.jsx";
 import Documents from "../pages/hr/Documents.jsx";
 import Training from "../pages/hr/Training.jsx";
+import DocumentForm from "../pages/hr/DocumentForm.jsx";
+import TrainingForm from "../pages/hr/TrainingForm.jsx";
 import HRReports from "../pages/hr/Reports.jsx";
 import Products from "../pages/inventory/Products.jsx";
 import Categories from "../pages/inventory/Categories.jsx";
@@ -125,7 +127,10 @@ function AppRoutes() {
               element={<RecruitmentForm />}
             />
             <Route path="documents" element={<Documents />} />
+            <Route path="documents/new" element={<DocumentForm />} />
             <Route path="training" element={<Training />} />
+            <Route path="training/new" element={<TrainingForm />} />
+            <Route path="training/:programId/edit" element={<TrainingForm />} />
             <Route path="reports" element={<HRReports />} />
           </Route>
 

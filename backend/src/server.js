@@ -58,6 +58,7 @@ const employeeRoutes = require('./routes/employeeRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const recruitmentRoutes = require('./routes/recruitmentRoutes');
+const hrDocumentRoutes = require('./routes/hrDocumentRoutes');
 const payrollRoutes = require('./routes/payrollRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/modules', moduleRoutes);
@@ -68,6 +69,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/recruitment', recruitmentRoutes);
+app.use('/api/hr-documents', hrDocumentRoutes);
 app.use('/api/payroll', payrollRoutes);
 
 // Module Routes (to be implemented)

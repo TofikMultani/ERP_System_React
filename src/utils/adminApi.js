@@ -370,6 +370,100 @@ export async function deleteRecruitmentCandidate(candidateCode) {
   return result.data;
 }
 
+export async function fetchHrDocuments() {
+  const result = await apiRequest(`/hr-documents`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function fetchNextHrDocumentCode() {
+  const result = await apiRequest(`/hr-documents/next-code`, {
+    headers: authHeaders(),
+  });
+
+  return result.data?.documentCode || "";
+}
+
+export async function uploadHrDocument(payload) {
+  const formData = new FormData();
+
+  Object.entries(payload || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+
+    formData.append(key, value);
+  });
+
+  const response = await fetch(`${API_BASE_URL}/hr-documents`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || "Document upload failed");
+  }
+
+  return data.data;
+}
+
+export async function deleteHrDocument(documentCode) {
+  const result = await apiRequest(`/hr-documents/${encodeURIComponent(documentCode)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  return result.data;
+}
+
+function parseFileNameFromDisposition(disposition, fallback) {
+  if (!disposition) {
+    return fallback;
+  }
+
+  const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const regularMatch = disposition.match(/filename="?([^";]+)"?/i);
+  if (regularMatch?.[1]) {
+    return regularMatch[1];
+  }
+
+  return fallback;
+}
+
+export async function downloadHrDocumentFile(documentCode) {
+  const response = await fetch(
+    `${API_BASE_URL}/hr-documents/${encodeURIComponent(documentCode)}/file`,
+    {
+      headers: authHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || "Unable to download file");
+  }
+
+  const blob = await response.blob();
+  const fileName = parseFileNameFromDisposition(
+    response.headers.get("content-disposition"),
+    `${documentCode}.bin`,
+  );
+
+  return {
+    blob,
+    fileName,
+  };
+}
+
 export async function fetchPayrollRecords() {
   const result = await apiRequest(`/payroll`, {
     headers: authHeaders(),

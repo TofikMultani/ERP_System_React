@@ -1,8 +1,5 @@
-import { useState } from "react";
-import {
-  handleFormFieldValidation,
-  validateFormWithInlineErrors,
-} from "../../utils/formValidation.js";
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePersistentState } from "../../utils/persistentState.js";
 import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
@@ -21,57 +18,20 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const emptyForm = {
-  title: "",
-  dept: "",
-  trainer: "",
-  startDate: "",
-  endDate: "",
-  seats: "",
-  enrolled: "0",
-};
-
 function Training() {
+  const navigate = useNavigate();
   const [programs, setPrograms] = usePersistentState(
     "erp_hr_training",
     initialPrograms,
   );
-  const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
 
-  function handleChange(e) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    const formElement = e.currentTarget;
-    if (!validateFormWithInlineErrors(formElement)) {
-      return;
-    }
-    if (editingId !== null) {
-      setPrograms((previousRows) =>
-        previousRows.map((item) =>
-          String(item.id) === String(editingId) ? { ...item, ...form } : item,
-        ),
-      );
-    } else {
-      setPrograms((prev) => [
-        ...prev,
-        { ...form, id: prev.length + 1, status: "Upcoming" },
-      ]);
-    }
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowForm(false);
-  }
+  const orderedPrograms = useMemo(
+    () => [...programs].sort((a, b) => Number(b.id || 0) - Number(a.id || 0)),
+    [programs],
+  );
 
   const handleEdit = (row) => {
-    setEditingId(row.id);
-    setForm({ ...emptyForm, ...row });
-    setShowForm(true);
+    navigate(`/hr/training/${encodeURIComponent(row.id)}/edit`);
   };
   const handleDelete = (row) =>
     deleteRowById(setPrograms, row, "training program");
@@ -106,8 +66,12 @@ function Training() {
           <h2>Training</h2>
           <p>Corporate training programs and employee skill development.</p>
         </div>
-        <button className="hr-btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Cancel" : "+ Schedule Training"}
+        <button
+          className="hr-btn"
+          type="button"
+          onClick={() => navigate("/hr/training/new")}
+        >
+          + Schedule Training
         </button>
       </div>
 
@@ -117,95 +81,11 @@ function Training() {
         ))}
       </div>
 
-      {showForm && (
-        <form
-          className="hr-form hr-panel"
-          onSubmit={handleSubmit}
-          noValidate
-          onChange={handleFormFieldValidation}
-        >
-          <h3 className="hr-panel__title">New Training Program</h3>
-          <div className="hr-form__grid">
-            <div className="hr-form__field hr-form__field--full">
-              <label>Program Title</label>
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Project Management Basics"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Target Department</label>
-              <select
-                name="dept"
-                value={form.dept}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select…</option>
-                <option>All</option>
-                {["Engineering", "HR", "Finance", "Sales", "IT", "Support"].map(
-                  (d) => (
-                    <option key={d}>{d}</option>
-                  ),
-                )}
-              </select>
-            </div>
-            <div className="hr-form__field">
-              <label>Trainer</label>
-              <input
-                name="trainer"
-                value={form.trainer}
-                onChange={handleChange}
-                required
-                placeholder="Trainer name"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Start Date</label>
-              <input
-                type="date"
-                name="startDate"
-                value={form.startDate}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>End Date</label>
-              <input
-                type="date"
-                name="endDate"
-                value={form.endDate}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Total Seats</label>
-              <input
-                type="number"
-                name="seats"
-                value={form.seats}
-                onChange={handleChange}
-                required
-                min="1"
-              />
-            </div>
-          </div>
-          <button type="submit" className="hr-btn hr-btn--submit">
-            Schedule Program
-          </button>
-        </form>
-      )}
-
       <div className="hr-panel">
         <h3 className="hr-panel__title">Training Programs</h3>
         <Table
           columns={columns}
-          rows={programs}
+          rows={orderedPrograms}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

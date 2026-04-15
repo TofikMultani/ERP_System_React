@@ -611,6 +611,104 @@ async function ensureRecruitmentCandidatesTable() {
   );
 }
 
+async function ensureHrDocumentsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS hr_documents (
+      id BIGSERIAL PRIMARY KEY,
+      document_code VARCHAR(60) UNIQUE NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      owner_name VARCHAR(255) NOT NULL,
+      linked_employee_id VARCHAR(50),
+      effective_date DATE,
+      expiry_date DATE,
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      description TEXT,
+      original_file_name VARCHAR(255) NOT NULL,
+      stored_file_name VARCHAR(255) NOT NULL,
+      file_path TEXT NOT NULL,
+      mime_type VARCHAR(150),
+      file_size_bytes BIGINT NOT NULL DEFAULT 0,
+      uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS document_code VARCHAR(60);`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS title VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS category VARCHAR(120);`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS owner_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS linked_employee_id VARCHAR(50);`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS effective_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS expiry_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Active';`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS description TEXT;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS original_file_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS stored_file_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS file_path TEXT;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS mime_type VARCHAR(150);`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS file_size_bytes BIGINT NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS created_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS updated_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE hr_documents ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_hr_documents_code ON hr_documents(document_code);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_hr_documents_category ON hr_documents(category);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_hr_documents_status ON hr_documents(status);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_hr_documents_linked_employee_id ON hr_documents(linked_employee_id);`,
+  );
+}
+
 async function ensurePayrollRecordsTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS payroll_records (
@@ -803,6 +901,7 @@ async function initializeDatabase() {
   await ensureDepartmentsTable();
   await ensureLeaveRequestsTable();
   await ensureRecruitmentCandidatesTable();
+  await ensureHrDocumentsTable();
   await ensurePayrollRecordsTable();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
