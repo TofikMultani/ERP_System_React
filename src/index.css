@@ -2211,6 +2211,17 @@ a {
   font-size: 0.94rem;
 }
 
+.hr-actions-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.hr-file-input {
+  display: none;
+}
+
 /* cards row */
 .hr-cards {
   display: grid;
@@ -2273,6 +2284,13 @@ a {
 .hr-search:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(90, 61, 240, 0.12);
+}
+
+.hr-inline-error {
+  margin: 0 0 0.9rem;
+  color: #b83232;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 /* date input */
@@ -2341,6 +2359,18 @@ a {
   opacity: 0.88;
 }
 
+.hr-btn--secondary {
+  border: 1px solid rgba(27, 35, 64, 0.14);
+  background: #ffffff;
+  color: var(--color-text-soft);
+}
+
+.hr-btn--secondary:hover {
+  opacity: 1;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
 /* form */
 .hr-form .hr-panel__title {
   margin-bottom: 1.25rem;
@@ -2394,6 +2424,46 @@ a {
   padding: 0.85rem;
 }
 
+.hr-employee-details {
+  display: grid;
+  gap: 1rem;
+}
+
+.hr-employee-details .hr-panel__toolbar {
+  margin-bottom: 0;
+}
+
+.hr-employee-details__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.hr-employee-details__grid > div {
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: var(--color-surface-muted);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.hr-employee-details__label {
+  font-size: 0.8rem;
+  color: var(--color-text-soft);
+  font-weight: 600;
+}
+
+.hr-employee-details__grid strong {
+  color: var(--color-text);
+  font-size: 0.92rem;
+}
+
+.hr-employee-details__grid--detailed {
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(20, 33, 61, 0.08);
+}
+
 /* responsive */
 @media (max-width: 960px) {
   .hr-shell {
@@ -2424,6 +2494,14 @@ a {
     padding: 1rem;
   }
 
+  .hr-actions-row {
+    width: 100%;
+  }
+
+  .hr-employee-details__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .hr-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2433,6 +2511,10 @@ a {
   }
 
   .hr-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-employee-details__grid {
     grid-template-columns: 1fr;
   }
 }

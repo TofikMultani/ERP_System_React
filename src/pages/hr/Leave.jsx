@@ -21,13 +21,6 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total Leaves", value: "0", helper: "this month" },
-  { title: "Approved", value: "0", helper: "leaves approved" },
-  { title: "Pending", value: "0", helper: "awaiting approval" },
-  { title: "Avg Leave Days", value: "0.0", helper: "per employee" },
-];
-
 const emptyForm = {
   name: "",
   dept: "",
@@ -78,6 +71,22 @@ function Leave() {
     setShowForm(true);
   };
   const handleDelete = (row) => deleteRowById(setLeaves, row, "leave request");
+
+  const approvedCount = leaves.filter((leave) => leave.status === "Approved").length;
+  const pendingCount = leaves.filter((leave) => leave.status === "Pending").length;
+  const avgLeaveDays = leaves.length
+    ? (
+        leaves.reduce((sum, leave) => sum + (Number(leave.days) || 0), 0) /
+        leaves.length
+      ).toFixed(1)
+    : "0.0";
+
+  const summary = [
+    { title: "Total Leaves", value: leaves.length, helper: "this month" },
+    { title: "Approved", value: approvedCount, helper: "leaves approved" },
+    { title: "Pending", value: pendingCount, helper: "awaiting approval" },
+    { title: "Avg Leave Days", value: avgLeaveDays, helper: "per employee" },
+  ];
 
   return (
     <div className="hr-page">

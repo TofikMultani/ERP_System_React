@@ -21,13 +21,6 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total Programs", value: "0", helper: "this quarter" },
-  { title: "Ongoing", value: "0", helper: "in progress" },
-  { title: "Upcoming", value: "0", helper: "scheduled" },
-  { title: "Completed", value: "0", helper: "this month" },
-];
-
 const emptyForm = {
   title: "",
   dept: "",
@@ -82,6 +75,29 @@ function Training() {
   };
   const handleDelete = (row) =>
     deleteRowById(setPrograms, row, "training program");
+
+  const summary = [
+    {
+      title: "Total Programs",
+      value: programs.length,
+      helper: "this quarter",
+    },
+    {
+      title: "Ongoing",
+      value: programs.filter((program) => program.status === "Ongoing").length,
+      helper: "in progress",
+    },
+    {
+      title: "Upcoming",
+      value: programs.filter((program) => program.status === "Upcoming").length,
+      helper: "scheduled",
+    },
+    {
+      title: "Completed",
+      value: programs.filter((program) => program.status === "Completed").length,
+      helper: "this month",
+    },
+  ];
 
   return (
     <div className="hr-page">

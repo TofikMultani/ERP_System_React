@@ -13,7 +13,18 @@ import {
   YAxis,
 } from "recharts";
 
-const headcountData = [];
+function getMonthLabel(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 const recentColumns = [
   { header: "Name", accessor: "name" },
@@ -26,6 +37,24 @@ function HRDashboard() {
   const employees = usePersistentSnapshot("erp_hr_employees", []);
   const leaves = usePersistentSnapshot("erp_hr_leave", []);
   const recruitment = usePersistentSnapshot("erp_hr_recruitment", []);
+
+  const joinMonthMap = employees.reduce((accumulator, employee) => {
+    const month = getMonthLabel(employee.joined || employee.applied);
+    if (!month) {
+      return accumulator;
+    }
+    accumulator[month] = (accumulator[month] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  let runningHeadcount = 0;
+  const headcountData = Object.keys(joinMonthMap)
+    .sort((left, right) => left.localeCompare(right))
+    .slice(-6)
+    .map((month) => {
+      runningHeadcount += joinMonthMap[month];
+      return { month: month.slice(5), count: runningHeadcount };
+    });
 
   const cards = [
     {
@@ -112,7 +141,6 @@ function HRDashboard() {
                 tick={{ fontSize: 12, fill: "#69708a" }}
                 axisLine={false}
                 tickLine={false}
-                domain={[210, 260]}
               />
               <Tooltip
                 contentStyle={{

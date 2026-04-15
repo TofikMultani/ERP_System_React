@@ -3,6 +3,7 @@ import Card from "../../components/Card.jsx";
 import Button from "../../components/Button.jsx";
 import Badge from "../../components/Badge.jsx";
 import { ticketsData } from "../../utils/supportData.js";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 
 function getStatusColor(status) {
   const statusMap = {
@@ -24,12 +25,13 @@ function getPriorityColor(priority) {
 }
 
 function Tickets() {
+  const tickets = usePersistentSnapshot("erp_support_tickets", ticketsData);
   const [filter, setFilter] = useState("all");
 
   const filteredTickets =
     filter === "all"
-      ? ticketsData
-      : ticketsData.filter((t) => t.status === filter);
+      ? tickets
+      : tickets.filter((t) => t.status === filter);
 
   return (
     <div className="support-page">
@@ -43,22 +45,22 @@ function Tickets() {
       <div className="support-cards">
         <Card
           title="Total Tickets"
-          value={ticketsData.length}
+          value={tickets.length}
           helper="All time"
         />
         <Card
           title="Open"
-          value={ticketsData.filter((t) => t.status === "open").length}
+          value={tickets.filter((t) => t.status === "open").length}
           helper="Awaiting response"
         />
         <Card
           title="In Progress"
-          value={ticketsData.filter((t) => t.status === "in-progress").length}
+          value={tickets.filter((t) => t.status === "in-progress").length}
           helper="Agent assigned"
         />
         <Card
           title="Resolved"
-          value={ticketsData.filter((t) => t.status === "resolved").length}
+          value={tickets.filter((t) => t.status === "resolved").length}
           helper="Closed"
         />
       </div>

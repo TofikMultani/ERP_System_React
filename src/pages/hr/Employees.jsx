@@ -1,298 +1,192 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 import {
-  handleFormFieldValidation,
-  validateFormWithInlineErrors,
-} from "../../utils/formValidation.js";
-import { usePersistentState } from "../../utils/persistentState.js";
-import { deleteRowById } from "../../utils/tableActions.js";
+  deleteEmployee,
+  fetchEmployees,
+  importEmployees,
+} from "../../utils/adminApi.js";
 import Table from "../../components/Table.jsx";
-
-const initialEmployees = [
-  {
-    id: 1,
-    name: "Ananya Sharma",
-    dept: "Engineering",
-    role: "Senior Dev",
-    email: "ananya@erp.io",
-    phone: "9810001111",
-    joined: "01 Mar 2025",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Rohan Mehta",
-    dept: "HR",
-    role: "HR Manager",
-    email: "rohan@erp.io",
-    phone: "9810002222",
-    joined: "15 Jan 2025",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Priya Nair",
-    dept: "Finance",
-    role: "Analyst",
-    email: "priya@erp.io",
-    phone: "9810003333",
-    joined: "10 Nov 2024",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Arjun Patel",
-    dept: "Sales",
-    role: "Sales Lead",
-    email: "arjun@erp.io",
-    phone: "9810004444",
-    joined: "05 Sep 2024",
-    status: "On Leave",
-  },
-  {
-    id: 5,
-    name: "Sneha Joshi",
-    dept: "IT",
-    role: "Sys Admin",
-    email: "sneha@erp.io",
-    phone: "9810005555",
-    joined: "20 Aug 2024",
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "Vikram Singh",
-    dept: "Engineering",
-    role: "Backend Dev",
-    email: "vikram@erp.io",
-    phone: "9810006666",
-    joined: "01 Jul 2024",
-    status: "Active",
-  },
-  {
-    id: 7,
-    name: "Neha Kapoor",
-    dept: "Support",
-    role: "Support Exec",
-    email: "neha@erp.io",
-    phone: "9810007777",
-    joined: "12 Jun 2024",
-    status: "Active",
-  },
-  {
-    id: 8,
-    name: "Karan Verma",
-    dept: "Sales",
-    role: "Account Mgr",
-    email: "karan@erp.io",
-    phone: "9810008888",
-    joined: "03 May 2024",
-    status: "Inactive",
-  },
-  {
-    id: 9,
-    name: "Divya Rao",
-    dept: "Finance",
-    role: "Sr. Accountant",
-    email: "divya@erp.io",
-    phone: "9810009999",
-    joined: "19 Apr 2024",
-    status: "Active",
-  },
-  {
-    id: 10,
-    name: "Amit Kumar",
-    dept: "Engineering",
-    role: "Frontend Dev",
-    email: "amit@erp.io",
-    phone: "9810010000",
-    joined: "08 Mar 2024",
-    status: "Active",
-  },
-];
+import {
+  isValidEmployeePayload,
+  normalizeEmployeePayload,
+  toApiPayload,
+} from "./employeeFormUtils.js";
 
 const columns = [
+  { header: "Employee ID", accessor: "employeeId" },
   { header: "Name", accessor: "name" },
   { header: "Department", accessor: "dept" },
   { header: "Role", accessor: "role" },
-  { header: "Email", accessor: "email" },
-  { header: "Phone", accessor: "phone" },
-  { header: "Joined", accessor: "joined" },
   { header: "Status", accessor: "status" },
 ];
 
-const emptyForm = {
-  name: "",
-  dept: "",
-  role: "",
-  email: "",
-  phone: "",
-  joined: "",
-  status: "Active",
-};
-
 function Employees() {
-  const [employees, setEmployees] = usePersistentState(
-    "erp_hr_employees",
-    initialEmployees,
-  );
-  const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const navigate = useNavigate();
+  const [employees, setEmployees] = useState([]);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
   const [search, setSearch] = useState("");
+  const excelInputRef = useRef(null);
 
-  function handleChange(e) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    const formElement = e.currentTarget;
-    if (!validateFormWithInlineErrors(formElement)) {
-      return;
-    }
-    if (editingId !== null) {
-      setEmployees((previousRows) =>
-        previousRows.map((item) =>
-          String(item.id) === String(editingId) ? { ...item, ...form } : item,
-        ),
-      );
-    } else {
-      setEmployees((prev) => [...prev, { ...form, id: prev.length + 1 }]);
-    }
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowForm(false);
-  }
-
-  const filtered = employees.filter((emp) =>
-    `${emp.name} ${emp.dept} ${emp.role}`
+  const filtered = employees.filter((employee) =>
+    `${employee.employeeId} ${employee.name} ${employee.dept} ${employee.role} ${employee.email} ${employee.phone}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
 
-  const handleEdit = (row) => {
-    setEditingId(row.id);
-    setForm({ ...emptyForm, ...row });
-    setShowForm(true);
-  };
-  const handleDelete = (row) => deleteRowById(setEmployees, row, "employee");
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  async function loadEmployees() {
+    setIsLoadingEmployees(true);
+    setErrorMessage("");
+
+    try {
+      const data = await fetchEmployees();
+      setEmployees(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setErrorMessage(error.message || "Failed to load employees from database.");
+    } finally {
+      setIsLoadingEmployees(false);
+    }
+  }
+
+  function handleEdit(employee) {
+    navigate(`/hr/employees/${encodeURIComponent(employee.employeeId)}/edit`);
+  }
+
+  async function handleDelete(employee) {
+    const shouldDelete = window.confirm(
+      `Delete employee ${employee.employeeId} - ${employee.name}?`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteEmployee(employee.employeeId);
+      await loadEmployees();
+    } catch (error) {
+      window.alert(error.message || "Unable to delete employee from database.");
+    }
+  }
+
+  function handleView(employee) {
+    navigate(`/hr/employees/${encodeURIComponent(employee.employeeId)}`);
+  }
+
+  async function handleExcelImport(event) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const firstSheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: true,
+      });
+
+      if (!rows.length) {
+        window.alert("No rows found in the selected file.");
+        return;
+      }
+
+      const validEmployees = rows
+        .map((row) => normalizeEmployeePayload(row))
+        .filter((employee) => isValidEmployeePayload(employee));
+
+      if (!validEmployees.length) {
+        window.alert(
+          "No valid employee rows found. Ensure required columns are present in the Excel file.",
+        );
+        return;
+      }
+
+      const result = await importEmployees({
+        employees: validEmployees.map(toApiPayload),
+      });
+
+      await loadEmployees();
+
+      const insertedOrUpdated = Number(result?.insertedOrUpdated || 0);
+      const skipped = Number(result?.skipped || 0);
+      window.alert(
+        `${insertedOrUpdated} employee record(s) saved to database.${
+          skipped > 0 ? ` ${skipped} row(s) skipped due to missing required fields.` : ""
+        }`,
+      );
+    } catch {
+      window.alert("Unable to import employee file to database. Please check the file format.");
+    } finally {
+      event.target.value = "";
+    }
+  }
 
   return (
     <div className="hr-page">
       <div className="hr-page__header">
         <div>
           <h2>Employees</h2>
-          <p>Manage the full employee directory.</p>
+          <p>Manage the full employee directory from database records.</p>
         </div>
-        <button className="hr-btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Cancel" : "+ Add Employee"}
-        </button>
-      </div>
-
-      {showForm && (
-        <form
-          className="hr-form hr-panel"
-          onSubmit={handleSubmit}
-          noValidate
-          onChange={handleFormFieldValidation}
-        >
-          <h3 className="hr-panel__title">New Employee</h3>
-          <div className="hr-form__grid">
-            <div className="hr-form__field">
-              <label>Full Name</label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Ravi Sharma"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Department</label>
-              <select
-                name="dept"
-                value={form.dept}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select…</option>
-                {["Engineering", "HR", "Finance", "Sales", "IT", "Support"].map(
-                  (d) => (
-                    <option key={d}>{d}</option>
-                  ),
-                )}
-              </select>
-            </div>
-            <div className="hr-form__field">
-              <label>Role</label>
-              <input
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Developer"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Email</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                placeholder="user@erp.io"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Phone</label>
-              <input
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="98XXXXXXXX"
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Date Joined</label>
-              <input
-                type="date"
-                name="joined"
-                value={form.joined}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="hr-form__field">
-              <label>Status</label>
-              <select name="status" value={form.status} onChange={handleChange}>
-                <option>Active</option>
-                <option>Inactive</option>
-                <option>On Leave</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" className="hr-btn hr-btn--submit">
-            Save Employee
+        <div className="hr-actions-row">
+          <input
+            ref={excelInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hr-file-input"
+            onChange={handleExcelImport}
+          />
+          <button
+            type="button"
+            className="hr-btn hr-btn--secondary"
+            onClick={() => excelInputRef.current?.click()}
+          >
+            Import Excel
           </button>
-        </form>
-      )}
+          <button
+            type="button"
+            className="hr-btn"
+            onClick={() => navigate("/hr/employees/new")}
+          >
+            + Add Employee
+          </button>
+        </div>
+      </div>
 
       <div className="hr-panel">
         <div className="hr-panel__toolbar">
           <h3 className="hr-panel__title">All Employees ({filtered.length})</h3>
           <input
             className="hr-search"
-            placeholder="Search name / dept / role…"
+            placeholder="Search ID / name / dept / role…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
           />
         </div>
+
+        {errorMessage && <p className="hr-inline-error">{errorMessage}</p>}
+
         <Table
           columns={columns}
-          rows={filtered}
+          rows={isLoadingEmployees ? [] : filtered}
+          renderActions={(row) => (
+            <button
+              type="button"
+              className="erp-table__action-btn erp-table__action-btn--view"
+              onClick={() => handleView(row)}
+            >
+              View Details
+            </button>
+          )}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

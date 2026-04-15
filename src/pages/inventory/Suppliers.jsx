@@ -4,6 +4,7 @@ import {
   validateFormWithInlineErrors,
 } from "../../utils/formValidation.js";
 import { usePersistentState } from "../../utils/persistentState.js";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import { deleteRowById } from "../../utils/tableActions.js";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
@@ -19,13 +20,6 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total Suppliers", value: "0", helper: "active + inactive" },
-  { title: "Active", value: "0", helper: "suppliers" },
-  { title: "Countries", value: "0", helper: "global reach" },
-  { title: "Avg Lead Time", value: "0 days", helper: "delivery" },
-];
-
 const emptyForm = { name: "", contact: "", email: "", phone: "", city: "" };
 
 function Suppliers() {
@@ -33,6 +27,7 @@ function Suppliers() {
     "erp_inventory_suppliers",
     initialSuppliers,
   );
+  const purchaseOrders = usePersistentSnapshot("erp_inventory_purchase_orders", []);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -78,6 +73,38 @@ function Suppliers() {
     setShowForm(true);
   };
   const handleDelete = (row) => deleteRowById(setSuppliers, row, "supplier");
+
+  const activeSuppliers = suppliers.filter(
+    (supplier) => supplier.status === "Active",
+  ).length;
+  const uniqueCities = new Set(
+    suppliers.map((supplier) => (supplier.city || "").trim()).filter(Boolean),
+  ).size;
+  const leadTimes = purchaseOrders
+    .map((po) => {
+      const startDate = new Date(po.date);
+      const endDate = new Date(po.dueDate);
+      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        return null;
+      }
+      const dayDiff = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
+      return dayDiff >= 0 ? dayDiff : null;
+    })
+    .filter((value) => value !== null);
+  const averageLeadTime = leadTimes.length
+    ? `${Math.round(leadTimes.reduce((sum, value) => sum + value, 0) / leadTimes.length)} days`
+    : "0 days";
+
+  const summary = [
+    {
+      title: "Total Suppliers",
+      value: suppliers.length,
+      helper: "active + inactive",
+    },
+    { title: "Active", value: activeSuppliers, helper: "suppliers" },
+    { title: "Countries", value: uniqueCities, helper: "global reach" },
+    { title: "Avg Lead Time", value: averageLeadTime, helper: "delivery" },
+  ];
 
   return (
     <div className="inv-page">

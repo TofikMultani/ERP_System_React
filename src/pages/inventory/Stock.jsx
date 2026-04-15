@@ -96,13 +96,6 @@ const columns = [
   { header: "Last Updated", accessor: "lastUpdated" },
 ];
 
-const summary = [
-  { title: "Total Stock Items", value: "8", helper: "products tracked" },
-  { title: "Low Stock Alert", value: "4", helper: "below reorder level" },
-  { title: "Out of Stock", value: "1", helper: "requires immediate reorder" },
-  { title: "Total Value", value: "₹4.2M", helper: "inventory value" },
-];
-
 function Stock() {
   const [stockRows, setStockRows] = useState(initialStock);
   const [filterWarehouse, setFilterWarehouse] = useState("All");
@@ -124,6 +117,31 @@ function Stock() {
       : stockRows.filter((s) => s.warehouse === filterWarehouse);
 
   const lowStockAlerts = stockRows.filter((s) => s.onHand <= s.reorderLevel);
+  const outOfStockCount = stockRows.filter((s) => s.onHand === 0).length;
+  const totalUnits = stockRows.reduce((sum, row) => sum + Number(row.onHand || 0), 0);
+
+  const summary = [
+    {
+      title: "Total Stock Items",
+      value: stockRows.length,
+      helper: "products tracked",
+    },
+    {
+      title: "Low Stock Alert",
+      value: lowStockAlerts.length,
+      helper: "below reorder level",
+    },
+    {
+      title: "Out of Stock",
+      value: outOfStockCount,
+      helper: "requires immediate reorder",
+    },
+    {
+      title: "Total Units On Hand",
+      value: totalUnits,
+      helper: "inventory quantity",
+    },
+  ];
 
   const handleEdit = (row) => {
     setEditingId(row.id);

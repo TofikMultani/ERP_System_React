@@ -16,11 +16,20 @@ import {
   Cell,
 } from "recharts";
 
-const expenseData = [];
-
-const monthlyData = [];
-
 const COLORS = ["#5a3df0", "#3b82f6", "#10b981", "#fbbf24", "#ef4444"];
+
+function parseCurrency(value) {
+  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+}
+
+function getMonthLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 function FinanceDashboard() {
   const invoices = usePersistentSnapshot("erp_finance_invoices", []);
@@ -28,29 +37,64 @@ function FinanceDashboard() {
   const payments = usePersistentSnapshot("erp_finance_payments", []);
 
   const totalIncome = invoices.reduce(
-    (sum, invoice) =>
-      sum +
-      (Number.parseInt(String(invoice.amount).replace(/[^\d]/g, ""), 10) || 0),
+    (sum, invoice) => sum + parseCurrency(invoice.amount),
     0,
   );
   const totalExpenses = expenses.reduce(
-    (sum, expense) =>
-      sum +
-      (Number.parseInt(String(expense.amount).replace(/[^\d]/g, ""), 10) || 0),
+    (sum, expense) => sum + parseCurrency(expense.amount),
     0,
   );
   const pendingInvoices = invoices
     .filter((invoice) => invoice.status !== "Paid")
     .reduce(
       (sum, invoice) =>
-        sum +
-        (Number.parseInt(String(invoice.amount).replace(/[^\d]/g, ""), 10) ||
-          0),
+        sum + parseCurrency(invoice.amount),
       0,
     );
   const completedPayments = payments.filter(
     (payment) => payment.status === "Completed",
   ).length;
+
+  const monthlyIncomeMap = invoices.reduce((accumulator, invoice) => {
+    const month = getMonthLabel(invoice.date);
+    if (!month) {
+      return accumulator;
+    }
+    accumulator[month] = (accumulator[month] || 0) + parseCurrency(invoice.amount);
+    return accumulator;
+  }, {});
+
+  const monthlyExpenseMap = expenses.reduce((accumulator, expense) => {
+    const month = getMonthLabel(expense.date);
+    if (!month) {
+      return accumulator;
+    }
+    accumulator[month] = (accumulator[month] || 0) + parseCurrency(expense.amount);
+    return accumulator;
+  }, {});
+
+  const monthKeys = Array.from(
+    new Set([...Object.keys(monthlyIncomeMap), ...Object.keys(monthlyExpenseMap)]),
+  )
+    .sort((left, right) => left.localeCompare(right))
+    .slice(-6);
+
+  const monthlyData = monthKeys.map((monthKey) => ({
+    month: monthKey.slice(5),
+    income: monthlyIncomeMap[monthKey] || 0,
+    expenses: monthlyExpenseMap[monthKey] || 0,
+  }));
+
+  const categoryMap = expenses.reduce((accumulator, expense) => {
+    const category = expense.category || "Others";
+    accumulator[category] = (accumulator[category] || 0) + parseCurrency(expense.amount);
+    return accumulator;
+  }, {});
+
+  const expenseData = Object.entries(categoryMap).map(([category, amount]) => ({
+    category,
+    amount,
+  }));
 
   return (
     <div className="finance-page">

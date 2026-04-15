@@ -54,11 +54,13 @@ const moduleRoutes = require('./routes/moduleRoutes');
 const accessRequestRoutes = require('./routes/accessRequestRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
+const employeeRoutes = require('./routes/employeeRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use('/api/access-requests', accessRequestRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/employees', employeeRoutes);
 
 // Module Routes (to be implemented)
 // app.use('/api/users', require('./routes/userRoutes'));

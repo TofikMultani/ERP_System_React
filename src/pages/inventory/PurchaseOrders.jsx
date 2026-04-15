@@ -20,12 +20,9 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total POs", value: "0", helper: "this month" },
-  { title: "Pending", value: "0", helper: "awaiting confirmation" },
-  { title: "In Transit", value: "0", helper: "on the way" },
-  { title: "Total Value", value: "₹0", helper: "outstanding orders" },
-];
+function parseCurrency(value) {
+  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+}
 
 const emptyForm = {
   poNumber: "",
@@ -76,6 +73,27 @@ function PurchaseOrders() {
 
   const filtered =
     filterStatus === "All" ? pos : pos.filter((p) => p.status === filterStatus);
+
+  const pendingCount = pos.filter((po) => po.status === "Pending").length;
+  const inTransitCount = pos.filter((po) => po.status === "In Transit").length;
+  const outstandingValue = pos
+    .filter((po) => po.status !== "Delivered")
+    .reduce((sum, po) => sum + parseCurrency(po.amount), 0);
+
+  const summary = [
+    { title: "Total POs", value: pos.length, helper: "this month" },
+    {
+      title: "Pending",
+      value: pendingCount,
+      helper: "awaiting confirmation",
+    },
+    { title: "In Transit", value: inTransitCount, helper: "on the way" },
+    {
+      title: "Total Value",
+      value: `₹${outstandingValue.toLocaleString()}`,
+      helper: "outstanding orders",
+    },
+  ];
 
   const handleEdit = (row) => {
     setEditingId(row.id);

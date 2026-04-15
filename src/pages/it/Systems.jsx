@@ -29,6 +29,13 @@ function Systems() {
       ? systems
       : systems.filter((s) => s.status === filterStatus);
 
+  const operationalCount = systems.filter(
+    (system) => system.status === "Operational",
+  ).length;
+  const avgUptime = systems.length
+    ? ((operationalCount / systems.length) * 100).toFixed(2)
+    : "0.00";
+
   const handleEdit = (_, rowIndex) => {
     const targetRow = filtered[rowIndex];
     if (targetRow) {
@@ -100,7 +107,7 @@ function Systems() {
         <Card title="Total Systems" value={systems.length} helper="Monitored" />
         <Card
           title="Operational"
-          value={systems.filter((s) => s.status === "Operational").length}
+          value={operationalCount}
           helper="Running"
         />
         <Card
@@ -108,7 +115,7 @@ function Systems() {
           value={systems.filter((s) => s.status === "Maintenance").length}
           helper="Being serviced"
         />
-        <Card title="Avg Uptime" value="99.75%" helper="Last 30 days" />
+        <Card title="Avg Uptime" value={`${avgUptime}%`} helper="Current systems" />
       </div>
 
       <div className="it-panel">

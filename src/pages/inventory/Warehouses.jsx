@@ -19,12 +19,9 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total Warehouses", value: "0", helper: "across multiple cities" },
-  { title: "Total Capacity", value: "0 units", helper: "combined" },
-  { title: "Current Stock", value: "0 units", helper: "0% utilization" },
-  { title: "Available Space", value: "0 units", helper: "0% available" },
-];
+function parseNumber(value) {
+  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+}
 
 const emptyForm = { name: "", location: "", capacity: "", manager: "" };
 
@@ -71,6 +68,42 @@ function Warehouses() {
     setShowForm(true);
   };
   const handleDelete = (row) => deleteRowById(setWarehouses, row, "warehouse");
+
+  const totalCapacity = warehouses.reduce(
+    (sum, warehouse) => sum + parseNumber(warehouse.capacity),
+    0,
+  );
+  const currentStock = warehouses.reduce(
+    (sum, warehouse) => sum + parseNumber(warehouse.occupied),
+    0,
+  );
+  const availableSpace = Math.max(totalCapacity - currentStock, 0);
+  const utilization = totalCapacity
+    ? ((currentStock / totalCapacity) * 100).toFixed(1)
+    : "0.0";
+
+  const summary = [
+    {
+      title: "Total Warehouses",
+      value: warehouses.length,
+      helper: "across multiple cities",
+    },
+    {
+      title: "Total Capacity",
+      value: `${totalCapacity.toLocaleString()} units`,
+      helper: "combined",
+    },
+    {
+      title: "Current Stock",
+      value: `${currentStock.toLocaleString()} units`,
+      helper: `${utilization}% utilization`,
+    },
+    {
+      title: "Available Space",
+      value: `${availableSpace.toLocaleString()} units`,
+      helper: `${(100 - Number(utilization)).toFixed(1)}% available`,
+    },
+  ];
 
   return (
     <div className="inv-page">

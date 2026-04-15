@@ -1,5 +1,6 @@
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   BarChart,
   Bar,
@@ -16,29 +17,77 @@ import {
   Cell,
 } from "recharts";
 
-const monthlyData = [
-  { month: "January", income: 450000, expenses: 385000, profit: 65000 },
-  { month: "February", income: 520000, expenses: 410000, profit: 110000 },
-  { month: "March", income: 615000, expenses: 445000, profit: 170000 },
-];
-
-const expenseCategoryData = [
-  { category: "Salaries", amount: 450000 },
-  { category: "Operations", amount: 125000 },
-  { category: "Marketing", amount: 75000 },
-  { category: "Utilities", amount: 35000 },
-  { category: "Others", amount: 40000 },
-];
-
 const COLORS = ["#5a3df0", "#3b82f6", "#10b981", "#fbbf24", "#ef4444"];
 
-const summaryRows = [
-  ["January 2026", "₹4.50L", "₹3.85L", "₹0.65L"],
-  ["February 2026", "₹5.20L", "₹4.10L", "₹1.10L"],
-  ["March 2026", "₹6.15L", "₹4.45L", "₹1.70L"],
-];
+function parseCurrency(value) {
+  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+}
+
+function getMonthLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 function FinanceReports() {
+  const invoices = usePersistentSnapshot("erp_finance_invoices", []);
+  const expenses = usePersistentSnapshot("erp_finance_expenses", []);
+
+  const monthlyIncomeMap = invoices.reduce((accumulator, invoice) => {
+    const month = getMonthLabel(invoice.date);
+    if (!month) {
+      return accumulator;
+    }
+    accumulator[month] = (accumulator[month] || 0) + parseCurrency(invoice.amount);
+    return accumulator;
+  }, {});
+
+  const monthlyExpenseMap = expenses.reduce((accumulator, expense) => {
+    const month = getMonthLabel(expense.date);
+    if (!month) {
+      return accumulator;
+    }
+    accumulator[month] = (accumulator[month] || 0) + parseCurrency(expense.amount);
+    return accumulator;
+  }, {});
+
+  const monthKeys = Array.from(
+    new Set([...Object.keys(monthlyIncomeMap), ...Object.keys(monthlyExpenseMap)]),
+  )
+    .sort((left, right) => left.localeCompare(right))
+    .slice(-6);
+
+  const monthlyData = monthKeys.map((monthKey) => {
+    const income = monthlyIncomeMap[monthKey] || 0;
+    const monthlyExpenses = monthlyExpenseMap[monthKey] || 0;
+    return {
+      month: monthKey,
+      income,
+      expenses: monthlyExpenses,
+      profit: income - monthlyExpenses,
+    };
+  });
+
+  const categoryMap = expenses.reduce((accumulator, expense) => {
+    const category = expense.category || "Others";
+    accumulator[category] = (accumulator[category] || 0) + parseCurrency(expense.amount);
+    return accumulator;
+  }, {});
+
+  const expenseCategoryData = Object.entries(categoryMap).map(
+    ([category, amount]) => ({ category, amount }),
+  );
+
+  const summaryRows = monthlyData.map((row) => [
+    row.month,
+    `₹${(row.income / 100000).toFixed(2)}L`,
+    `₹${(row.expenses / 100000).toFixed(2)}L`,
+    `₹${(row.profit / 100000).toFixed(2)}L`,
+  ]);
+
   const totalIncome = monthlyData.reduce((sum, m) => sum + m.income, 0);
   const totalExpenses = monthlyData.reduce((sum, m) => sum + m.expenses, 0);
   const totalProfit = totalIncome - totalExpenses;
@@ -70,7 +119,7 @@ function FinanceReports() {
         />
         <Card
           title="Profit Margin"
-          value={((totalProfit / totalIncome) * 100).toFixed(1) + "%"}
+          value={totalIncome ? ((totalProfit / totalIncome) * 100).toFixed(1) + "%" : "0.0%"}
           helper="Of income"
         />
       </div>
@@ -143,6 +192,9 @@ function FinanceReports() {
           columns={["Period", "Income", "Expenses", "Profit"]}
           rows={summaryRows}
         />
+        {!summaryRows.length ? (
+          <p className="root-admin-dashboard__empty-state">No monthly summary data yet.</p>
+        ) : null}
       </div>
     </div>
   );

@@ -121,14 +121,40 @@ const columns = [
   { header: "Rating", accessor: "rating" },
 ];
 
-const summary = [
-  { title: "Avg Score", value: "82.4", helper: "org-wide average" },
-  { title: "Excellent", value: "2", helper: "employees rated excellent" },
-  { title: "Good", value: "4", helper: "employees rated good" },
-  { title: "Needs Attention", value: "2", helper: "below 70%" },
-];
-
 function Performance() {
+  const averageScore = performanceData.length
+    ? (
+        performanceData.reduce(
+          (sum, employee) => sum + Number(employee.avg || 0),
+          0,
+        ) / performanceData.length
+      ).toFixed(1)
+    : "0.0";
+  const excellentCount = performanceData.filter(
+    (employee) => employee.rating === "Excellent",
+  ).length;
+  const goodCount = performanceData.filter(
+    (employee) => employee.rating === "Good",
+  ).length;
+  const needsAttentionCount = performanceData.filter(
+    (employee) => Number(employee.avg || 0) < 70,
+  ).length;
+
+  const summary = [
+    { title: "Avg Score", value: averageScore, helper: "org-wide average" },
+    {
+      title: "Excellent",
+      value: excellentCount,
+      helper: "employees rated excellent",
+    },
+    { title: "Good", value: goodCount, helper: "employees rated good" },
+    {
+      title: "Needs Attention",
+      value: needsAttentionCount,
+      helper: "below 70%",
+    },
+  ];
+
   return (
     <div className="hr-page">
       <div className="hr-page__header">

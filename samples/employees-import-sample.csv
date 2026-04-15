@@ -1,0 +1,6 @@
+employeeId,fullName,phone,email,department,role,dateJoined,status,salary,address,reportingManager
+,Ravi Sharma,9876543210,ravi.sharma@example.com,IT,Developer,2026-04-01,Active,90000,Rajkot,Nidhi Patel
+,Anita Verma,9898989898,anita.verma@example.com,HR,HR Executive,2026-03-20,Active,75000,Ahmedabad,Rohan Mehta
+,Kunal Joshi,9123456780,kunal.joshi@example.com,Finance,Accountant,2026-02-15,On Leave,82000,Surat,Priya Nair
+,Megha Desai,9012345678,megha.desai@example.com,Sales,Sales Lead,2026-01-10,Active,88000,Vadodara,Arjun Patel
+,Suresh Iyer,9988776655,suresh.iyer@example.com,Support,Support Specialist,2025-12-05,Inactive,68000,Mumbai,Neha Kapoor

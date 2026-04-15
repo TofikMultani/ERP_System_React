@@ -181,3 +181,58 @@ export async function deleteMyUser(userId) {
 
   return result.data;
 }
+
+export async function fetchEmployees() {
+  const result = await apiRequest(`/employees`, {
+    headers: authHeaders(),
+  });
+
+  return result.data || [];
+}
+
+export async function fetchNextEmployeeId() {
+  const result = await apiRequest(`/employees/next-id`, {
+    headers: authHeaders(),
+  });
+
+  return result.data?.employeeId || "";
+}
+
+export async function createEmployee(payload) {
+  const result = await apiRequest(`/employees`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function updateEmployee(employeeId, payload) {
+  const result = await apiRequest(`/employees/${encodeURIComponent(employeeId)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}
+
+export async function deleteEmployee(employeeId) {
+  const result = await apiRequest(`/employees/${encodeURIComponent(employeeId)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  return result.data;
+}
+
+export async function importEmployees(payload) {
+  const result = await apiRequest(`/employees/import`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}

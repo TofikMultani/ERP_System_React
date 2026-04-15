@@ -11,6 +11,8 @@ import Login from "../pages/login/Login.jsx";
 import Dashboard from "../pages/admin/Dashboard.jsx";
 import HRDashboard from "../pages/hr/HRDashboard.jsx";
 import Employees from "../pages/hr/Employees.jsx";
+import EmployeeForm from "../pages/hr/EmployeeForm.jsx";
+import EmployeeDetails from "../pages/hr/EmployeeDetails.jsx";
 import Departments from "../pages/hr/Departments.jsx";
 import Attendance from "../pages/hr/Attendance.jsx";
 import Leave from "../pages/hr/Leave.jsx";
@@ -96,6 +98,12 @@ function AppRoutes() {
             <Route index element={<HRDashboard />} />
             <Route path="dashboard" element={<Navigate to="/hr" replace />} />
             <Route path="employees" element={<Employees />} />
+            <Route path="employees/new" element={<EmployeeForm />} />
+            <Route path="employees/:employeeId" element={<EmployeeDetails />} />
+            <Route
+              path="employees/:employeeId/edit"
+              element={<EmployeeForm />}
+            />
             <Route path="departments" element={<Departments />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="leave" element={<Leave />} />

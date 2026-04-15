@@ -92,13 +92,6 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total Documents", value: "8", helper: "in repository" },
-  { title: "Policies", value: "4", helper: "active policy files" },
-  { title: "Templates", value: "2", helper: "ready to use" },
-  { title: "Legal Docs", value: "1", helper: "compliance documents" },
-];
-
 const emptyForm = {
   name: "",
   category: "Policy",
@@ -145,6 +138,25 @@ function Documents() {
   const filtered = docs.filter((d) =>
     `${d.name} ${d.category}`.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const summary = [
+    { title: "Total Documents", value: docs.length, helper: "in repository" },
+    {
+      title: "Policies",
+      value: docs.filter((doc) => doc.category === "Policy").length,
+      helper: "active policy files",
+    },
+    {
+      title: "Templates",
+      value: docs.filter((doc) => doc.category === "Template").length,
+      helper: "ready to use",
+    },
+    {
+      title: "Legal Docs",
+      value: docs.filter((doc) => doc.category === "Legal").length,
+      helper: "compliance documents",
+    },
+  ];
 
   const handleEdit = (row) => {
     setEditingId(row.id);

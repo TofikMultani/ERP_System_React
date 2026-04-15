@@ -1,5 +1,6 @@
 import Card from "../../components/Card.jsx";
 import { ticketsData } from "../../utils/supportData.js";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   BarChart,
   Bar,
@@ -13,20 +14,62 @@ import {
   Legend,
 } from "recharts";
 
-const ticketData = [];
+function getMonthLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
 
-const resolutionData = [];
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 function SupportDashboard() {
-  const openTickets = ticketsData.filter(
+  const tickets = usePersistentSnapshot("erp_support_tickets", ticketsData);
+
+  const openTickets = tickets.filter(
     (ticket) => ticket.status === "open",
   ).length;
-  const resolvedTickets = ticketsData.filter(
+  const resolvedTickets = tickets.filter(
     (ticket) => ticket.status === "resolved",
   ).length;
-  const inProgressTickets = ticketsData.filter(
+  const inProgressTickets = tickets.filter(
     (ticket) => ticket.status === "in-progress",
   ).length;
+
+  const monthlyMap = tickets.reduce((accumulator, ticket) => {
+    const monthKey = getMonthLabel(ticket.created || ticket.date);
+    if (!monthKey) {
+      return accumulator;
+    }
+
+    if (!accumulator[monthKey]) {
+      accumulator[monthKey] = { month: monthKey, open: 0, resolved: 0 };
+    }
+
+    if (ticket.status === "resolved") {
+      accumulator[monthKey].resolved += 1;
+    } else {
+      accumulator[monthKey].open += 1;
+    }
+
+    return accumulator;
+  }, {});
+
+  const ticketData = Object.values(monthlyMap)
+    .sort((left, right) => left.month.localeCompare(right.month))
+    .slice(-6)
+    .map((item) => ({ ...item, month: item.month.slice(5) }));
+
+  const statusCountMap = tickets.reduce((accumulator, ticket) => {
+    const key = ticket.status || "unknown";
+    accumulator[key] = (accumulator[key] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  const resolutionData = Object.entries(statusCountMap).map(([name, value]) => ({
+    name,
+    value,
+  }));
 
   return (
     <div className="support-page">
@@ -53,7 +96,11 @@ function SupportDashboard() {
           value={inProgressTickets}
           helper="Assigned to agents"
         />
-        <Card title="Customer Satisfaction" value="4.8/5" helper="Rating" />
+        <Card
+          title="Customer Satisfaction"
+          value={`${tickets.length ? ((resolvedTickets / tickets.length) * 5).toFixed(1) : "0.0"}/5`}
+          helper="Resolution ratio"
+        />
       </div>
 
       <div className="support-charts">

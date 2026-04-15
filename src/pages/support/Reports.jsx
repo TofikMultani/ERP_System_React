@@ -1,8 +1,50 @@
 import Card from "../../components/Card.jsx";
-
-const reportData = [];
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
+import { ticketsData } from "../../utils/supportData.js";
 
 function SupportReports() {
+  const tickets = usePersistentSnapshot("erp_support_tickets", ticketsData);
+
+  const reportMap = tickets.reduce((accumulator, ticket) => {
+    const agent = ticket.agent || ticket.assignee || "Unassigned";
+
+    if (!accumulator[agent]) {
+      accumulator[agent] = {
+        agent,
+        tickets: 0,
+        resolved: 0,
+        hoursTotal: 0,
+        hoursCount: 0,
+      };
+    }
+
+    accumulator[agent].tickets += 1;
+    if (ticket.status === "resolved") {
+      accumulator[agent].resolved += 1;
+    }
+
+    const hours = Number.parseFloat(ticket.resolutionHours);
+    if (!Number.isNaN(hours) && hours > 0) {
+      accumulator[agent].hoursTotal += hours;
+      accumulator[agent].hoursCount += 1;
+    }
+
+    return accumulator;
+  }, {});
+
+  const reportData = Object.values(reportMap)
+    .map((row) => {
+      const avgHours = row.hoursCount ? row.hoursTotal / row.hoursCount : 0;
+      const satisfaction = row.tickets ? (row.resolved / row.tickets) * 5 : 0;
+
+      return {
+        ...row,
+        avg_time: avgHours ? `${avgHours.toFixed(1)} hrs` : "-",
+        satisfaction: satisfaction.toFixed(1),
+      };
+    })
+    .sort((left, right) => right.tickets - left.tickets);
+
   const totalTickets = reportData.reduce((sum, r) => sum + r.tickets, 0);
   const totalResolved = reportData.reduce((sum, r) => sum + r.resolved, 0);
   const avgSatisfaction = reportData.length
@@ -34,8 +76,24 @@ function SupportReports() {
         />
         <Card
           title="Avg Resolution Time"
-          value="3.8 hrs"
-          helper="Target: 4 hrs"
+          value={
+            reportData.some((row) => row.avg_time !== "-")
+              ? `${(
+                  reportData
+                    .filter((row) => row.avg_time !== "-")
+                    .reduce(
+                      (sum, row) =>
+                        sum + Number.parseFloat(String(row.avg_time).replace(/[^\d.]/g, "")),
+                      0,
+                    ) /
+                  Math.max(
+                    reportData.filter((row) => row.avg_time !== "-").length,
+                    1,
+                  )
+                ).toFixed(1)} hrs`
+              : "-"
+          }
+          helper="Across tracked agents"
         />
         <Card
           title="Customer Satisfaction"

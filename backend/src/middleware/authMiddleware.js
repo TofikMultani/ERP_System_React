@@ -41,7 +41,12 @@ const checkRole = (allowedRoles) => {
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const normalizedRole = String(req.user.role || '').trim().toLowerCase();
+    const normalizedAllowedRoles = Array.isArray(allowedRoles)
+      ? allowedRoles.map((role) => String(role || '').trim().toLowerCase())
+      : [];
+
+    if (!normalizedAllowedRoles.includes(normalizedRole)) {
       return res.status(403).json({
         status: 'ERROR',
         message: 'Access denied - insufficient privileges',

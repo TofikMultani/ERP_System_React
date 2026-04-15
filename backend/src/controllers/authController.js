@@ -100,10 +100,11 @@ const loginUser = async (req, res) => {
     }
 
     const user = result.rows[0];
+    const normalizedRole = String(user.role || '').trim().toLowerCase();
     const allowedModules = normalizeAllowedModules(user.allowed_modules);
-    const allowedPaths = buildAllowedPaths(user.role, allowedModules);
+    const allowedPaths = buildAllowedPaths(normalizedRole, allowedModules);
 
-    if ((user.role === 'client' || user.role === 'sub-user') && (!allowedPaths || !allowedPaths.length)) {
+    if ((normalizedRole === 'client' || normalizedRole === 'sub-user') && (!allowedPaths || !allowedPaths.length)) {
       return res.status(401).json({
         status: 'ERROR',
         message: 'Your account is not provisioned with modules yet',
@@ -133,7 +134,7 @@ const loginUser = async (req, res) => {
       {
         id: user.id,
         email: user.email,
-        role: user.role,
+        role: normalizedRole,
         allowedModules,
         allowedPaths,
       },
@@ -148,15 +149,15 @@ const loginUser = async (req, res) => {
       message: 'Login successful',
       token,
       redirectTo:
-        user.role === 'root-admin'
+        normalizedRole === 'root-admin'
           ? '/root-admin'
-          : getPrimaryRoute(user.role, allowedPaths) || `/${user.role}`,
+          : getPrimaryRoute(normalizedRole, allowedPaths) || `/${normalizedRole}`,
       user: {
         id: user.id,
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
-        role: user.role,
+        role: normalizedRole,
         allowedModules,
         allowedPaths,
       },
@@ -186,13 +187,15 @@ const getCurrentUser = async (req, res) => {
     }
 
     const user = result.rows[0];
+    const normalizedRole = String(user.role || '').trim().toLowerCase();
     const allowedModules = normalizeAllowedModules(user.allowed_modules);
-    const allowedPaths = buildAllowedPaths(user.role, allowedModules);
+    const allowedPaths = buildAllowedPaths(normalizedRole, allowedModules);
 
     res.status(200).json({
       status: 'OK',
       data: {
         ...user,
+        role: normalizedRole,
         allowedModules,
         allowedPaths,
       },

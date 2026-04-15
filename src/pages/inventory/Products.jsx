@@ -19,12 +19,9 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total Products", value: "0", helper: "active products" },
-  { title: "Total Value", value: "₹0", helper: "inventory value" },
-  { title: "Low Stock", value: "0", helper: "items need reorder" },
-  { title: "Out of Stock", value: "0", helper: "discontinued items" },
-];
+function parseNumber(value) {
+  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+}
 
 const emptyForm = { name: "", category: "", sku: "", price: "", stock: "" };
 
@@ -78,6 +75,42 @@ function Products() {
     setShowForm(true);
   };
   const handleDelete = (row) => deleteRowById(setProducts, row, "product");
+
+  const totalValue = products.reduce((sum, product) => {
+    const price = parseNumber(product.price);
+    const stock = parseNumber(product.stock);
+    return sum + price * stock;
+  }, 0);
+  const lowStockCount = products.filter((product) => {
+    const stock = parseNumber(product.stock);
+    return stock > 0 && stock <= 10;
+  }).length;
+  const outOfStockCount = products.filter(
+    (product) => parseNumber(product.stock) === 0,
+  ).length;
+
+  const summary = [
+    {
+      title: "Total Products",
+      value: products.length,
+      helper: "active products",
+    },
+    {
+      title: "Total Value",
+      value: `₹${totalValue.toLocaleString()}`,
+      helper: "inventory value",
+    },
+    {
+      title: "Low Stock",
+      value: lowStockCount,
+      helper: "items need reorder",
+    },
+    {
+      title: "Out of Stock",
+      value: outOfStockCount,
+      helper: "discontinued items",
+    },
+  ];
 
   return (
     <div className="inv-page">

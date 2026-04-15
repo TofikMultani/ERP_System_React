@@ -19,13 +19,6 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total Applicants", value: "0", helper: "active pipeline" },
-  { title: "Selected", value: "0", helper: "offers extended" },
-  { title: "In Progress", value: "0", helper: "across stages" },
-  { title: "Open Positions", value: "0", helper: "to be filled" },
-];
-
 const emptyForm = {
   name: "",
   role: "",
@@ -77,6 +70,34 @@ function Recruitment() {
     setShowForm(true);
   };
   const handleDelete = (row) => deleteRowById(setCandidates, row, "candidate");
+
+  const selectedCount = candidates.filter(
+    (candidate) => candidate.status === "Selected",
+  ).length;
+  const inProgressCount = candidates.filter(
+    (candidate) => candidate.status === "In Progress",
+  ).length;
+  const openPositions = new Set(
+    candidates
+      .filter((candidate) => candidate.status !== "Selected")
+      .map((candidate) => candidate.role)
+      .filter(Boolean),
+  ).size;
+
+  const summary = [
+    {
+      title: "Total Applicants",
+      value: candidates.length,
+      helper: "active pipeline",
+    },
+    { title: "Selected", value: selectedCount, helper: "offers extended" },
+    {
+      title: "In Progress",
+      value: inProgressCount,
+      helper: "across stages",
+    },
+    { title: "Open Positions", value: openPositions, helper: "to be filled" },
+  ];
 
   return (
     <div className="hr-page">

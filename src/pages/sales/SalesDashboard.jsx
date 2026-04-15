@@ -13,40 +13,76 @@ import {
   Legend,
 } from "recharts";
 
-const monthlyData = [];
+function parseCurrency(value) {
+  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+}
+
+function getMonthLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 function SalesDashboard() {
   const customers = usePersistentSnapshot("erp_sales_customers", []);
   const orders = usePersistentSnapshot("erp_sales_orders", []);
   const quotations = usePersistentSnapshot("erp_sales_quotations", []);
 
+  const currentDate = new Date();
   const currentMonthRevenue = orders.reduce((sum, order) => {
-    const amount =
-      Number.parseInt(String(order.amount).replace(/[^\d]/g, ""), 10) || 0;
-    return sum + amount;
+    const date = new Date(order.date);
+    if (
+      Number.isNaN(date.getTime()) ||
+      date.getMonth() !== currentDate.getMonth() ||
+      date.getFullYear() !== currentDate.getFullYear()
+    ) {
+      return sum;
+    }
+
+    return sum + parseCurrency(order.amount);
   }, 0);
 
-  const topCustomers = [...customers]
-    .sort((left, right) => {
-      const leftValue =
-        Number.parseInt(
-          String(left.totalValue || "0").replace(/[^\d]/g, ""),
-          10,
-        ) || 0;
-      const rightValue =
-        Number.parseInt(
-          String(right.totalValue || "0").replace(/[^\d]/g, ""),
-          10,
-        ) || 0;
-      return rightValue - leftValue;
-    })
+  const monthlyMap = orders.reduce((accumulator, order) => {
+    const monthKey = getMonthLabel(order.date);
+    if (!monthKey) {
+      return accumulator;
+    }
+
+    if (!accumulator[monthKey]) {
+      accumulator[monthKey] = { month: monthKey, revenue: 0, orders: 0 };
+    }
+
+    accumulator[monthKey].revenue += parseCurrency(order.amount);
+    accumulator[monthKey].orders += 1;
+    return accumulator;
+  }, {});
+
+  const monthlyData = Object.values(monthlyMap)
+    .sort((left, right) => left.month.localeCompare(right.month))
+    .slice(-6)
+    .map((item) => ({ ...item, month: item.month.slice(5) }));
+
+  const customerSpendMap = orders.reduce((accumulator, order) => {
+    const key = order.customer || "Unknown";
+    accumulator[key] = (accumulator[key] || 0) + parseCurrency(order.amount);
+    return accumulator;
+  }, {});
+
+  const topCustomers = Object.entries(customerSpendMap)
+    .sort((left, right) => right[1] - left[1])
     .slice(0, 3)
-    .map((customer) => ({
-      name: customer.name,
-      phone: customer.phone,
-      email: customer.email,
-      spent: customer.totalValue || "₹0",
-    }));
+    .map(([name, total]) => {
+      const customer = customers.find((item) => item.name === name) || {};
+      return {
+        name,
+        phone: customer.phone || "-",
+        email: customer.email || "-",
+        spent: `₹${total.toLocaleString()}`,
+      };
+    });
 
   return (
     <div className="sales-page">

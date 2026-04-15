@@ -81,13 +81,6 @@ const columns = [
   { header: "Approved By", accessor: "approvedBy" },
 ];
 
-const summary = [
-  { title: "Total Adjustments", value: "6", helper: "this month" },
-  { title: "Units Added", value: "14", helper: "positive adjustments" },
-  { title: "Units Removed", value: "12", helper: "negative adjustments" },
-  { title: "Net Change", value: "+2", helper: "this month" },
-];
-
 const emptyForm = {
   date: "",
   product: "",
@@ -141,6 +134,39 @@ function Adjustments() {
   };
   const handleDelete = (row) =>
     deleteRowById(setAdjustments, row, "adjustment");
+
+  const unitsAdded = adjustments
+    .filter((adjustment) => Number(adjustment.quantity) > 0)
+    .reduce((sum, adjustment) => sum + Number(adjustment.quantity || 0), 0);
+  const unitsRemoved = Math.abs(
+    adjustments
+      .filter((adjustment) => Number(adjustment.quantity) < 0)
+      .reduce((sum, adjustment) => sum + Number(adjustment.quantity || 0), 0),
+  );
+  const netChange = unitsAdded - unitsRemoved;
+
+  const summary = [
+    {
+      title: "Total Adjustments",
+      value: adjustments.length,
+      helper: "this month",
+    },
+    {
+      title: "Units Added",
+      value: unitsAdded,
+      helper: "positive adjustments",
+    },
+    {
+      title: "Units Removed",
+      value: unitsRemoved,
+      helper: "negative adjustments",
+    },
+    {
+      title: "Net Change",
+      value: `${netChange >= 0 ? "+" : ""}${netChange}`,
+      helper: "this month",
+    },
+  ];
 
   return (
     <div className="inv-page">

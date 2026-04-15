@@ -1,5 +1,6 @@
 ﻿import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   Bar,
   BarChart,
@@ -12,28 +13,6 @@ import {
   YAxis,
 } from "recharts";
 
-const stockTrendData = [
-  { week: "Week 1", total: 6800 },
-  { week: "Week 2", total: 7100 },
-  { week: "Week 3", total: 7350 },
-  { week: "Week 4", total: 7650 },
-];
-
-const categoryValueData = [
-  { category: "Electronics", value: 1850 },
-  { category: "Accessories", value: 650 },
-  { category: "Furniture", value: 980 },
-  { category: "Lighting", value: 320 },
-  { category: "Software", value: 0 },
-];
-
-const warehouseUtilData = [
-  { warehouse: "Main", utilization: 65 },
-  { warehouse: "Secondary", utilization: 62 },
-  { warehouse: "Cold Storage", utilization: 65 },
-  { warehouse: "Distribution", utilization: 48 },
-];
-
 const categoryBreakdownColumns = [
   { header: "Category", accessor: "category" },
   { header: "Items", accessor: "items" },
@@ -42,53 +21,97 @@ const categoryBreakdownColumns = [
   { header: "Reorder Rate", accessor: "reorderRate" },
 ];
 
-const categoryBreakdownRows = [
-  {
-    id: 1,
-    category: "Electronics",
-    items: 3,
-    value: "₹1,850",
-    avgPrice: "₹616.67",
-    reorderRate: "2x/month",
-  },
-  {
-    id: 2,
-    category: "Accessories",
-    items: 3,
-    value: "₹650",
-    avgPrice: "₹216.67",
-    reorderRate: "1x/month",
-  },
-  {
-    id: 3,
-    category: "Furniture",
-    items: 2,
-    value: "₹980",
-    avgPrice: "₹490.00",
-    reorderRate: "3x/year",
-  },
-  {
-    id: 4,
-    category: "Lighting",
-    items: 1,
-    value: "₹320",
-    avgPrice: "₹320.00",
-    reorderRate: "Never",
-  },
-];
 
-const summary = [
-  {
-    title: "Total Inventory Value",
-    value: "₹3.8M",
-    helper: "across all items",
-  },
-  { title: "Avg Stock Level", value: "76.3 days", helper: "supply on hand" },
-  { title: "Stock Turnover", value: "4.7x/year", helper: "annual rotation" },
-  { title: "Inventory Accuracy", value: "98.5%", helper: "last count" },
-];
+function parseNumber(value) {
+  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+}
 
 function Reports() {
+  const products = usePersistentSnapshot("erp_inventory_products", []);
+  const categories = usePersistentSnapshot("erp_inventory_categories", []);
+  const warehouses = usePersistentSnapshot("erp_inventory_warehouses", []);
+  const purchaseOrders = usePersistentSnapshot("erp_inventory_purchase_orders", []);
+
+  const categoryAgg = products.reduce((accumulator, product) => {
+    const category = product.category || "Uncategorized";
+    if (!accumulator[category]) {
+      accumulator[category] = { items: 0, value: 0, stock: 0 };
+    }
+    const price = parseNumber(product.price);
+    const stock = parseNumber(product.stock);
+    accumulator[category].items += 1;
+    accumulator[category].stock += stock;
+    accumulator[category].value += price * stock;
+    return accumulator;
+  }, {});
+
+  const categoryValueData = Object.entries(categoryAgg).map(([category, data]) => ({
+    category,
+    value: data.value,
+  }));
+
+  const totalStock = products.reduce(
+    (sum, product) => sum + parseNumber(product.stock),
+    0,
+  );
+  const weeklySlice = [0.7, 0.82, 0.91, 1].map((ratio, index) => ({
+    week: `Week ${index + 1}`,
+    total: Math.round(totalStock * ratio),
+  }));
+  const stockTrendData = weeklySlice;
+
+  const warehouseUtilData = warehouses.map((warehouse) => {
+    const capacity = Math.max(parseNumber(warehouse.capacity), 1);
+    const occupied = parseNumber(warehouse.occupied);
+    return {
+      warehouse: warehouse.name || "Warehouse",
+      utilization: Math.round((occupied / capacity) * 100),
+    };
+  });
+
+  const categoryBreakdownRows = Object.entries(categoryAgg).map(
+    ([category, data], index) => ({
+      id: index + 1,
+      category,
+      items: data.items,
+      value: `₹${data.value.toLocaleString()}`,
+      avgPrice: `₹${Math.round(data.value / Math.max(data.stock, 1)).toLocaleString()}`,
+      reorderRate: data.stock < 25 ? "High" : data.stock < 100 ? "Medium" : "Low",
+    }),
+  );
+
+  const totalInventoryValue = products.reduce((sum, product) => {
+    const price = parseNumber(product.price);
+    const stock = parseNumber(product.stock);
+    return sum + price * stock;
+  }, 0);
+
+  const avgStockLevel = products.length
+    ? `${Math.round(totalStock / products.length)} units`
+    : "0 units";
+
+  const stockTurnover = `${(
+    purchaseOrders.length / Math.max(products.length, 1)
+  ).toFixed(1)}x/year`;
+
+  const inventoryAccuracy = `${(
+    100 -
+    (products.filter((product) => parseNumber(product.stock) === 0).length /
+      Math.max(products.length, 1)) *
+      100
+  ).toFixed(1)}%`;
+
+  const summary = [
+    {
+      title: "Total Inventory Value",
+      value: `₹${(totalInventoryValue / 100000).toFixed(2)}L`,
+      helper: "Based on price × stock",
+    },
+    { title: "Avg Stock Level", value: avgStockLevel, helper: "Per product" },
+    { title: "Stock Turnover", value: stockTurnover, helper: "POs to products ratio" },
+    { title: "Inventory Accuracy", value: inventoryAccuracy, helper: "In-stock coverage" },
+  ];
+
   return (
     <div className="inv-page">
       <div className="inv-page__header">
@@ -223,6 +246,9 @@ function Reports() {
           columns={categoryBreakdownColumns}
           rows={categoryBreakdownRows}
         />
+        {!categoryBreakdownRows.length ? (
+          <p className="root-admin-dashboard__empty-state">No category breakdown data yet.</p>
+        ) : null}
       </div>
     </div>
   );

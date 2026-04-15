@@ -1,5 +1,6 @@
 ﻿import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   Bar,
   BarChart,
@@ -12,24 +13,6 @@ import {
   YAxis,
 } from "recharts";
 
-const headcountTrend = [
-  { month: "Oct", count: 220 },
-  { month: "Nov", count: 225 },
-  { month: "Dec", count: 228 },
-  { month: "Jan", count: 232 },
-  { month: "Feb", count: 240 },
-  { month: "Mar", count: 248 },
-];
-
-const attritionData = [
-  { month: "Oct", exits: 2 },
-  { month: "Nov", exits: 1 },
-  { month: "Dec", exits: 3 },
-  { month: "Jan", exits: 2 },
-  { month: "Feb", exits: 4 },
-  { month: "Mar", exits: 1 },
-];
-
 const deptSummaryColumns = [
   { header: "Department", accessor: "dept" },
   { header: "Employees", accessor: "total" },
@@ -39,71 +22,117 @@ const deptSummaryColumns = [
   { header: "Payroll Cost", accessor: "payroll" },
 ];
 
-const deptSummaryRows = [
-  {
-    id: 1,
-    dept: "Engineering",
-    total: 74,
-    present: 68,
-    onLeave: 4,
-    perf: "87.4",
-    payroll: "₹48,200",
-  },
-  {
-    id: 2,
-    dept: "HR",
-    total: 22,
-    present: 21,
-    onLeave: 1,
-    perf: "80.3",
-    payroll: "₹28,600",
-  },
-  {
-    id: 3,
-    dept: "Finance",
-    total: 31,
-    present: 29,
-    onLeave: 2,
-    perf: "86.0",
-    payroll: "₹41,000",
-  },
-  {
-    id: 4,
-    dept: "Sales",
-    total: 48,
-    present: 42,
-    onLeave: 5,
-    perf: "72.4",
-    payroll: "₹38,400",
-  },
-  {
-    id: 5,
-    dept: "IT",
-    total: 40,
-    present: 38,
-    onLeave: 2,
-    perf: "89.5",
-    payroll: "₹33,800",
-  },
-  {
-    id: 6,
-    dept: "Support",
-    total: 33,
-    present: 31,
-    onLeave: 2,
-    perf: "83.5",
-    payroll: "₹26,200",
-  },
-];
 
-const summary = [
-  { title: "Headcount", value: "248", helper: "+12 from last month" },
-  { title: "Attrition Rate", value: "1.2%", helper: "6 exits this quarter" },
-  { title: "Avg Attendance", value: "86.3%", helper: "this month" },
-  { title: "Total Payroll", value: "₹216k", helper: "March 2026" },
-];
+function getMonthLabel(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 function Reports() {
+  const employees = usePersistentSnapshot("erp_hr_employees", []);
+  const leaves = usePersistentSnapshot("erp_hr_leave", []);
+  const recruitment = usePersistentSnapshot("erp_hr_recruitment", []);
+
+  const joinMonthMap = employees.reduce((accumulator, employee) => {
+    const month = getMonthLabel(employee.joined);
+    if (!month) {
+      return accumulator;
+    }
+    accumulator[month] = (accumulator[month] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  const monthKeys = Object.keys(joinMonthMap)
+    .sort((left, right) => left.localeCompare(right))
+    .slice(-6);
+
+  let runningCount = 0;
+  const headcountTrend = monthKeys.map((month) => {
+    runningCount += joinMonthMap[month];
+    return { month: month.slice(5), count: runningCount };
+  });
+
+  const exitsByMonth = employees
+    .filter((employee) => employee.status === "Inactive")
+    .reduce((accumulator, employee) => {
+      const month = getMonthLabel(employee.joined);
+      if (!month) {
+        return accumulator;
+      }
+      accumulator[month] = (accumulator[month] || 0) + 1;
+      return accumulator;
+    }, {});
+
+  const attritionData = monthKeys.map((month) => ({
+    month: month.slice(5),
+    exits: exitsByMonth[month] || 0,
+  }));
+
+  const leaveDeptMap = leaves.reduce((accumulator, leave) => {
+    const dept = leave.dept || "Unknown";
+    accumulator[dept] = (accumulator[dept] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  const deptSummaryRows = Object.entries(
+    employees.reduce((accumulator, employee) => {
+      const dept = employee.dept || "Unknown";
+      if (!accumulator[dept]) {
+        accumulator[dept] = {
+          id: dept,
+          dept,
+          total: 0,
+          present: 0,
+          onLeave: 0,
+          perf: "0.0",
+          payroll: "₹0",
+        };
+      }
+      accumulator[dept].total += 1;
+      if (employee.status === "Active") {
+        accumulator[dept].present += 1;
+      }
+      return accumulator;
+    }, {}),
+  ).map(([, row]) => ({
+    ...row,
+    onLeave: leaveDeptMap[row.dept] || 0,
+    perf: row.total ? ((row.present / row.total) * 100).toFixed(1) : "0.0",
+    payroll: `₹${(row.total * 18000).toLocaleString()}`,
+  }));
+
+  const headcount = employees.length;
+  const inactiveCount = employees.filter(
+    (employee) => employee.status === "Inactive",
+  ).length;
+  const attritionRate = headcount
+    ? `${((inactiveCount / headcount) * 100).toFixed(1)}%`
+    : "0.0%";
+  const activeCount = employees.filter((employee) => employee.status === "Active").length;
+  const avgAttendance = headcount
+    ? `${((activeCount / headcount) * 100).toFixed(1)}%`
+    : "0.0%";
+  const totalPayroll = `₹${(headcount * 18000).toLocaleString()}`;
+
+  const summary = [
+    { title: "Headcount", value: String(headcount), helper: "Current employees" },
+    {
+      title: "Attrition Rate",
+      value: attritionRate,
+      helper: `${inactiveCount} inactive records`,
+    },
+    { title: "Avg Attendance", value: avgAttendance, helper: "Active status ratio" },
+    { title: "Total Payroll", value: totalPayroll, helper: "Estimated monthly" },
+  ];
+
   return (
     <div className="hr-page">
       <div className="hr-page__header">
@@ -199,6 +228,9 @@ function Reports() {
       <div className="hr-panel">
         <h3 className="hr-panel__title">Department Summary</h3>
         <Table columns={deptSummaryColumns} rows={deptSummaryRows} />
+        {!deptSummaryRows.length ? (
+          <p className="root-admin-dashboard__empty-state">No department summary data yet.</p>
+        ) : null}
       </div>
     </div>
   );

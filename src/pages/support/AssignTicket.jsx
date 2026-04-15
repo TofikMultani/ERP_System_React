@@ -2,16 +2,49 @@ import { useState } from "react";
 import Card from "../../components/Card.jsx";
 import Button from "../../components/Button.jsx";
 import Select from "../../components/Select.jsx";
-
-const unassignedTickets = [];
-
-const agentOptions = [];
-
-const queueOptions = [];
+import { usePersistentSnapshot } from "../../utils/persistentState.js";
+import { ticketsData } from "../../utils/supportData.js";
 
 function AssignTicket() {
+  const tickets = usePersistentSnapshot("erp_support_tickets", ticketsData);
   const [selectedAgent, setSelectedAgent] = useState("");
   const [selectedQueue, setSelectedQueue] = useState("");
+
+  const unassignedTickets = tickets.filter(
+    (ticket) => !ticket.agent && !ticket.assignee,
+  );
+
+  const agentNames = Array.from(
+    new Set(
+      tickets
+        .map((ticket) => ticket.agent || ticket.assignee)
+        .filter((agent) => typeof agent === "string" && agent.trim().length > 0),
+    ),
+  );
+
+  const categoryNames = Array.from(
+    new Set(
+      tickets
+        .map((ticket) => ticket.category)
+        .filter((category) => typeof category === "string" && category.trim().length > 0),
+    ),
+  );
+
+  const agentOptions = agentNames.map((name) => ({
+    label: name,
+    value: name,
+  }));
+  const queueOptions = categoryNames.map((name) => ({
+    label: name,
+    value: name,
+  }));
+
+  const escalations = tickets.filter((ticket) => {
+    const priority = String(ticket.priority || "").toLowerCase();
+    return priority === "high" || priority === "critical";
+  }).length;
+  const availableAgents = agentNames.length;
+  const queueTimeMinutes = Math.max(5, unassignedTickets.length * 6);
 
   return (
     <div className="support-page">
@@ -23,12 +56,16 @@ function AssignTicket() {
       </div>
 
       <div className="support-cards">
-        <Card title="Unassigned Tickets" value="0" helper="Needs routing" />
-        <Card title="Escalations" value="0" helper="Priority attention" />
-        <Card title="Available Agents" value="0" helper="Online now" />
+        <Card
+          title="Unassigned Tickets"
+          value={unassignedTickets.length}
+          helper="Needs routing"
+        />
+        <Card title="Escalations" value={escalations} helper="Priority attention" />
+        <Card title="Available Agents" value={availableAgents} helper="Online now" />
         <Card
           title="Average Queue Time"
-          value="18 min"
+          value={`${queueTimeMinutes} min`}
           helper="Before assignment"
         />
       </div>

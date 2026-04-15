@@ -14,13 +14,6 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Present", value: "214", helper: "out of 248 employees" },
-  { title: "Absent", value: "16", helper: "today's absences" },
-  { title: "On Leave", value: "18", helper: "approved leaves" },
-  { title: "Late", value: "12", helper: "arrived after 09:15" },
-];
-
 const emptyForm = {
   name: "",
   dept: "",
@@ -42,6 +35,35 @@ function Attendance() {
     filterStatus === "All"
       ? records
       : records.filter((r) => r.status === filterStatus);
+
+  const dateFiltered = records.filter((record) => {
+    if (!record.date) {
+      return true;
+    }
+    return String(record.date).startsWith(date);
+  });
+
+  const presentCount = dateFiltered.filter(
+    (record) => record.status === "Present",
+  ).length;
+  const absentCount = dateFiltered.filter(
+    (record) => record.status === "Absent",
+  ).length;
+  const onLeaveCount = dateFiltered.filter(
+    (record) => record.status === "On Leave",
+  ).length;
+  const lateCount = dateFiltered.filter((record) => record.status === "Late").length;
+
+  const summary = [
+    {
+      title: "Present",
+      value: presentCount,
+      helper: `out of ${dateFiltered.length} employees`,
+    },
+    { title: "Absent", value: absentCount, helper: "today's absences" },
+    { title: "On Leave", value: onLeaveCount, helper: "approved leaves" },
+    { title: "Late", value: lateCount, helper: "arrived after 09:15" },
+  ];
 
   const handleEdit = (row) => {
     setEditingId(row.id);

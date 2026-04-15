@@ -112,14 +112,45 @@ const columns = [
   { header: "Net Pay", accessor: "net" },
 ];
 
-const summary = [
-  { title: "Total Payroll", value: "₹216,200", helper: "March 2026" },
-  { title: "Avg Salary", value: "₹5,405", helper: "per employee" },
-  { title: "Total Employees", value: "248", helper: "on payroll" },
-  { title: "Pending Payouts", value: "6", helper: "to be processed" },
-];
+function parseCurrency(value) {
+  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
+}
 
 function Payroll() {
+  const totalPayroll = payrollData.reduce(
+    (sum, employee) => sum + parseCurrency(employee.net),
+    0,
+  );
+  const avgSalary = payrollData.length
+    ? Math.round(totalPayroll / payrollData.length)
+    : 0;
+  const pendingPayouts = payrollData.filter(
+    (employee) => parseCurrency(employee.net) > 0,
+  ).length;
+
+  const summary = [
+    {
+      title: "Total Payroll",
+      value: `₹${totalPayroll.toLocaleString()}`,
+      helper: "Current cycle",
+    },
+    {
+      title: "Avg Salary",
+      value: `₹${avgSalary.toLocaleString()}`,
+      helper: "per employee",
+    },
+    {
+      title: "Total Employees",
+      value: payrollData.length,
+      helper: "on payroll",
+    },
+    {
+      title: "Pending Payouts",
+      value: pendingPayouts,
+      helper: "to be processed",
+    },
+  ];
+
   return (
     <div className="hr-page">
       <div className="hr-page__header">

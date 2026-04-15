@@ -283,6 +283,84 @@ async function ensureAccessRequestsTable() {
   );
 }
 
+async function ensureEmployeesTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS employees (
+      id BIGSERIAL PRIMARY KEY,
+      employee_id VARCHAR(50) UNIQUE NOT NULL,
+      full_name VARCHAR(255) NOT NULL,
+      phone VARCHAR(50) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      department VARCHAR(120) NOT NULL,
+      role_designation VARCHAR(150) NOT NULL,
+      date_joined DATE NOT NULL,
+      status VARCHAR(80) NOT NULL,
+      salary NUMERIC(14,2),
+      address TEXT,
+      reporting_manager VARCHAR(255),
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50);`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS email VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS department VARCHAR(120);`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS role_designation VARCHAR(150);`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS date_joined DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS status VARCHAR(80);`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS salary NUMERIC(14,2);`,
+  );
+  await pool.query(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS address TEXT;`);
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS reporting_manager VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS created_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS updated_by INTEGER;`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE employees ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_employee_id ON employees(employee_id);`,
+  );
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email);`);
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_employees_department ON employees(department);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_employees_created_at ON employees(created_at DESC);`,
+  );
+}
+
 async function seedDemoUsers() {
   const seededUsers = [];
 
@@ -355,6 +433,7 @@ async function initializeDatabase() {
   await ensureUsersTable();
   await ensureModuleCatalogTable();
   await ensureAccessRequestsTable();
+  await ensureEmployeesTable();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
 

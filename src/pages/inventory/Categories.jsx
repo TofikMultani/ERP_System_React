@@ -17,13 +17,6 @@ const columns = [
   { header: "Status", accessor: "status" },
 ];
 
-const summary = [
-  { title: "Total Categories", value: "0", helper: "active + inactive" },
-  { title: "Active", value: "0", helper: "categories" },
-  { title: "Total Products", value: "0", helper: "across all categories" },
-  { title: "Avg per Category", value: "0", helper: "products" },
-];
-
 const emptyForm = { name: "", description: "" };
 
 function Categories() {
@@ -69,6 +62,35 @@ function Categories() {
     setShowForm(true);
   };
   const handleDelete = (row) => deleteRowById(setCategories, row, "category");
+
+  const totalProducts = categories.reduce(
+    (sum, category) => sum + (Number(category.productCount) || 0),
+    0,
+  );
+  const activeCategories = categories.filter(
+    (category) => category.status === "Active",
+  ).length;
+
+  const summary = [
+    {
+      title: "Total Categories",
+      value: categories.length,
+      helper: "active + inactive",
+    },
+    { title: "Active", value: activeCategories, helper: "categories" },
+    {
+      title: "Total Products",
+      value: totalProducts,
+      helper: "across all categories",
+    },
+    {
+      title: "Avg per Category",
+      value: categories.length
+        ? (totalProducts / categories.length).toFixed(1)
+        : "0.0",
+      helper: "products",
+    },
+  ];
 
   return (
     <div className="inv-page">
