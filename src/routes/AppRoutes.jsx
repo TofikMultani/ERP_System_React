@@ -42,10 +42,10 @@ import Adjustments from "../pages/inventory/Adjustments.jsx";
 import AdjustmentForm from "../pages/inventory/AdjustmentsForm.jsx";
 import InventoryReports from "../pages/inventory/Reports.jsx";
 import SalesDashboard from "../pages/sales/SalesDashboard.jsx";
-import SalesCustomers from "../pages/sales/Customers.jsx";
-import SalesOrders from "../pages/sales/Orders.jsx";
-import SalesInvoices from "../pages/sales/Invoices.jsx";
-import Quotations from "../pages/sales/Quotations.jsx";
+import { Customers as SalesCustomersList, CustomersForm as SalesCustomersForm } from "../pages/sales/Customers.jsx";
+import { Orders as SalesOrdersList, OrdersForm as SalesOrdersForm } from "../pages/sales/Orders.jsx";
+import { Invoices as SalesInvoicesList, InvoicesForm as SalesInvoicesForm } from "../pages/sales/Invoices.jsx";
+import { Quotations as SalesQuotationsList, QuotationsForm as SalesQuotationsForm } from "../pages/sales/Quotations.jsx";
 import SalesReports from "../pages/sales/Reports.jsx";
 import FinanceDashboard from "../pages/finance/FinanceDashboard.jsx";
 import FinanceInvoices from "../pages/finance/Invoices.jsx";
@@ -180,10 +180,18 @@ function AppRoutes() {
               path="dashboard"
               element={<Navigate to="/sales" replace />}
             />
-            <Route path="customers" element={<SalesCustomers />} />
-            <Route path="orders" element={<SalesOrders />} />
-            <Route path="invoices" element={<SalesInvoices />} />
-            <Route path="quotations" element={<Quotations />} />
+            <Route path="customers" element={<SalesCustomersList />} />
+            <Route path="customers/new" element={<SalesCustomersForm />} />
+            <Route path="customers/:customerCode/edit" element={<SalesCustomersForm />} />
+            <Route path="orders" element={<SalesOrdersList />} />
+            <Route path="orders/new" element={<SalesOrdersForm />} />
+            <Route path="orders/:orderNumber/edit" element={<SalesOrdersForm />} />
+            <Route path="invoices" element={<SalesInvoicesList />} />
+            <Route path="invoices/new" element={<SalesInvoicesForm />} />
+            <Route path="invoices/:invoiceNumber/edit" element={<SalesInvoicesForm />} />
+            <Route path="quotations" element={<SalesQuotationsList />} />
+            <Route path="quotations/new" element={<SalesQuotationsForm />} />
+            <Route path="quotations/:quotationNumber/edit" element={<SalesQuotationsForm />} />
             <Route path="reports" element={<SalesReports />} />
           </Route>
 

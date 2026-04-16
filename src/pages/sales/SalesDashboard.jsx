@@ -162,39 +162,14 @@ function SalesDashboard() {
 
         <div className="sales-panel">
           <h3 className="sales-panel__title">Top Customers</h3>
-          <div style={{ display: "grid", gap: "0.8rem" }}>
+          <div className="sales-customer-list">
             {topCustomers.map((customer, index) => (
-              <div
-                key={index}
-                style={{
-                  padding: "1rem",
-                  borderRadius: "8px",
-                  background: "#f8f9ff",
-                  borderLeft: "3px solid #5a3df0",
-                }}
-              >
-                <div style={{ fontWeight: "600", color: "var(--color-text)" }}>
-                  {customer.name}
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "var(--color-text-soft)",
-                    marginTop: "0.3rem",
-                  }}
-                >
+              <div key={index} className="sales-customer-item">
+                <div className="sales-customer-item__name">{customer.name}</div>
+                <div className="sales-customer-item__meta">
                   {customer.email} • {customer.phone}
                 </div>
-                <div
-                  style={{
-                    fontSize: "1rem",
-                    fontWeight: "600",
-                    color: "#5a3df0",
-                    marginTop: "0.4rem",
-                  }}
-                >
-                  {customer.spent}
-                </div>
+                <div className="sales-customer-item__spent">{customer.spent}</div>
               </div>
             ))}
           </div>

@@ -923,6 +923,100 @@ async function ensurePayrollRecordsTable() {
   );
 }
 
+async function ensureSalesTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sales_customers (
+      id BIGSERIAL PRIMARY KEY,
+      customer_code VARCHAR(60) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(50),
+      company VARCHAR(255),
+      industry VARCHAR(120),
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      credit_limit NUMERIC(14,2) NOT NULL DEFAULT 0,
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sales_orders (
+      id BIGSERIAL PRIMARY KEY,
+      order_number VARCHAR(60) UNIQUE NOT NULL,
+      customer_code VARCHAR(60) NOT NULL,
+      customer_name VARCHAR(255) NOT NULL,
+      order_date DATE NOT NULL,
+      amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+      item_count INTEGER NOT NULL DEFAULT 0,
+      status VARCHAR(80) NOT NULL DEFAULT 'Processing',
+      shipping_address TEXT,
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sales_invoices (
+      id BIGSERIAL PRIMARY KEY,
+      invoice_number VARCHAR(60) UNIQUE NOT NULL,
+      customer_code VARCHAR(60) NOT NULL,
+      customer_name VARCHAR(255) NOT NULL,
+      invoice_date DATE NOT NULL,
+      due_date DATE NOT NULL,
+      amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+      status VARCHAR(80) NOT NULL DEFAULT 'Pending',
+      payment_date DATE,
+      order_number VARCHAR(60),
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sales_quotations (
+      id BIGSERIAL PRIMARY KEY,
+      quotation_number VARCHAR(60) UNIQUE NOT NULL,
+      customer_code VARCHAR(60) NOT NULL,
+      customer_name VARCHAR(255) NOT NULL,
+      quotation_date DATE NOT NULL,
+      expiry_date DATE NOT NULL,
+      amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+      status VARCHAR(80) NOT NULL DEFAULT 'Sent',
+      conversion_status VARCHAR(80) NOT NULL DEFAULT 'Not Converted',
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_customers_code ON sales_customers(customer_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_customers_status ON sales_customers(status);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_orders_number ON sales_orders(order_number);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_orders_customer_code ON sales_orders(customer_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_orders_status ON sales_orders(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_orders_order_date ON sales_orders(order_date DESC);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_invoices_number ON sales_invoices(invoice_number);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_invoices_customer_code ON sales_invoices(customer_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_invoices_status ON sales_invoices(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_invoices_due_date ON sales_invoices(due_date);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_quotations_number ON sales_quotations(quotation_number);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_quotations_customer_code ON sales_quotations(customer_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_quotations_status ON sales_quotations(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_quotations_expiry_date ON sales_quotations(expiry_date);`);
+}
+
 async function ensureSupportTables() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS support_customers (
@@ -1336,6 +1430,7 @@ async function initializeDatabase() {
   await ensureHrDocumentsTable();
   await ensureTrainingProgramsTable();
   await ensurePayrollRecordsTable();
+  await ensureSalesTables();
   await ensureInventoryTables();
   await ensureSupportTables();
   const seededUsers = await seedDemoUsers();
