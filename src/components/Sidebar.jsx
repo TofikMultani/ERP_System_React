@@ -125,8 +125,9 @@ const moduleChildNavigation = {
   ],
   "/support": [
     { label: "Dashboard", path: "/support" },
+    { label: "Customers", path: "/support/customers" },
     { label: "Tickets", path: "/support/tickets" },
-    { label: "Assign Ticket", path: "/support/assign-ticket" },
+    { label: "Responses", path: "/support/responses" },
     { label: "Reports", path: "/support/reports" },
   ],
   "/root-admin": [

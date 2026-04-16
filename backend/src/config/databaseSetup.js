@@ -923,6 +923,102 @@ async function ensurePayrollRecordsTable() {
   );
 }
 
+async function ensureSupportTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS support_customers (
+      id BIGSERIAL PRIMARY KEY,
+      customer_code VARCHAR(60) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(50),
+      company VARCHAR(255),
+      industry VARCHAR(120),
+      account_type VARCHAR(80) NOT NULL DEFAULT 'Standard',
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS support_tickets (
+      id BIGSERIAL PRIMARY KEY,
+      ticket_number VARCHAR(60) UNIQUE NOT NULL,
+      customer_code VARCHAR(60) NOT NULL,
+      customer_name VARCHAR(255) NOT NULL,
+      customer_email VARCHAR(255) NOT NULL,
+      subject VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      priority VARCHAR(80) NOT NULL DEFAULT 'Medium',
+      status VARCHAR(80) NOT NULL DEFAULT 'Open',
+      assigned_to VARCHAR(255),
+      resolution_summary TEXT,
+      response_count INTEGER NOT NULL DEFAULT 0,
+      first_response_at TIMESTAMP,
+      resolved_at TIMESTAMP,
+      satisfaction_rating INTEGER,
+      sla_response_minutes INTEGER DEFAULT 240,
+      sla_resolution_hours INTEGER DEFAULT 72,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS support_responses (
+      id BIGSERIAL PRIMARY KEY,
+      response_code VARCHAR(60) UNIQUE NOT NULL,
+      ticket_number VARCHAR(60) NOT NULL,
+      author_name VARCHAR(255) NOT NULL,
+      author_email VARCHAR(255),
+      author_role VARCHAR(80) NOT NULL,
+      content TEXT NOT NULL,
+      response_type VARCHAR(80) NOT NULL DEFAULT 'Note',
+      is_internal BOOLEAN NOT NULL DEFAULT false,
+      attachments_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS support_knowledge_base (
+      id BIGSERIAL PRIMARY KEY,
+      kb_code VARCHAR(60) UNIQUE NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      keywords_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+      views INTEGER NOT NULL DEFAULT 0,
+      is_published BOOLEAN NOT NULL DEFAULT false,
+      helpful_count INTEGER NOT NULL DEFAULT 0,
+      not_helpful_count INTEGER NOT NULL DEFAULT 0,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_support_customers_code ON support_customers(customer_code);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_support_tickets_number ON support_tickets(ticket_number);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_support_tickets_customer ON support_tickets(customer_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_support_tickets_priority ON support_tickets(priority);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_support_responses_code ON support_responses(response_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_support_responses_ticket ON support_responses(ticket_number);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_support_kb_code ON support_knowledge_base(kb_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_support_kb_published ON support_knowledge_base(is_published);`);
+}
+
 async function ensureInventoryTables() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS inventory_products (
@@ -1241,6 +1337,7 @@ async function initializeDatabase() {
   await ensureTrainingProgramsTable();
   await ensurePayrollRecordsTable();
   await ensureInventoryTables();
+  await ensureSupportTables();
   const seededUsers = await seedDemoUsers();
   await seedModuleCatalog();
 

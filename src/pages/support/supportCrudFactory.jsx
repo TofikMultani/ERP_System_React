@@ -1,0 +1,514 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import Card from "../../components/Card.jsx";
+import Table from "../../components/Table.jsx";
+
+function normalizeOption(option) {
+  if (typeof option === "string") {
+    return { value: option, label: option };
+  }
+
+  if (option && typeof option === "object") {
+    return {
+      value: String(option.value ?? ""),
+      label: String(option.label ?? option.value ?? ""),
+    };
+  }
+
+  return { value: "", label: "" };
+}
+
+function validateField(field, value) {
+  const text = String(value ?? "").trim();
+
+  if (field.required && field.type !== "checkbox" && !text) {
+    return `${field.label} is required.`;
+  }
+
+  if (field.type === "number" && text) {
+    const parsed = Number(text);
+    if (!Number.isFinite(parsed)) {
+      return `${field.label} must be a valid number.`;
+    }
+
+    if (typeof field.min === "number" && parsed < field.min) {
+      return `${field.label} must be at least ${field.min}.`;
+    }
+
+    if (typeof field.max === "number" && parsed > field.max) {
+      return `${field.label} must be at most ${field.max}.`;
+    }
+  }
+
+  return "";
+}
+
+function validateFormValues(formValues, fields) {
+  const errors = {};
+
+  fields.forEach((field) => {
+    const message = validateField(field, formValues[field.name]);
+    if (message) {
+      errors[field.name] = message;
+    }
+  });
+
+  return errors;
+}
+
+function paginate(rows, page, pageSize) {
+  const start = (page - 1) * pageSize;
+  return rows.slice(start, start + pageSize);
+}
+
+export function createSupportListPage(config) {
+  return function SupportListPage() {
+    const navigate = useNavigate();
+    const [rows, setRows] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All");
+    const [page, setPage] = useState(1);
+
+    useEffect(() => {
+      loadRows();
+    }, []);
+
+    async function loadRows() {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      try {
+        const data = await config.fetchRows();
+        setRows(Array.isArray(data) ? data : []);
+      } catch (error) {
+        setErrorMessage(error.message || `Unable to load ${config.labelPlural} from database.`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    const filteredRows = useMemo(() => {
+      const searchText = search.toLowerCase();
+      return rows.filter((row) => {
+        if (statusFilter !== "All") {
+          const rowStatus = String(row.status || "").toLowerCase();
+          if (rowStatus !== statusFilter.toLowerCase()) {
+            return false;
+          }
+        }
+
+        if (!searchText) {
+          return true;
+        }
+
+        const searchBlob = config.searchFields
+          .map((field) => String(row[field] ?? ""))
+          .join(" ")
+          .toLowerCase();
+
+        return searchBlob.includes(searchText);
+      });
+    }, [rows, search, statusFilter]);
+
+    const pageSize = config.pageSize || 10;
+    const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const pagedRows = paginate(filteredRows, currentPage, pageSize);
+
+    const summaryCards = config.buildSummary ? config.buildSummary(rows) : [];
+
+    async function handleDelete(row) {
+      const keyValue = row[config.codeField];
+      const shouldDelete = window.confirm(`Delete ${config.label} ${keyValue}?`);
+      if (!shouldDelete) {
+        return;
+      }
+
+      try {
+        await config.deleteRow(keyValue);
+        await loadRows();
+      } catch (error) {
+        window.alert(error.message || `Unable to delete ${config.label}.`);
+      }
+    }
+
+    function handleEdit(row) {
+      navigate(config.editRoute(row[config.codeField]));
+    }
+
+    return (
+      <div className="inv-container">
+        <div className="inv-header">
+          <h1>{config.pageTitle}</h1>
+          <div className="inv-actions">
+            <button type="button" className="inv-btn" onClick={() => navigate(config.newRoute)}>
+              {config.addLabel}
+            </button>
+          </div>
+        </div>
+
+        <div className="inv-cards inv-cards--compact">
+          {summaryCards.map((card) => (
+            <Card key={card.title} {...card} />
+          ))}
+        </div>
+
+        <div className="inv-panel">
+          <div className="inv-panel__toolbar">
+            <h3 className="inv-panel__title">
+              {config.listTitle} ({filteredRows.length})
+            </h3>
+            <div className="inv-actions-row">
+              {config.statusFilters?.length ? (
+                <div className="inv-filter-group">
+                  {config.statusFilters.map((filterValue) => (
+                    <button
+                      key={filterValue}
+                      type="button"
+                      className={`inv-filter-btn ${
+                        statusFilter === filterValue ? "inv-filter-btn--active" : ""
+                      }`}
+                      onClick={() => {
+                        setStatusFilter(filterValue);
+                        setPage(1);
+                      }}
+                    >
+                      {filterValue}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <input
+                className="inv-search"
+                placeholder={config.searchPlaceholder}
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+          </div>
+
+          {errorMessage && <p className="hr-inline-error">{errorMessage}</p>}
+
+          <Table
+            columns={config.columns}
+            rows={isLoading ? [] : pagedRows}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            renderActions={
+              config.renderActions
+                ? (row) => config.renderActions(row, loadRows)
+                : config.extraActionLabel && config.extraAction
+                  ? (row) => (
+                      <button
+                        type="button"
+                        className="erp-table__action-btn erp-table__action-btn--view"
+                        onClick={async () => {
+                          try {
+                            await config.extraAction(row, loadRows);
+                          } catch (error) {
+                            window.alert(error.message || `Unable to complete ${config.extraActionLabel}.`);
+                          }
+                        }}
+                      >
+                        {config.extraActionLabel}
+                      </button>
+                    )
+                  : undefined
+            }
+          />
+
+          {totalPages > 1 ? (
+            <div className="inv-pagination">
+              <button
+                type="button"
+                className="inv-btn inv-btn--secondary"
+                disabled={currentPage <= 1}
+                onClick={() => setPage((value) => Math.max(1, value - 1))}
+              >
+                Previous
+              </button>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                className="inv-btn inv-btn--secondary"
+                disabled={currentPage >= totalPages}
+                onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  };
+}
+
+function toFieldValue(field, value) {
+  if (field.type === "number") {
+    return String(value ?? "");
+  }
+
+  if (field.type === "textarea") {
+    return String(value ?? "");
+  }
+
+  return String(value ?? "");
+}
+
+export function createSupportFormPage(config) {
+  return function SupportFormPage() {
+    const navigate = useNavigate();
+    const params = useParams();
+    const codeValue = params[config.routeParam];
+    const isEditMode = Boolean(codeValue);
+    const [form, setForm] = useState(config.emptyForm);
+    const [context, setContext] = useState({});
+    const [globalErrors, setGlobalErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+      if (!isEditMode || !codeValue) {
+        return;
+      }
+
+      let isMounted = true;
+
+      const loadRow = async () => {
+        try {
+          const row = await config.fetchRow(codeValue);
+          if (isMounted) {
+            setForm(config.rowToForm(row));
+          }
+        } catch (error) {
+          window.alert(error.message || `Unable to load ${config.label}.`);
+          navigate(config.listRoute);
+        }
+      };
+
+      loadRow();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [codeValue, isEditMode, navigate]);
+
+    useEffect(() => {
+      let isMounted = true;
+
+      const loadContext = async () => {
+        try {
+          if (config.loadContext) {
+            const ctx = await config.loadContext();
+            if (isMounted) {
+              setContext(ctx);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading context:", error);
+        }
+      };
+
+      loadContext();
+
+      return () => {
+        isMounted = false;
+      };
+    }, []);
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+
+      const errors = validateFormValues(form, config.fields);
+      if (Object.keys(errors).length) {
+        setGlobalErrors(errors);
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        const data = config.formToRow(form);
+
+        if (isEditMode) {
+          await config.updateRow(codeValue, data);
+        } else {
+          await config.createRow(data);
+        }
+
+        navigate(config.listRoute);
+      } catch (error) {
+        window.alert(error.message || `Unable to save ${config.label}.`);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+
+    function handleFieldChange(fieldName, value) {
+      setForm((prevForm) => ({
+        ...prevForm,
+        [fieldName]: value,
+      }));
+
+      const field = config.fields.find((item) => item.name === fieldName);
+      const error = field ? validateField(field, value) : "";
+      if (error) {
+        setGlobalErrors((prevErrors) => ({
+          ...prevErrors,
+          [fieldName]: error,
+        }));
+      } else {
+        setGlobalErrors((prevErrors) => {
+          const updated = { ...prevErrors };
+          delete updated[fieldName];
+          return updated;
+        });
+      }
+    }
+
+    return (
+      <div className="inv-container">
+        <div className="inv-header">
+          <button
+            type="button"
+            className="inv-btn inv-btn--back"
+            onClick={() => navigate(config.listRoute)}
+          >
+            ← Back to {config.labelPlural}
+          </button>
+          <h1>{isEditMode ? `Edit ${config.label}` : `New ${config.label}`}</h1>
+        </div>
+
+        <form className="inv-form" onSubmit={handleSubmit}>
+          <div className="inv-form__fields">
+            {config.fields.map((field) => {
+              const value = toFieldValue(field, form[field.name]);
+              const error = globalErrors[field.name];
+              const fieldClassName = [
+                "inv-form__field",
+                field.fullWidth || field.type === "textarea" ? "inv-form__field--full" : "",
+              ]
+                .join(" ")
+                .trim();
+
+              return (
+                <div key={field.name} className={fieldClassName}>
+                  <label htmlFor={field.name} className="inv-form__label">
+                    {field.label}
+                  </label>
+
+                  {field.type === "select" ? (
+                    <select
+                      id={field.name}
+                      name={field.name}
+                      className={`inv-form__input ${error ? "inv-form__input--error" : ""}`}
+                      value={value}
+                      onChange={(event) => handleFieldChange(field.name, event.target.value)}
+                      disabled={isSubmitting}
+                      required={field.required}
+                    >
+                      <option value="">Select {field.label}</option>
+                      {Array.isArray(field.options)
+                        ? field.options.map((option) => {
+                            const normalized = normalizeOption(option);
+                            return (
+                              <option key={normalized.value} value={normalized.value}>
+                                {normalized.label}
+                              </option>
+                            );
+                          })
+                        : []}
+                      {context[field.optionsFrom]
+                        ? context[field.optionsFrom].map((item) => {
+                            const normalized = normalizeOption(item);
+                            return (
+                              <option key={normalized.value} value={normalized.value}>
+                                {normalized.label}
+                              </option>
+                            );
+                          })
+                        : []}
+                    </select>
+                  ) : field.type === "textarea" ? (
+                    <textarea
+                      id={field.name}
+                      name={field.name}
+                      className={`inv-form__input inv-form__textarea ${
+                        error ? "inv-form__input--error" : ""
+                      }`}
+                      value={value}
+                      onChange={(event) => handleFieldChange(field.name, event.target.value)}
+                      disabled={isSubmitting}
+                      required={field.required}
+                      rows={field.rows || 4}
+                      placeholder={field.placeholder}
+                      readOnly={field.readOnly}
+                    />
+                  ) : field.type === "checkbox" ? (
+                    <input
+                      id={field.name}
+                      name={field.name}
+                      type="checkbox"
+                      className="inv-form__checkbox"
+                      checked={Boolean(form[field.name])}
+                      onChange={(event) => handleFieldChange(field.name, event.target.checked)}
+                      disabled={isSubmitting}
+                      readOnly={field.readOnly}
+                    />
+                  ) : (
+                    <input
+                      id={field.name}
+                      name={field.name}
+                      type={field.type || "text"}
+                      className={`inv-form__input ${error ? "inv-form__input--error" : ""}`}
+                      value={value}
+                      onChange={(event) => handleFieldChange(field.name, event.target.value)}
+                      disabled={isSubmitting}
+                      required={field.required}
+                      placeholder={field.placeholder}
+                      readOnly={field.readOnly}
+                      min={field.min}
+                      max={field.max}
+                      step={field.step}
+                    />
+                  )}
+
+                  {error && <p className="inv-form__error">{error}</p>}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="inv-form__actions">
+            <button
+              type="button"
+              className="inv-btn inv-btn--secondary"
+              onClick={() => navigate(config.listRoute)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="inv-btn"
+              disabled={isSubmitting || Object.keys(globalErrors).length > 0}
+            >
+              {isSubmitting
+                ? "Saving..."
+                : isEditMode
+                  ? `Save ${config.label}`
+                  : `Create ${config.label}`}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+}

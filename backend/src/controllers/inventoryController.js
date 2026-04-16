@@ -632,7 +632,22 @@ async function fetchPurchaseOrderPdf(req, res) {
       });
     }
 
-    const order = purchaseOrderCrud.mapRow(result.rows[0]);
+    const row = result.rows[0];
+    const items = Array.isArray(row.items_json)
+      ? row.items_json
+      : toJson(row.items_json, []);
+    const order = {
+      poNumber: row.po_number,
+      supplierName: row.supplier_name,
+      warehouseName: row.warehouse_name,
+      items,
+      itemsText: csvItems(items),
+      amount: row.amount === null ? '0' : String(row.amount),
+      orderDate: row.order_date,
+      dueDate: row.due_date,
+      status: row.status,
+      notes: row.notes || '',
+    };
     const pdf = new PDFDocument({ margin: 40, size: 'A4' });
     const chunks = [];
 

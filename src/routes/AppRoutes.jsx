@@ -42,7 +42,7 @@ import Adjustments from "../pages/inventory/Adjustments.jsx";
 import AdjustmentForm from "../pages/inventory/AdjustmentsForm.jsx";
 import InventoryReports from "../pages/inventory/Reports.jsx";
 import SalesDashboard from "../pages/sales/SalesDashboard.jsx";
-import Customers from "../pages/sales/Customers.jsx";
+import SalesCustomers from "../pages/sales/Customers.jsx";
 import SalesOrders from "../pages/sales/Orders.jsx";
 import SalesInvoices from "../pages/sales/Invoices.jsx";
 import Quotations from "../pages/sales/Quotations.jsx";
@@ -57,9 +57,13 @@ import Systems from "../pages/it/Systems.jsx";
 import Assets from "../pages/it/Assets.jsx";
 import Maintenance from "../pages/it/Maintenance.jsx";
 import ITReports from "../pages/it/Reports.jsx";
-import SupportDashboard from "../pages/support/SupportDashboard.jsx";
-import Tickets from "../pages/support/Tickets.jsx";
-import AssignTicket from "../pages/support/AssignTicket.jsx";
+import SupportDashboard from "../pages/support/Dashboard.jsx";
+import SupportCustomers from "../pages/support/Customers.jsx";
+import CustomersForm from "../pages/support/CustomersForm.jsx";
+import SupportTickets from "../pages/support/Tickets.jsx";
+import TicketsForm from "../pages/support/TicketsForm.jsx";
+import Responses from "../pages/support/Responses.jsx";
+import ResponsesForm from "../pages/support/ResponsesForm.jsx";
 import SupportReports from "../pages/support/Reports.jsx";
 import RootAdminDashboard from "../pages/root-admin/RootAdminDashboard.jsx";
 import RequestManagement from "../pages/root-admin/RequestManagement.jsx";
@@ -176,7 +180,7 @@ function AppRoutes() {
               path="dashboard"
               element={<Navigate to="/sales" replace />}
             />
-            <Route path="customers" element={<Customers />} />
+            <Route path="customers" element={<SalesCustomers />} />
             <Route path="orders" element={<SalesOrders />} />
             <Route path="invoices" element={<SalesInvoices />} />
             <Route path="quotations" element={<Quotations />} />
@@ -210,8 +214,15 @@ function AppRoutes() {
               path="dashboard"
               element={<Navigate to="/support" replace />}
             />
-            <Route path="tickets" element={<Tickets />} />
-            <Route path="assign-ticket" element={<AssignTicket />} />
+            <Route path="customers" element={<SupportCustomers />} />
+            <Route path="customers/new" element={<CustomersForm />} />
+            <Route path="customers/:code/edit" element={<CustomersForm />} />
+            <Route path="tickets" element={<SupportTickets />} />
+            <Route path="tickets/new" element={<TicketsForm />} />
+            <Route path="tickets/:code/edit" element={<TicketsForm />} />
+            <Route path="responses" element={<Responses />} />
+            <Route path="responses/new" element={<ResponsesForm />} />
+            <Route path="responses/:code/edit" element={<ResponsesForm />} />
             <Route path="reports" element={<SupportReports />} />
           </Route>
 
