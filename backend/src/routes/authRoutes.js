@@ -20,6 +20,21 @@ router.post(
   authController.loginUser
 );
 
+router.post(
+  '/forgot-password',
+  sanitizeInput,
+  validateEmail,
+  authController.forgotPassword,
+);
+
+router.get('/reset-password/validate', authController.validateResetToken);
+
+router.post(
+  '/reset-password',
+  sanitizeInput,
+  authController.resetPassword,
+);
+
 // Protected Routes
 router.get('/me', verifyToken, authController.getCurrentUser);
 

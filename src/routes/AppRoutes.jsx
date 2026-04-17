@@ -8,6 +8,8 @@ import FinanceLayout from "../layout/FinanceLayout.jsx";
 import ITLayout from "../layout/ITLayout.jsx";
 import SupportLayout from "../layout/SupportLayout.jsx";
 import Login from "../pages/login/Login.jsx";
+import ForgotPassword from "../pages/login/ForgotPassword.jsx";
+import ResetPassword from "../pages/login/ResetPassword.jsx";
 import Dashboard from "../pages/admin/Dashboard.jsx";
 import HRDashboard from "../pages/hr/HRDashboard.jsx";
 import Employees from "../pages/hr/Employees.jsx";
@@ -79,6 +81,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/request-action/cancel" element={<CancelRequestPage />} />
       <Route path="/request-action/payment" element={<PaymentRequestPage />} />
 

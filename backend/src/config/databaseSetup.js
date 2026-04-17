@@ -140,6 +140,45 @@ async function ensureUsersTable() {
   );
 }
 
+async function ensurePasswordResetTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id BIGSERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash VARCHAR(255) NOT NULL UNIQUE,
+      expires_at TIMESTAMP NOT NULL,
+      used_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(
+    `ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`,
+  );
+  await pool.query(
+    `ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);`,
+  );
+  await pool.query(
+    `ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS used_at TIMESTAMP;`,
+  );
+  await pool.query(
+    `ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  );
+
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens(token_hash);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);`,
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires_at ON password_reset_tokens(expires_at);`,
+  );
+}
+
 async function ensureModuleCatalogTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS module_catalog (
@@ -1797,6 +1836,7 @@ async function seedModuleCatalog() {
 
 async function initializeDatabase() {
   await ensureUsersTable();
+  await ensurePasswordResetTable();
   await ensureModuleCatalogTable();
   await ensureAccessRequestsTable();
   await ensureEmployeesTable();

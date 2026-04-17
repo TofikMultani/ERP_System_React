@@ -98,7 +98,36 @@ async function sendCredentialsMail({
   return { sent: true };
 }
 
+async function sendPasswordResetMail({ toEmail, requesterName, resetUrl }) {
+  const transporter = getMailTransport();
+
+  if (!transporter) {
+    return { sent: false, reason: 'SMTP not configured' };
+  }
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    to: toEmail,
+    subject: 'Reset your ERP password',
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;max-width:680px;margin:0 auto;">
+        <h2 style="margin-bottom:8px;">Hello ${requesterName || 'there'},</h2>
+        <p>We received a request to reset your ERP account password.</p>
+        <p>Click the button below to set a new password:</p>
+        <div style="margin:18px 0;">
+          <a href="${resetUrl}" style="background:#2563eb;color:#fff;text-decoration:none;padding:10px 14px;border-radius:8px;display:inline-block;">Reset Password</a>
+        </div>
+        <p>This link expires in 30 minutes.</p>
+        <p>If you did not request this, you can safely ignore this email.</p>
+      </div>
+    `,
+  });
+
+  return { sent: true };
+}
+
 module.exports = {
   sendApprovalMail,
   sendCredentialsMail,
+  sendPasswordResetMail,
 };
