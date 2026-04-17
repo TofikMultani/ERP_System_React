@@ -124,7 +124,7 @@ function Reports() {
   const assetSummary = Object.entries(assetTypeMap).map(([type, metrics]) => [
     type,
     String(metrics.count),
-    `$${metrics.value.toFixed(2)}`,
+    `₹${metrics.value.toFixed(2)}`,
     "Active",
   ]);
 

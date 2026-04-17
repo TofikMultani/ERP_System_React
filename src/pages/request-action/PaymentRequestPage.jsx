@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { CheckCircle2, CreditCard, ShieldCheck, Wallet } from "lucide-react";
 import {
   createPaymentOrderByToken,
   fetchActionRequestByToken,
@@ -33,6 +34,16 @@ function PaymentRequestPage() {
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const amountLabel = useMemo(
+    () =>
+      new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0,
+      }).format(requestData?.totalEstimatedCost || 0),
+    [requestData],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -123,56 +134,77 @@ function PaymentRequestPage() {
 
   return (
     <main className="login-page">
-      <section className="login-card" style={{ maxWidth: "640px" }}>
-        <div className="login-card__hero" style={{ width: "100%" }}>
+      <section className="login-card request-payment-card">
+        <div className="login-card__hero request-payment__hero">
           <p className="login-card__eyebrow">Request Action</p>
-          <h1>Payment</h1>
+          <h1>Secure Payment</h1>
+          <p>Review your request and complete payment to activate your ERP access.</p>
 
-          {isLoading ? <p>Loading request...</p> : null}
-          {error ? <p className="login-form__error">{error}</p> : null}
+          {isLoading ? <p className="request-payment__status">Loading request...</p> : null}
+
+          {error ? <p className="request-payment__status request-payment__status--error">{error}</p> : null}
+
           {successMessage ? (
-            <p className="login-form__error" style={{ color: "#0f9b6d" }}>
-              {successMessage}
-            </p>
+            <div className="request-payment__success-banner">
+              <CheckCircle2 size={18} />
+              <span>{successMessage}</span>
+            </div>
           ) : null}
 
           {requestData ? (
-            <>
-              <p>
-                <strong>Requested Modules:</strong>
-              </p>
-              <ul>
-                {(requestData.modules || []).map((moduleName) => (
-                  <li key={moduleName}>{moduleName}</li>
-                ))}
-              </ul>
+            <div className="request-payment__content">
+              <div className="request-payment__summary-grid">
+                <article className="request-payment__summary-card">
+                  <div className="request-payment__summary-head">
+                    <Wallet size={16} />
+                    <span>Amount Payable</span>
+                  </div>
+                  <strong>{amountLabel}</strong>
+                </article>
 
-              <p>
-                <strong>Payment Amount:</strong>{" "}
-                {new Intl.NumberFormat("en-IN", {
-                  style: "currency",
-                  currency: "INR",
-                  maximumFractionDigits: 0,
-                }).format(requestData.totalEstimatedCost || 0)}
-              </p>
+                <article className="request-payment__summary-card">
+                  <div className="request-payment__summary-head">
+                    <CreditCard size={16} />
+                    <span>Payment Status</span>
+                  </div>
+                  <strong>
+                    {requestData.status === "payment_done" ? "Completed" : "Pending"}
+                  </strong>
+                </article>
+              </div>
 
-              {requestData.status === "payment_done" ? (
-                <p>Payment already completed.</p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handlePayNow}
-                  disabled={isPaying || requestData.status !== "payment_pending"}
-                >
-                  {isPaying ? "Processing..." : "Pay Now"}
-                </button>
-              )}
-            </>
+              <div className="request-payment__section">
+                <h3>
+                  <ShieldCheck size={16} />
+                  Requested Modules
+                </h3>
+                <div className="request-payment__module-tags">
+                  {(requestData.modules || []).map((moduleName) => (
+                    <span key={moduleName}>{moduleName}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="request-payment__actions">
+                {requestData.status === "payment_done" ? (
+                  <p className="request-payment__done-text">Payment already completed for this request.</p>
+                ) : (
+                  <button
+                    type="button"
+                    className="request-payment__pay-btn"
+                    onClick={handlePayNow}
+                    disabled={isPaying || requestData.status !== "payment_pending"}
+                  >
+                    {isPaying ? "Opening Gateway..." : "Proceed to Payment Gateway"}
+                  </button>
+                )}
+
+                <Link className="request-payment__back-link" to="/">
+                  Back to home
+                </Link>
+              </div>
+            </div>
           ) : null}
-
-          <p style={{ marginTop: "1rem" }}>
-            <Link to="/">Back to home</Link>
-          </p>
         </div>
       </section>
     </main>

@@ -14,7 +14,9 @@ async function apiRequest(path, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || "Request failed");
+    throw new Error(
+      data.error ? `${data.message || "Request failed"}: ${data.error}` : data.message || "Request failed",
+    );
   }
 
   return data;

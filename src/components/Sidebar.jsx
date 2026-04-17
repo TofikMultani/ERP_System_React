@@ -105,7 +105,6 @@ const moduleChildNavigation = {
     { label: "Stock", path: "/inventory/stock" },
     { label: "Suppliers", path: "/inventory/suppliers" },
     { label: "Warehouses", path: "/inventory/warehouses" },
-    { label: "Purchase Orders", path: "/inventory/purchase-orders" },
     { label: "Adjustments", path: "/inventory/adjustments" },
     { label: "Reports", path: "/inventory/reports" },
   ],

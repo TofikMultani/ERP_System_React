@@ -9,7 +9,7 @@ function formatDate(value) {
 
 function formatAmount(value) {
   const amount = Number(value || 0);
-  return `$${amount.toFixed(2)}`;
+  return `₹${amount.toFixed(2)}`;
 }
 
 function saveSalesDocument({ title, fileName, codeLabel, codeValue, fields }) {

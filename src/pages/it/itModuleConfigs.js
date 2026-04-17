@@ -144,7 +144,7 @@ export const itAssetsConfig = {
     { key: 'assetType', label: 'Type', sortable: true },
     { key: 'serialNumber', label: 'Serial Number', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
-    { key: 'value', label: 'Value', sortable: true, format: (val) => `$${Number(val || 0).toFixed(2)}` },
+    { key: 'value', label: 'Value', sortable: true, format: (val) => `₹${Number(val || 0).toFixed(2)}` },
   ],
 
   searchFields: ['code', 'name', 'assetType', 'serialNumber', 'assignedTo', 'status'],
@@ -221,7 +221,7 @@ export const itAssetsConfig = {
       { title: 'Total Assets', value: total, color: '#6366f1' },
       { title: 'Active', value: active, color: '#10b981' },
       { title: 'Retired', value: retired, color: '#ef4444' },
-      { title: 'Total Value', value: `$${totalValue.toFixed(2)}`, color: '#8b5cf6' },
+      { title: 'Total Value', value: `₹${totalValue.toFixed(2)}`, color: '#8b5cf6' },
     ];
   },
 };

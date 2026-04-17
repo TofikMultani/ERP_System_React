@@ -36,8 +36,6 @@ import Suppliers from "../pages/inventory/Suppliers.jsx";
 import SupplierForm from "../pages/inventory/SuppliersForm.jsx";
 import Warehouses from "../pages/inventory/Warehouses.jsx";
 import WarehouseForm from "../pages/inventory/WarehousesForm.jsx";
-import PurchaseOrders from "../pages/inventory/PurchaseOrders.jsx";
-import PurchaseOrderForm from "../pages/inventory/PurchaseOrdersForm.jsx";
 import Adjustments from "../pages/inventory/Adjustments.jsx";
 import AdjustmentForm from "../pages/inventory/AdjustmentsForm.jsx";
 import InventoryReports from "../pages/inventory/Reports.jsx";
@@ -162,12 +160,6 @@ function AppRoutes() {
             <Route path="warehouses" element={<Warehouses />} />
             <Route path="warehouses/new" element={<WarehouseForm />} />
             <Route path="warehouses/:warehouseCode/edit" element={<WarehouseForm />} />
-            <Route path="purchase-orders" element={<PurchaseOrders />} />
-            <Route path="purchase-orders/new" element={<PurchaseOrderForm />} />
-            <Route
-              path="purchase-orders/:poNumber/edit"
-              element={<PurchaseOrderForm />}
-            />
             <Route path="adjustments" element={<Adjustments />} />
             <Route path="adjustments/new" element={<AdjustmentForm />} />
             <Route path="adjustments/:adjustmentCode/edit" element={<AdjustmentForm />} />

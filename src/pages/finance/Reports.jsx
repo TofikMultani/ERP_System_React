@@ -109,9 +109,9 @@ function FinanceReports() {
   const summaryRows = useMemo(
     () => monthlyData.map((row) => [
       row.month,
-      `$${row.income.toFixed(2)}`,
-      `$${row.expenses.toFixed(2)}`,
-      `$${row.profit.toFixed(2)}`,
+      `₹${row.income.toFixed(2)}`,
+      `₹${row.expenses.toFixed(2)}`,
+      `₹${row.profit.toFixed(2)}`,
     ]),
     [monthlyData],
   );
@@ -130,9 +130,9 @@ function FinanceReports() {
       </div>
 
       <div className="finance-cards">
-        <Card title="Total Income" value={`$${totalIncome.toFixed(2)}`} helper="YTD" />
-        <Card title="Total Expenses" value={`$${totalExpenses.toFixed(2)}`} helper="YTD" />
-        <Card title="Net Profit" value={`$${totalProfit.toFixed(2)}`} helper="YTD" />
+        <Card title="Total Income" value={`₹${totalIncome.toFixed(2)}`} helper="YTD" />
+        <Card title="Total Expenses" value={`₹${totalExpenses.toFixed(2)}`} helper="YTD" />
+        <Card title="Net Profit" value={`₹${totalProfit.toFixed(2)}`} helper="YTD" />
         <Card
           title="Profit Margin"
           value={totalIncome ? `${((totalProfit / totalIncome) * 100).toFixed(1)}%` : "0.0%"}
@@ -148,7 +148,7 @@ function FinanceReports() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `$${value}`} />
+              <Tooltip formatter={(value) => `₹${value}`} />
               <Legend />
               <Bar dataKey="income" fill="#10b981" name="Income" />
               <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
@@ -173,7 +173,7 @@ function FinanceReports() {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => `$${value}`} />
+              <Tooltip formatter={(value) => `₹${value}`} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -185,7 +185,7 @@ function FinanceReports() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `$${value}`} />
+              <Tooltip formatter={(value) => `₹${value}`} />
               <Legend />
               <Line type="monotone" dataKey="profit" stroke="#5a3df0" strokeWidth={2} name="Profit" />
             </LineChart>

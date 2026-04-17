@@ -2,29 +2,24 @@ import {
   createInventoryAdjustment,
   createInventoryCategory,
   createInventoryProduct,
-  createInventoryPurchaseOrder,
   createInventoryStock,
   createInventorySupplier,
   createInventoryWarehouse,
   deleteInventoryAdjustment,
   deleteInventoryCategory,
   deleteInventoryProduct,
-  deleteInventoryPurchaseOrder,
   deleteInventoryStock,
   deleteInventorySupplier,
   deleteInventoryWarehouse,
-  downloadInventoryPurchaseOrderPdf,
   fetchInventoryAdjustments,
   fetchInventoryCategories,
   fetchInventoryProducts,
-  fetchInventoryPurchaseOrders,
   fetchInventoryStock,
   fetchInventorySuppliers,
   fetchInventoryWarehouses,
   fetchNextInventoryAdjustmentCode,
   fetchNextInventoryCategoryCode,
   fetchNextInventoryProductCode,
-  fetchNextInventoryPurchaseOrderCode,
   fetchNextInventoryStockCode,
   fetchNextInventorySupplierCode,
   fetchNextInventoryWarehouseCode,
@@ -32,7 +27,6 @@ import {
   updateInventoryAdjustment,
   updateInventoryCategory,
   updateInventoryProduct,
-  updateInventoryPurchaseOrder,
   updateInventoryStock,
   updateInventorySupplier,
   updateInventoryWarehouse,
@@ -55,16 +49,28 @@ function formatCurrency(value) {
   return `₹${toNumber(value).toLocaleString()}`;
 }
 
+function pickFirstDefined(...values) {
+  for (const value of values) {
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
 function parseProductRow(row) {
   return {
-    name: String(row["Product Name"] || row.name || "").trim(),
-    category: String(row.Category || row.category || "").trim(),
-    sku: String(row.SKU || row.sku || "").trim(),
-    unitPrice: String(row.Price || row.unitPrice || row.unit_price || "").trim(),
-    stockQty: String(row.Stock || row.stockQty || row.stock_qty || "").trim(),
-    reorderLevel: String(row.ReorderLevel || row.reorderLevel || "10").trim(),
-    status: String(row.Status || row.status || "Active").trim(),
-    description: String(row.Description || row.description || "").trim(),
+    name: String(pickFirstDefined(row["Product Name"], row["Product"], row.name, row.Name)).trim(),
+    category: String(pickFirstDefined(row.Category, row.category, row["Product Category"])).trim(),
+    sku: String(pickFirstDefined(row.SKU, row.sku, row["Product SKU"], row["Item Code"])).trim(),
+    unitPrice: String(
+      pickFirstDefined(row.Price, row["Unit Price"], row.unitPrice, row.unit_price, row["Selling Price"]),
+    ).trim(),
+    stockQty: String(pickFirstDefined(row.Stock, row["Stock Qty"], row.stockQty, row.stock_qty, row.Quantity)).trim(),
+    reorderLevel: String(pickFirstDefined(row.ReorderLevel, row["Reorder Level"], row.reorderLevel, "10")).trim(),
+    status: String(pickFirstDefined(row.Status, row.status, "Active")).trim(),
+    description: String(pickFirstDefined(row.Description, row.description, row.Notes, "")).trim(),
   };
 }
 
@@ -351,7 +357,7 @@ export const suppliersConfig = {
   label: "supplier",
   labelPlural: "suppliers",
   listTitle: "Supplier Directory",
-  description: "Vendor master data for procurement and purchase orders.",
+  description: "Vendor master data for procurement operations.",
   formTitle: "Add Supplier",
   formDescription: "Create or update supplier records.",
   listRoute: "/inventory/suppliers",
@@ -521,115 +527,6 @@ export const warehousesConfig = {
   },
 };
 
-export const purchaseOrdersConfig = {
-  title: "Purchase Orders",
-  label: "purchase order",
-  labelPlural: "purchase orders",
-  listTitle: "Purchase Orders",
-  description: "Supplier ordering, receiving schedules, and PDF output.",
-  formTitle: "Create Purchase Order",
-  formDescription: "Create or update purchase order records.",
-  listRoute: "/inventory/purchase-orders",
-  newRoute: "/inventory/purchase-orders/new",
-  editRoute: (code) => `/inventory/purchase-orders/${encodeURIComponent(code)}/edit`,
-  addLabel: "+ Create PO",
-  columns: [
-    { header: "PO Number", accessor: "poNumber" },
-    { header: "Supplier", accessor: "supplierName" },
-    { header: "Warehouse", accessor: "warehouseName" },
-    { header: "Items", accessor: "itemCount" },
-    { header: "Amount", accessor: "amount" },
-    { header: "Order Date", accessor: "orderDate" },
-    { header: "Due Date", accessor: "dueDate" },
-    { header: "Status", accessor: "status" },
-  ],
-  searchFields: ["poNumber", "supplierName", "warehouseName", "status", "itemsText"],
-  pageSize: 8,
-  statusFilters: ["All", "Pending", "Confirmed", "In Transit", "Delivered"],
-  codeField: "poNumber",
-  emptyForm: {
-    poNumber: "",
-    supplierName: "",
-    warehouseName: "",
-    items: "",
-    amount: "0",
-    orderDate: "",
-    dueDate: "",
-    status: "Pending",
-    notes: "",
-  },
-  fields: [
-    { name: "poNumber", label: "PO Number", type: "text", readOnly: true, required: true },
-    { name: "supplierName", label: "Supplier", type: "select", contextKey: "supplierOptions", required: true },
-    { name: "warehouseName", label: "Warehouse", type: "select", contextKey: "warehouseOptions", required: true },
-    { name: "items", label: "Items", type: "textarea", fullWidth: true, required: true, rows: 5, placeholder: "One item per line" },
-    { name: "amount", label: "Amount", type: "number", step: "0.01", placeholder: "0.00" },
-    { name: "orderDate", label: "Order Date", type: "date", required: true },
-    { name: "dueDate", label: "Due Date", type: "date", required: true },
-    { name: "status", label: "Status", type: "select", options: ["Pending", "Confirmed", "In Transit", "Delivered"], required: true },
-    { name: "notes", label: "Notes", type: "textarea", fullWidth: true, placeholder: "Optional notes" },
-  ],
-  fetchRows: fetchInventoryPurchaseOrders,
-  fetchNextCode: fetchNextInventoryPurchaseOrderCode,
-  createItem: createInventoryPurchaseOrder,
-  updateItem: updateInventoryPurchaseOrder,
-  deleteRow: deleteInventoryPurchaseOrder,
-  buildSummary(rows) {
-    const pending = rows.filter((row) => row.status === "Pending").length;
-    const outstanding = rows.filter((row) => row.status !== "Delivered").reduce((sum, row) => sum + toNumber(row.amount), 0);
-    return [
-      { title: "Total POs", value: rows.length, helper: "saved in database" },
-      { title: "Pending", value: pending, helper: "awaiting processing" },
-      { title: "Outstanding", value: formatCurrency(outstanding), helper: "open order value" },
-      { title: "Delivered", value: rows.filter((row) => row.status === "Delivered").length, helper: "closed orders" },
-    ];
-  },
-  mapRowToForm(row) {
-    return {
-      poNumber: row.poNumber || "",
-      supplierName: row.supplierName || "",
-      warehouseName: row.warehouseName || "",
-      items: Array.isArray(row.items) ? row.items.join("\n") : row.itemsText || "",
-      amount: row.amount || "0",
-      orderDate: row.orderDate || "",
-      dueDate: row.dueDate || "",
-      status: row.status || "Pending",
-      notes: row.notes || "",
-    };
-  },
-  mapFormToApi(form) {
-    return {
-      poNumber: String(form.poNumber || "").trim(),
-      supplierName: String(form.supplierName || "").trim(),
-      warehouseName: String(form.warehouseName || "").trim(),
-      items: String(form.items || "")
-        .split(/\r?\n/)
-        .map((item) => item.trim())
-        .filter(Boolean),
-      amount: toNumber(form.amount),
-      orderDate: String(form.orderDate || "").trim(),
-      dueDate: String(form.dueDate || "").trim(),
-      status: String(form.status || "Pending").trim(),
-      notes: String(form.notes || "").trim(),
-    };
-  },
-  loadContext: async () => {
-    const [suppliers, warehouses] = await Promise.all([fetchInventorySuppliers(), fetchInventoryWarehouses()]);
-    return {
-      supplierOptions: (suppliers || []).map((row) => ({ value: row.name, label: row.name })),
-      warehouseOptions: (warehouses || []).map((row) => ({ value: row.name, label: row.name })),
-    };
-  },
-  renderActions: async (row) => row,
-  extraActionLabel: "PDF",
-  async extraAction(row) {
-    const blob = await downloadInventoryPurchaseOrderPdf(row.poNumber);
-    const url = URL.createObjectURL(blob);
-    window.open(url, "_blank", "noopener,noreferrer");
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-  },
-};
-
 export const adjustmentsConfig = {
   title: "Adjustments",
   label: "adjustment",
@@ -735,7 +632,6 @@ export function getInventoryListConfig(key) {
     stock: stockConfig,
     suppliers: suppliersConfig,
     warehouses: warehousesConfig,
-    purchaseOrders: purchaseOrdersConfig,
     adjustments: adjustmentsConfig,
   };
 

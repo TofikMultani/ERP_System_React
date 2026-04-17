@@ -235,6 +235,8 @@ function createCrudHandlers(config) {
     createItem,
     updateItem,
     deleteItem,
+    normalizeInput: config.normalizeInput,
+    hasRequiredFields: config.hasRequiredFields,
   };
 }
 
@@ -707,77 +709,106 @@ async function importProducts(req, res) {
   const client = await pool.connect();
   try {
     let processed = 0;
+    const failed = [];
     await client.query('BEGIN');
 
-    for (const item of items) {
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index];
       const normalized = productCrud.normalizeInput(item || {});
       if (!productCrud.hasRequiredFields(normalized)) {
+        failed.push({
+          row: index + 1,
+          sku: normalized.sku || null,
+          reason: 'Missing required fields (name/category/sku)',
+        });
         continue;
       }
 
-      const existing = await client.query(
-        `SELECT id FROM inventory_products WHERE sku = $1 LIMIT 1`,
-        [normalized.sku],
-      );
+      await client.query('SAVEPOINT product_import_row');
+      try {
+        const existing = await client.query(
+          `SELECT id FROM inventory_products WHERE sku = $1 LIMIT 1`,
+          [normalized.sku],
+        );
 
-      if (existing.rows[0]) {
-        await client.query(
-          `
-            UPDATE inventory_products
-            SET name = $1,
-                category = $2,
-                unit_price = $3,
-                stock_qty = $4,
-                reorder_level = $5,
-                status = $6,
-                description = $7,
-                updated_by = $8,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE sku = $9
-          `,
-          [
-            normalized.name,
-            normalized.category,
-            normalized.unit_price,
-            normalized.stock_qty,
-            normalized.reorder_level,
-            normalized.status,
-            normalized.description,
-            req.user?.id || null,
-            normalized.sku,
-          ],
-        );
-      } else {
-        const code = await getNextCode(client, 'inventory_products', 'product_code', 'PRD');
-        await client.query(
-          `
-            INSERT INTO inventory_products (
-              product_code, name, category, sku, unit_price, stock_qty, reorder_level, status, description, created_by, updated_by
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10)
-          `,
-          [
-            code,
-            normalized.name,
-            normalized.category,
-            normalized.sku,
-            normalized.unit_price,
-            normalized.stock_qty,
-            normalized.reorder_level,
-            normalized.status,
-            normalized.description,
-            req.user?.id || null,
-          ],
-        );
+        if (existing.rows[0]) {
+          await client.query(
+            `
+              UPDATE inventory_products
+              SET name = $1,
+                  category = $2,
+                  unit_price = $3,
+                  stock_qty = $4,
+                  reorder_level = $5,
+                  status = $6,
+                  description = $7,
+                  updated_by = $8,
+                  updated_at = CURRENT_TIMESTAMP
+              WHERE sku = $9
+            `,
+            [
+              normalized.name,
+              normalized.category,
+              normalized.unit_price,
+              normalized.stock_qty,
+              normalized.reorder_level,
+              normalized.status,
+              normalized.description,
+              req.user?.id || null,
+              normalized.sku,
+            ],
+          );
+        } else {
+          const code = await getNextCode(client, 'inventory_products', 'product_code', 'PRD');
+          await client.query(
+            `
+              INSERT INTO inventory_products (
+                product_code, name, category, sku, unit_price, stock_qty, reorder_level, status, description, created_by, updated_by
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10)
+            `,
+            [
+              code,
+              normalized.name,
+              normalized.category,
+              normalized.sku,
+              normalized.unit_price,
+              normalized.stock_qty,
+              normalized.reorder_level,
+              normalized.status,
+              normalized.description,
+              req.user?.id || null,
+            ],
+          );
+        }
+
+        processed += 1;
+      } catch (rowError) {
+        await client.query('ROLLBACK TO SAVEPOINT product_import_row');
+        failed.push({
+          row: index + 1,
+          sku: normalized.sku || null,
+          reason: rowError.message,
+        });
       }
-
-      processed += 1;
     }
 
     await client.query('COMMIT');
+
+    if (!processed && failed.length) {
+      return res.status(400).json({
+        status: 'ERROR',
+        message: 'No products were imported',
+        error: failed[0].reason,
+        data: { processed, failed },
+      });
+    }
+
     return res.status(200).json({
       status: 'OK',
-      message: 'Products imported successfully',
-      data: { processed },
+      message: failed.length
+        ? `Products imported with ${failed.length} skipped row(s)`
+        : 'Products imported successfully',
+      data: { processed, failed },
     });
   } catch (error) {
     await client.query('ROLLBACK');

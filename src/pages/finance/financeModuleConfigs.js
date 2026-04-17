@@ -36,7 +36,7 @@ export const financeIncomeConfig = {
     { key: 'code', label: 'Income Code', sortable: true },
     { key: 'sourceName', label: 'Source', sortable: true },
     { key: 'receivedDate', label: 'Received Date', sortable: true },
-    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `$${Number(val || 0).toFixed(2)}` },
+    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${Number(val || 0).toFixed(2)}` },
     { key: 'status', label: 'Status', sortable: true },
     { key: 'reference', label: 'Reference', sortable: true },
   ],
@@ -101,7 +101,7 @@ export const financeIncomeConfig = {
 
     return [
       { title: 'Total Income Records', value: total, color: '#6366f1' },
-      { title: 'Total Income', value: `$${totalAmount.toFixed(2)}`, color: '#10b981' },
+      { title: 'Total Income', value: `₹${totalAmount.toFixed(2)}`, color: '#10b981' },
       { title: 'Received', value: received, color: '#8b5cf6' },
       { title: 'Pending', value: pending, color: '#f59e0b' },
     ];
@@ -128,7 +128,7 @@ export const financeExpensesConfig = {
     { key: 'expenseDate', label: 'Date', sortable: true },
     { key: 'category', label: 'Category', sortable: true },
     { key: 'description', label: 'Description', sortable: true },
-    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `$${Number(val || 0).toFixed(2)}` },
+    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${Number(val || 0).toFixed(2)}` },
     { key: 'status', label: 'Status', sortable: true },
   ],
 
@@ -192,7 +192,7 @@ export const financeExpensesConfig = {
 
     return [
       { title: 'Total Expenses', value: total, color: '#6366f1' },
-      { title: 'Total Spend', value: `$${totalAmount.toFixed(2)}`, color: '#ef4444' },
+      { title: 'Total Spend', value: `₹${totalAmount.toFixed(2)}`, color: '#ef4444' },
       { title: 'Approved', value: approved, color: '#10b981' },
       { title: 'Pending', value: pending, color: '#f59e0b' },
     ];
@@ -219,7 +219,7 @@ export const financePaymentsConfig = {
     { key: 'paymentDate', label: 'Date', sortable: true },
     { key: 'vendorName', label: 'Vendor', sortable: true },
     { key: 'incomeCode', label: 'Income Code', sortable: true },
-    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `$${Number(val || 0).toFixed(2)}` },
+    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${Number(val || 0).toFixed(2)}` },
     { key: 'method', label: 'Method', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
   ],
@@ -297,8 +297,8 @@ export const financePaymentsConfig = {
     return [
       { title: 'Total Payments', value: total, color: '#6366f1' },
       { title: 'Completed', value: completed, color: '#10b981' },
-      { title: 'Amount Paid', value: `$${paidAmount.toFixed(2)}`, color: '#8b5cf6' },
-      { title: 'Pending Amount', value: `$${pendingAmount.toFixed(2)}`, color: '#f59e0b' },
+      { title: 'Amount Paid', value: `₹${paidAmount.toFixed(2)}`, color: '#8b5cf6' },
+      { title: 'Pending Amount', value: `₹${pendingAmount.toFixed(2)}`, color: '#f59e0b' },
     ];
   },
 };

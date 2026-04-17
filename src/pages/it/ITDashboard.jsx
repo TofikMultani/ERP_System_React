@@ -88,7 +88,7 @@ function ITDashboard() {
   ).map(([type, data]) => ({
     type,
     count: data.count,
-    value: `$${data.value.toFixed(2)}`,
+    value: `₹${data.value.toFixed(2)}`,
   }));
 
   const systemsTrendData = useMemo(() => {
@@ -181,7 +181,7 @@ function ITDashboard() {
         />
         <Card
           title="Total Asset Value"
-          value={`$${totalValue.toFixed(2)}`}
+          value={`₹${totalValue.toFixed(2)}`}
           helper="Inventory value"
         />
       </div>

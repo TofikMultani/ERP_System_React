@@ -51,7 +51,7 @@ export const customersConfig = {
     { key: 'status', label: 'Status', sortable: true },
     { key: 'creditLimit', label: 'Credit Limit', sortable: true, format: (val) => {
       const amount = Number(val || 0);
-      return `$${amount.toFixed(2)}`;
+      return `₹${amount.toFixed(2)}`;
     }},
   ],
 
@@ -143,7 +143,7 @@ export const customersConfig = {
       },
       {
         title: 'Total Credit Limit',
-        value: `$${totalCredit.toFixed(2)}`,
+        value: `₹${totalCredit.toFixed(2)}`,
         color: '#f59e0b',
       },
     ];
@@ -173,7 +173,7 @@ export const ordersConfig = {
     { key: 'code', label: 'Order Number', sortable: true },
     { key: 'customerCode', label: 'Customer Code', sortable: true },
     { key: 'orderDate', label: 'Order Date', sortable: true },
-    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `$${val.toFixed(2)}` },
+    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${val.toFixed(2)}` },
     { key: 'itemCount', label: 'Items', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
   ],
@@ -182,7 +182,7 @@ export const ordersConfig = {
 
   fields: [
     { name: 'code', label: 'Order Number', type: 'text', required: true, readOnly: true },
-    { name: 'customerCode', label: 'Customer Code', type: 'text', required: true, placeholder: 'e.g., CUST-00001' },
+    { name: 'customerCode', label: 'Customer Code', type: 'select', required: true, optionsFrom: 'customerOptions' },
     { name: 'customerName', label: 'Customer Name', type: 'text', readOnly: true },
     { name: 'orderDate', label: 'Order Date', type: 'date', required: true },
     {
@@ -258,7 +258,13 @@ export const ordersConfig = {
 
   loadContext: async () => {
     const customers = await fetchSalesCustomers();
-    return { customers };
+    return {
+      customers,
+      customerOptions: (customers || []).map((customer) => ({
+        value: customer.code || customer.customerCode,
+        label: `${customer.code || customer.customerCode} - ${customer.name || customer.customerName}`,
+      })),
+    };
   },
 
   buildSummary: (rows) => {
@@ -274,7 +280,7 @@ export const ordersConfig = {
       },
       {
         title: 'Total Revenue',
-        value: `$${totalRevenue.toFixed(2)}`,
+        value: `₹${totalRevenue.toFixed(2)}`,
         color: '#10b981',
       },
       {
@@ -310,7 +316,7 @@ export const invoicesConfig = {
     { key: 'customerCode', label: 'Customer Code', sortable: true },
     { key: 'invoiceDate', label: 'Invoice Date', sortable: true },
     { key: 'dueDate', label: 'Due Date', sortable: true },
-    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `$${val.toFixed(2)}` },
+    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${val.toFixed(2)}` },
     { key: 'status', label: 'Status', sortable: true },
   ],
 
@@ -318,7 +324,7 @@ export const invoicesConfig = {
 
   fields: [
     { name: 'code', label: 'Invoice Number', type: 'text', required: true, readOnly: true },
-    { name: 'customerCode', label: 'Customer Code', type: 'text', required: true, placeholder: 'e.g., CUST-00001' },
+    { name: 'customerCode', label: 'Customer Code', type: 'select', required: true, optionsFrom: 'customerOptions' },
     { name: 'customerName', label: 'Customer Name', type: 'text', readOnly: true },
     { name: 'invoiceDate', label: 'Invoice Date', type: 'date', required: true },
     { name: 'dueDate', label: 'Due Date', type: 'date', required: true },
@@ -390,7 +396,13 @@ export const invoicesConfig = {
 
   loadContext: async () => {
     const customers = await fetchSalesCustomers();
-    return { customers };
+    return {
+      customers,
+      customerOptions: (customers || []).map((customer) => ({
+        value: customer.code || customer.customerCode,
+        label: `${customer.code || customer.customerCode} - ${customer.name || customer.customerName}`,
+      })),
+    };
   },
 
   buildSummary: (rows) => {
@@ -406,7 +418,7 @@ export const invoicesConfig = {
       },
       {
         title: 'Total Amount',
-        value: `$${totalAmount.toFixed(2)}`,
+        value: `₹${totalAmount.toFixed(2)}`,
         color: '#10b981',
       },
       {
@@ -446,7 +458,7 @@ export const quotationsConfig = {
     { key: 'customerCode', label: 'Customer Code', sortable: true },
     { key: 'quotationDate', label: 'Quote Date', sortable: true },
     { key: 'expiryDate', label: 'Expiry Date', sortable: true },
-    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `$${val.toFixed(2)}` },
+    { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${val.toFixed(2)}` },
     { key: 'status', label: 'Status', sortable: true },
   ],
 
@@ -454,7 +466,7 @@ export const quotationsConfig = {
 
   fields: [
     { name: 'code', label: 'Quotation Number', type: 'text', required: true, readOnly: true },
-    { name: 'customerCode', label: 'Customer Code', type: 'text', required: true, placeholder: 'e.g., CUST-00001' },
+    { name: 'customerCode', label: 'Customer Code', type: 'select', required: true, optionsFrom: 'customerOptions' },
     { name: 'customerName', label: 'Customer Name', type: 'text', readOnly: true },
     { name: 'quotationDate', label: 'Quotation Date', type: 'date', required: true },
     { name: 'expiryDate', label: 'Expiry Date', type: 'date', required: true },
@@ -532,7 +544,13 @@ export const quotationsConfig = {
 
   loadContext: async () => {
     const customers = await fetchSalesCustomers();
-    return { customers };
+    return {
+      customers,
+      customerOptions: (customers || []).map((customer) => ({
+        value: customer.code || customer.customerCode,
+        label: `${customer.code || customer.customerCode} - ${customer.name || customer.customerName}`,
+      })),
+    };
   },
 
   buildSummary: (rows) => {
@@ -548,7 +566,7 @@ export const quotationsConfig = {
       },
       {
         title: 'Total Value',
-        value: `$${totalValue.toFixed(2)}`,
+        value: `₹${totalValue.toFixed(2)}`,
         color: '#10b981',
       },
       {

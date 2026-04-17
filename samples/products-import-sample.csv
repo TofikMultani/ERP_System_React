@@ -1,0 +1,6 @@
+Product Name,Category,SKU,Price,Stock,ReorderLevel,Status,Description
+Laptop Pro 14,Electronics,PRD-SMP-001,85000,15,5,Active,14-inch business laptop
+Wireless Mouse,Accessories,PRD-SMP-002,1200,60,20,Active,2.4GHz ergonomic mouse
+Office Chair,Furniture,PRD-SMP-003,6500,12,4,Active,Adjustable ergonomic chair
+A4 Paper Pack,Stationery,PRD-SMP-004,320,200,50,Active,500 sheets A4 size
+Network Switch 24P,Electronics,PRD-SMP-005,14000,8,3,Active,24-port gigabit managed switch

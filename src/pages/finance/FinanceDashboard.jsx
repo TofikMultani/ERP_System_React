@@ -143,10 +143,10 @@ function FinanceDashboard() {
       </div>
 
       <div className="finance-cards">
-        <Card title="Total Income" value={`$${totalIncome.toFixed(2)}`} helper={`${income.length} records`} />
-        <Card title="Total Expenses" value={`$${totalExpenses.toFixed(2)}`} helper={`${expenses.length} expense records`} />
-        <Card title="Net Profit" value={`$${(totalIncome - totalExpenses).toFixed(2)}`} helper="Income minus expenses" />
-        <Card title="Pending Income" value={`$${pendingIncome.toFixed(2)}`} helper={`${completedPayments} payments completed`} />
+        <Card title="Total Income" value={`₹${totalIncome.toFixed(2)}`} helper={`${income.length} records`} />
+        <Card title="Total Expenses" value={`₹${totalExpenses.toFixed(2)}`} helper={`${expenses.length} expense records`} />
+        <Card title="Net Profit" value={`₹${(totalIncome - totalExpenses).toFixed(2)}`} helper="Income minus expenses" />
+        <Card title="Pending Income" value={`₹${pendingIncome.toFixed(2)}`} helper={`${completedPayments} payments completed`} />
       </div>
 
       <div className="finance-charts">
@@ -157,7 +157,7 @@ function FinanceDashboard() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `$${value}`} />
+              <Tooltip formatter={(value) => `₹${value}`} />
               <Legend />
               <Bar dataKey="income" fill="#10b981" name="Income" />
               <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
@@ -182,7 +182,7 @@ function FinanceDashboard() {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => `$${value}`} />
+              <Tooltip formatter={(value) => `₹${value}`} />
             </PieChart>
           </ResponsiveContainer>
           {!expenseData.length ? <p className="root-admin-dashboard__empty-state">No expense breakdown data yet.</p> : null}
@@ -195,7 +195,7 @@ function FinanceDashboard() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `$${value}`} />
+              <Tooltip formatter={(value) => `₹${value}`} />
               <Legend />
               <Line type="monotone" dataKey="profit" stroke="#5a3df0" strokeWidth={2} name="Profit" />
             </LineChart>

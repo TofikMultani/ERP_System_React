@@ -283,21 +283,21 @@ function MyUsers() {
   }
 
   return (
-    <div className="admin-dashboard root-admin-dashboard root-admin-requests-page">
-      <section className="admin-dashboard__panel" style={{ marginBottom: 24 }}>
+    <div className="admin-dashboard root-admin-dashboard root-admin-requests-page my-users-page">
+      <section className="admin-dashboard__panel my-users-page__panel">
         <div className="root-admin-dashboard__table-head">
           <h3 className="admin-dashboard__panel-title">My Users</h3>
-          <div className="root-admin-dashboard__filters">
-            <div className="root-admin-dashboard__filter-btn root-admin-dashboard__filter-btn--active" style={{ cursor: "default" }}>
+          <div className="root-admin-dashboard__filters my-users-page__metrics">
+            <div className="root-admin-dashboard__filter-btn root-admin-dashboard__filter-btn--active my-users-page__metric-pill">
               {users.length} Users
             </div>
-            <div className="root-admin-dashboard__filter-btn" style={{ cursor: "default" }}>
+            <div className="root-admin-dashboard__filter-btn my-users-page__metric-pill">
               {allowedModules.length} Allocated Modules
             </div>
           </div>
         </div>
 
-        <div className="root-admin-request__contact" style={{ marginTop: 12 }}>
+        <div className="root-admin-request__contact my-users-page__limit">
           <strong>Module user limit:</strong>
           <span>2 users per module</span>
         </div>
@@ -306,7 +306,7 @@ function MyUsers() {
         {loading ? <p className="root-admin-dashboard__empty-state">Loading users...</p> : null}
       </section>
 
-      <section className="admin-dashboard__panel" style={{ marginBottom: 24 }}>
+      <section className="admin-dashboard__panel my-users-page__panel">
         <div className="root-admin-dashboard__table-head">
           <h3 className="admin-dashboard__panel-title">
             {editingUserId ? "Edit Sub-User" : "Add New Sub-User"}
@@ -317,9 +317,9 @@ function MyUsers() {
           </Button>
         </div>
 
-        <form className="root-admin-module-config" onSubmit={handleSubmit}>
-          <div className="root-admin-module-config__row" style={{ alignItems: "flex-start" }}>
-            <label className="root-admin-module-config__price" style={{ flex: 1 }}>
+        <form className="my-users-form" onSubmit={handleSubmit}>
+          <div className="my-users-form__grid">
+            <label className="my-users-form__field">
               <span>First Name</span>
               <input
                 name="firstName"
@@ -329,7 +329,7 @@ function MyUsers() {
               />
               {formErrors.firstName ? <small className="profile-page__error">{formErrors.firstName}</small> : null}
             </label>
-            <label className="root-admin-module-config__price" style={{ flex: 1 }}>
+            <label className="my-users-form__field">
               <span>Last Name</span>
               <input
                 name="lastName"
@@ -341,8 +341,8 @@ function MyUsers() {
             </label>
           </div>
 
-          <div className="root-admin-module-config__row" style={{ alignItems: "flex-start" }}>
-            <label className="root-admin-module-config__price" style={{ flex: 1 }}>
+          <div className="my-users-form__grid">
+            <label className="my-users-form__field">
               <span>Email</span>
               <input
                 type="email"
@@ -354,7 +354,7 @@ function MyUsers() {
               {formErrors.email ? <small className="profile-page__error">{formErrors.email}</small> : null}
             </label>
 
-            <label className="root-admin-module-config__price" style={{ flex: 1 }}>
+            <label className="my-users-form__field">
               <span>Module</span>
               <select
                 name="assignedModule"
@@ -375,16 +375,15 @@ function MyUsers() {
             </label>
           </div>
 
-          <div className="root-admin-module-config__row" style={{ alignItems: "flex-start" }}>
-            <label className="root-admin-module-config__price" style={{ flex: 1 }}>
+          <div className="my-users-form__grid">
+            <label className="my-users-form__field">
               <span>Password</span>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div className="my-users-form__password-row">
                 <input
                   name="password"
                   value={formValues.password}
                   onChange={handleFieldChange}
                   placeholder="Password"
-                  style={{ flex: 1 }}
                 />
                 <Button type="button" variant="outline" size="sm" onClick={handleGeneratePassword}>
                   <KeyRound size={14} />
@@ -394,9 +393,9 @@ function MyUsers() {
               {formErrors.password ? <small className="profile-page__error">{formErrors.password}</small> : null}
             </label>
 
-            <div className="root-admin-module-config__price" style={{ flex: 1 }}>
+            <div className="my-users-form__field">
               <span>Module Access</span>
-              <div className="root-admin-request__module-tags">
+              <div className="root-admin-request__module-tags my-users-form__module-access">
                 {allowedModules.length
                   ? allowedModules.map((moduleKey) => (
                       <span key={moduleKey}>{MODULE_LABELS[moduleKey] || moduleKey}</span>
@@ -406,7 +405,7 @@ function MyUsers() {
             </div>
           </div>
 
-          <div className="root-admin-dashboard__table-actions" style={{ marginTop: 12 }}>
+          <div className="root-admin-dashboard__table-actions my-users-form__actions">
             <Button type="submit" variant="primary" disabled={saving}>
               <UserRoundPlus size={14} />
               {editingUserId ? "Update Sub-User" : "Add New User"}

@@ -5,7 +5,6 @@ import {
   fetchInventoryAdjustments,
   fetchInventoryCategories,
   fetchInventoryProducts,
-  fetchInventoryPurchaseOrders,
   fetchInventorySuppliers,
   fetchInventoryWarehouses,
 } from "../../utils/inventoryApi.js";
@@ -55,7 +54,6 @@ function Reports() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
-  const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [adjustments, setAdjustments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,12 +68,11 @@ function Reports() {
     setErrorMessage("");
 
     try {
-      const [productRows, categoryRows, warehouseRows, poRows, supplierRows, adjustmentRows] =
+      const [productRows, categoryRows, warehouseRows, supplierRows, adjustmentRows] =
         await Promise.all([
           fetchInventoryProducts(),
           fetchInventoryCategories(),
           fetchInventoryWarehouses(),
-          fetchInventoryPurchaseOrders(),
           fetchInventorySuppliers(),
           fetchInventoryAdjustments(),
         ]);
@@ -83,7 +80,6 @@ function Reports() {
       setProducts(Array.isArray(productRows) ? productRows : []);
       setCategories(Array.isArray(categoryRows) ? categoryRows : []);
       setWarehouses(Array.isArray(warehouseRows) ? warehouseRows : []);
-      setPurchaseOrders(Array.isArray(poRows) ? poRows : []);
       setSuppliers(Array.isArray(supplierRows) ? supplierRows : []);
       setAdjustments(Array.isArray(adjustmentRows) ? adjustmentRows : []);
     } catch (error) {
@@ -103,23 +99,23 @@ function Reports() {
       (product) => toNumber(product.stockQty) <= toNumber(product.reorderLevel),
     ).length;
 
-    const monthlyPurchaseMap = purchaseOrders.reduce((accumulator, po) => {
-      const monthKey = getMonthKey(po.orderDate);
+    const monthlyAdjustmentMap = adjustments.reduce((accumulator, adjustment) => {
+      const monthKey = getMonthKey(adjustment.date);
       if (!monthKey) {
         return accumulator;
       }
 
-      accumulator[monthKey] = (accumulator[monthKey] || 0) + toNumber(po.amount);
+      accumulator[monthKey] = (accumulator[monthKey] || 0) + 1;
       return accumulator;
     }, {});
 
-    const purchaseMonths = Object.keys(monthlyPurchaseMap)
+    const adjustmentMonths = Object.keys(monthlyAdjustmentMap)
       .sort((left, right) => left.localeCompare(right))
       .slice(-6);
 
-    const purchaseTrend = purchaseMonths.map((month) => ({
+    const adjustmentTrend = adjustmentMonths.map((month) => ({
       month: month.slice(5),
-      amount: monthlyPurchaseMap[month] || 0,
+      count: monthlyAdjustmentMap[month] || 0,
     }));
 
     const warehouseUtilization = warehouses.map((warehouse) => {
@@ -161,7 +157,7 @@ function Reports() {
       lowStock: data.lowStock,
     }));
 
-    const pendingPos = purchaseOrders.filter((po) => po.status === "Pending").length;
+    const totalWarehouses = warehouses.length;
     const activeSuppliers = suppliers.filter((supplier) => supplier.status === "Active").length;
     const approvedAdjustments = adjustments.filter(
       (adjustment) => String(adjustment.status || "").toLowerCase() === "approved",
@@ -182,9 +178,9 @@ function Reports() {
         helper: "items at or below reorder level",
       },
       {
-        title: "Pending POs",
-        value: pendingPos,
-        helper: "awaiting procurement flow",
+        title: "Warehouses",
+        value: totalWarehouses,
+        helper: "tracked storage sites",
       },
       {
         title: "Active Suppliers",
@@ -205,18 +201,18 @@ function Reports() {
 
     return {
       summary,
-      purchaseTrend,
+      adjustmentTrend,
       warehouseUtilization,
       categoryRows,
     };
-  }, [products, categories, warehouses, purchaseOrders, suppliers, adjustments]);
+  }, [products, categories, warehouses, suppliers, adjustments]);
 
   return (
     <div className="inv-page">
       <div className="inv-page__header">
         <div>
           <h2>Inventory Reports</h2>
-          <p>Dynamic analytics from products, stock, suppliers, purchase orders, and adjustments.</p>
+            <p>Dynamic analytics from products, stock, suppliers, and adjustments.</p>
         </div>
         <button type="button" className="inv-btn" onClick={loadReports}>
           Refresh Report
@@ -233,14 +229,14 @@ function Reports() {
 
       <div className="inv-charts">
         <div className="inv-panel">
-          <h3 className="inv-panel__title">Purchase Value Trend (6 months)</h3>
+          <h3 className="inv-panel__title">Adjustments Trend (6 months)</h3>
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={isLoading ? [] : reportData.purchaseTrend} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+            <LineChart data={isLoading ? [] : reportData.adjustmentTrend} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,33,61,0.08)" />
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#69708a" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12, fill: "#69708a" }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ borderRadius: "12px", border: "1px solid rgba(20,33,61,0.1)" }} />
-              <Line type="monotone" dataKey="amount" stroke="#5a3df0" strokeWidth={2.5} dot={{ r: 4, fill: "#5a3df0", strokeWidth: 0 }} />
+              <Tooltip formatter={(value) => `${value} entries`} contentStyle={{ borderRadius: "12px", border: "1px solid rgba(20,33,61,0.1)" }} />
+              <Line type="monotone" dataKey="count" stroke="#5a3df0" strokeWidth={2.5} dot={{ r: 4, fill: "#5a3df0", strokeWidth: 0 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

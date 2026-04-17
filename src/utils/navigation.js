@@ -40,11 +40,6 @@ const APP_NAVIGATION_ITEMS = [
     keywords: ["inventory", "storage"],
   },
   {
-    label: "Purchase Orders",
-    path: "/inventory/purchase-orders",
-    keywords: ["inventory", "procurement"],
-  },
-  {
     label: "Adjustments",
     path: "/inventory/adjustments",
     keywords: ["inventory", "correction"],

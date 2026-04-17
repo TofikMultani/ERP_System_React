@@ -421,6 +421,8 @@ export function createSalesFormPage(config) {
           );
           if (customer) {
             updated.customerName = customer.name || customer.customerName || '';
+          } else {
+            updated.customerName = '';
           }
         }
 
