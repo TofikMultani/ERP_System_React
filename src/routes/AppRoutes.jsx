@@ -48,9 +48,9 @@ import { Invoices as SalesInvoicesList, InvoicesForm as SalesInvoicesForm } from
 import { Quotations as SalesQuotationsList, QuotationsForm as SalesQuotationsForm } from "../pages/sales/Quotations.jsx";
 import SalesReports from "../pages/sales/Reports.jsx";
 import FinanceDashboard from "../pages/finance/FinanceDashboard.jsx";
-import FinanceInvoices from "../pages/finance/Invoices.jsx";
-import Expenses from "../pages/finance/Expenses.jsx";
-import Payments from "../pages/finance/Payments.jsx";
+import { FinanceIncome, FinanceIncomeForm } from "../pages/finance/Invoices.jsx";
+import { FinanceExpenses, FinanceExpensesForm } from "../pages/finance/Expenses.jsx";
+import { FinancePayments, FinancePaymentsForm } from "../pages/finance/Payments.jsx";
 import FinanceReports from "../pages/finance/Reports.jsx";
 import ITDashboard from "../pages/it/ITDashboard.jsx";
 import Systems from "../pages/it/Systems.jsx";
@@ -201,9 +201,15 @@ function AppRoutes() {
               path="dashboard"
               element={<Navigate to="/finance" replace />}
             />
-            <Route path="invoices" element={<FinanceInvoices />} />
-            <Route path="expenses" element={<Expenses />} />
-            <Route path="payments" element={<Payments />} />
+            <Route path="income" element={<FinanceIncome />} />
+            <Route path="income/new" element={<FinanceIncomeForm />} />
+            <Route path="income/:incomeCode/edit" element={<FinanceIncomeForm />} />
+            <Route path="expenses" element={<FinanceExpenses />} />
+            <Route path="expenses/new" element={<FinanceExpensesForm />} />
+            <Route path="expenses/:expenseCode/edit" element={<FinanceExpensesForm />} />
+            <Route path="payments" element={<FinancePayments />} />
+            <Route path="payments/new" element={<FinancePaymentsForm />} />
+            <Route path="payments/:paymentCode/edit" element={<FinancePaymentsForm />} />
             <Route path="reports" element={<FinanceReports />} />
           </Route>
 

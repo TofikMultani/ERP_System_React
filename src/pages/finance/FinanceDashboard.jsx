@@ -1,5 +1,5 @@
+import { useEffect, useMemo, useState } from "react";
 import Card from "../../components/Card.jsx";
-import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   BarChart,
   Bar,
@@ -15,12 +15,13 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import {
+  fetchFinanceIncome,
+  fetchFinanceExpenses,
+  fetchFinancePayments,
+} from "../../utils/financeApi.js";
 
 const COLORS = ["#5a3df0", "#3b82f6", "#10b981", "#fbbf24", "#ef4444"];
-
-function parseCurrency(value) {
-  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
-}
 
 function getMonthLabel(value) {
   const date = new Date(value);
@@ -32,69 +33,105 @@ function getMonthLabel(value) {
 }
 
 function FinanceDashboard() {
-  const invoices = usePersistentSnapshot("erp_finance_invoices", []);
-  const expenses = usePersistentSnapshot("erp_finance_expenses", []);
-  const payments = usePersistentSnapshot("erp_finance_payments", []);
+  const [income, setIncome] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [payments, setPayments] = useState([]);
 
-  const totalIncome = invoices.reduce(
-    (sum, invoice) => sum + parseCurrency(invoice.amount),
-    0,
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        const [incomeData, expensesData, paymentsData] = await Promise.all([
+          fetchFinanceIncome(),
+          fetchFinanceExpenses(),
+          fetchFinancePayments(),
+        ]);
+
+        if (isMounted) {
+          setIncome(incomeData);
+          setExpenses(expensesData);
+          setPayments(paymentsData);
+        }
+      } catch (error) {
+        console.error("Unable to load finance dashboard data:", error);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const totalIncome = useMemo(
+    () => income.reduce((sum, record) => sum + (Number(record.amount) || 0), 0),
+    [income],
   );
-  const totalExpenses = expenses.reduce(
-    (sum, expense) => sum + parseCurrency(expense.amount),
-    0,
+
+  const totalExpenses = useMemo(
+    () => expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0),
+    [expenses],
   );
-  const pendingInvoices = invoices
-    .filter((invoice) => invoice.status !== "Paid")
-    .reduce(
-      (sum, invoice) =>
-        sum + parseCurrency(invoice.amount),
-      0,
-    );
-  const completedPayments = payments.filter(
-    (payment) => payment.status === "Completed",
-  ).length;
 
-  const monthlyIncomeMap = invoices.reduce((accumulator, invoice) => {
-    const month = getMonthLabel(invoice.date);
-    if (!month) {
+  const pendingIncome = useMemo(
+    () => income
+      .filter((record) => String(record.status || "").toLowerCase() === "pending")
+      .reduce((sum, record) => sum + (Number(record.amount) || 0), 0),
+    [income],
+  );
+
+  const completedPayments = useMemo(
+    () => payments.filter((payment) => String(payment.status || "").toLowerCase() === "completed").length,
+    [payments],
+  );
+
+  const monthlyData = useMemo(() => {
+    const monthlyIncomeMap = income.reduce((accumulator, record) => {
+      const month = getMonthLabel(record.receivedDate || record.date);
+      if (!month) {
+        return accumulator;
+      }
+      accumulator[month] = (accumulator[month] || 0) + (Number(record.amount) || 0);
       return accumulator;
-    }
-    accumulator[month] = (accumulator[month] || 0) + parseCurrency(invoice.amount);
-    return accumulator;
-  }, {});
+    }, {});
 
-  const monthlyExpenseMap = expenses.reduce((accumulator, expense) => {
-    const month = getMonthLabel(expense.date);
-    if (!month) {
+    const monthlyExpenseMap = expenses.reduce((accumulator, expense) => {
+      const month = getMonthLabel(expense.expenseDate || expense.date);
+      if (!month) {
+        return accumulator;
+      }
+      accumulator[month] = (accumulator[month] || 0) + (Number(expense.amount) || 0);
       return accumulator;
-    }
-    accumulator[month] = (accumulator[month] || 0) + parseCurrency(expense.amount);
-    return accumulator;
-  }, {});
+    }, {});
 
-  const monthKeys = Array.from(
-    new Set([...Object.keys(monthlyIncomeMap), ...Object.keys(monthlyExpenseMap)]),
-  )
-    .sort((left, right) => left.localeCompare(right))
-    .slice(-6);
+    const monthKeys = Array.from(
+      new Set([...Object.keys(monthlyIncomeMap), ...Object.keys(monthlyExpenseMap)]),
+    )
+      .sort((left, right) => left.localeCompare(right))
+      .slice(-6);
 
-  const monthlyData = monthKeys.map((monthKey) => ({
-    month: monthKey.slice(5),
-    income: monthlyIncomeMap[monthKey] || 0,
-    expenses: monthlyExpenseMap[monthKey] || 0,
-  }));
+    return monthKeys.map((monthKey) => ({
+      month: monthKey.slice(5),
+      income: monthlyIncomeMap[monthKey] || 0,
+      expenses: monthlyExpenseMap[monthKey] || 0,
+      profit: (monthlyIncomeMap[monthKey] || 0) - (monthlyExpenseMap[monthKey] || 0),
+    }));
+  }, [income, expenses]);
 
-  const categoryMap = expenses.reduce((accumulator, expense) => {
-    const category = expense.category || "Others";
-    accumulator[category] = (accumulator[category] || 0) + parseCurrency(expense.amount);
-    return accumulator;
-  }, {});
+  const expenseData = useMemo(() => {
+    const categoryMap = expenses.reduce((accumulator, expense) => {
+      const category = expense.category || "Others";
+      accumulator[category] = (accumulator[category] || 0) + (Number(expense.amount) || 0);
+      return accumulator;
+    }, {});
 
-  const expenseData = Object.entries(categoryMap).map(([category, amount]) => ({
-    category,
-    amount,
-  }));
+    return Object.entries(categoryMap).map(([category, amount]) => ({
+      category,
+      amount,
+    }));
+  }, [expenses]);
 
   return (
     <div className="finance-page">
@@ -106,26 +143,10 @@ function FinanceDashboard() {
       </div>
 
       <div className="finance-cards">
-        <Card
-          title="Total Income"
-          value={`₹${(totalIncome / 100000).toFixed(2)}L`}
-          helper={`${invoices.length} invoices`}
-        />
-        <Card
-          title="Total Expenses"
-          value={`₹${(totalExpenses / 100000).toFixed(2)}L`}
-          helper={`${expenses.length} expense records`}
-        />
-        <Card
-          title="Net Profit"
-          value={`₹${((totalIncome - totalExpenses) / 100000).toFixed(2)}L`}
-          helper="Income minus expenses"
-        />
-        <Card
-          title="Pending Invoices"
-          value={`₹${(pendingInvoices / 100000).toFixed(2)}L`}
-          helper={`${completedPayments} payments completed`}
-        />
+        <Card title="Total Income" value={`$${totalIncome.toFixed(2)}`} helper={`${income.length} records`} />
+        <Card title="Total Expenses" value={`$${totalExpenses.toFixed(2)}`} helper={`${expenses.length} expense records`} />
+        <Card title="Net Profit" value={`$${(totalIncome - totalExpenses).toFixed(2)}`} helper="Income minus expenses" />
+        <Card title="Pending Income" value={`$${pendingIncome.toFixed(2)}`} helper={`${completedPayments} payments completed`} />
       </div>
 
       <div className="finance-charts">
@@ -136,7 +157,7 @@ function FinanceDashboard() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `₹${value}`} />
+              <Tooltip formatter={(value) => `$${value}`} />
               <Legend />
               <Bar dataKey="income" fill="#10b981" name="Income" />
               <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
@@ -158,13 +179,10 @@ function FinanceDashboard() {
                 outerRadius={80}
               >
                 {expenseData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => `₹${value}`} />
+              <Tooltip formatter={(value) => `$${value}`} />
             </PieChart>
           </ResponsiveContainer>
           {!expenseData.length ? <p className="root-admin-dashboard__empty-state">No expense breakdown data yet.</p> : null}
@@ -173,24 +191,13 @@ function FinanceDashboard() {
         <div className="finance-panel">
           <h3 className="finance-panel__title">Monthly Profit</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={monthlyData.map((m) => ({
-                ...m,
-                profit: m.income - m.expenses,
-              }))}
-            >
+            <LineChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `₹${value}`} />
+              <Tooltip formatter={(value) => `$${value}`} />
               <Legend />
-              <Line
-                type="monotone"
-                dataKey="profit"
-                stroke="#5a3df0"
-                strokeWidth={2}
-                name="Profit"
-              />
+              <Line type="monotone" dataKey="profit" stroke="#5a3df0" strokeWidth={2} name="Profit" />
             </LineChart>
           </ResponsiveContainer>
           {!monthlyData.length ? <p className="root-admin-dashboard__empty-state">No profit trend data yet.</p> : null}

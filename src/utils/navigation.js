@@ -86,9 +86,9 @@ const APP_NAVIGATION_ITEMS = [
     keywords: ["finance", "accounts"],
   },
   {
-    label: "Finance Invoices",
-    path: "/finance/invoices",
-    keywords: ["finance", "billing"],
+    label: "Finance Income",
+    path: "/finance/income",
+    keywords: ["finance", "income"],
   },
   {
     label: "Expenses",

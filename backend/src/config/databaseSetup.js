@@ -1017,6 +1017,251 @@ async function ensureSalesTables() {
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_sales_quotations_expiry_date ON sales_quotations(expiry_date);`);
 }
 
+async function ensureFinanceTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS finance_income (
+      id BIGSERIAL PRIMARY KEY,
+      income_code VARCHAR(60) UNIQUE NOT NULL,
+      source_name VARCHAR(255) NOT NULL,
+      received_date DATE NOT NULL,
+      amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+      status VARCHAR(80) NOT NULL DEFAULT 'Received',
+      reference VARCHAR(255),
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS finance_expenses (
+      id BIGSERIAL PRIMARY KEY,
+      expense_code VARCHAR(60) UNIQUE NOT NULL,
+      expense_date DATE NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      description TEXT NOT NULL,
+      amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+      status VARCHAR(80) NOT NULL DEFAULT 'Pending',
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS finance_payments (
+      id BIGSERIAL PRIMARY KEY,
+      payment_code VARCHAR(60) UNIQUE NOT NULL,
+      payment_date DATE NOT NULL,
+      vendor_name VARCHAR(255) NOT NULL,
+      income_code VARCHAR(60),
+      amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+      payment_method VARCHAR(120) NOT NULL DEFAULT 'Bank Transfer',
+      status VARCHAR(80) NOT NULL DEFAULT 'Pending',
+      reference VARCHAR(255),
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_payments'
+          AND column_name = 'invoice_number'
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_payments'
+          AND column_name = 'income_code'
+      ) THEN
+        ALTER TABLE finance_payments RENAME COLUMN invoice_number TO income_code;
+      END IF;
+    END
+    $$;
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_income'
+          AND column_name = 'invoice_number'
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_income'
+          AND column_name = 'income_code'
+      ) THEN
+        ALTER TABLE finance_income RENAME COLUMN invoice_number TO income_code;
+      END IF;
+
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_income'
+          AND column_name = 'vendor_name'
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_income'
+          AND column_name = 'source_name'
+      ) THEN
+        ALTER TABLE finance_income RENAME COLUMN vendor_name TO source_name;
+      END IF;
+
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_income'
+          AND column_name = 'invoice_date'
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_income'
+          AND column_name = 'received_date'
+      ) THEN
+        ALTER TABLE finance_income RENAME COLUMN invoice_date TO received_date;
+      END IF;
+    END
+    $$;
+  `);
+
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS income_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS source_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS received_date DATE;`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS amount NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Received';`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS reference VARCHAR(255);`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS expense_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS expense_date DATE;`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS category VARCHAR(120);`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS description TEXT;`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS amount NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS payment_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS payment_date DATE;`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS vendor_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS income_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS amount NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(120) NOT NULL DEFAULT 'Bank Transfer';`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS reference VARCHAR(255);`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE finance_payments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_invoices'
+      )
+      AND EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'finance_income'
+      )
+      AND NOT EXISTS (SELECT 1 FROM finance_income LIMIT 1) THEN
+        INSERT INTO finance_income (income_code, source_name, received_date, amount, status, reference, notes, created_at, updated_at)
+        SELECT
+          COALESCE(
+            NULLIF(REPLACE(COALESCE(fi.invoice_number, ''), 'INV', 'INC'), ''),
+            CONCAT('INC-', LPAD(fi.id::text, 5, '0'))
+          ) AS income_code,
+          COALESCE(NULLIF(fi.vendor_name, ''), 'Unknown Source') AS source_name,
+          COALESCE(fi.payment_date, fi.invoice_date, fi.due_date, CURRENT_DATE) AS received_date,
+          COALESCE(fi.amount, 0) AS amount,
+          CASE
+            WHEN LOWER(COALESCE(fi.status, '')) = 'paid' THEN 'Received'
+            WHEN LOWER(COALESCE(fi.status, '')) = 'overdue' THEN 'Pending'
+            WHEN LOWER(COALESCE(fi.status, '')) = 'pending' THEN 'Pending'
+            ELSE 'Received'
+          END AS status,
+          NULL::VARCHAR(255) AS reference,
+          fi.notes,
+          COALESCE(fi.created_at, CURRENT_TIMESTAMP) AS created_at,
+          COALESCE(fi.updated_at, CURRENT_TIMESTAMP) AS updated_at
+        FROM finance_invoices fi
+        ON CONFLICT (income_code) DO NOTHING;
+      END IF;
+    END
+    $$;
+  `);
+
+  await pool.query(`
+    UPDATE finance_income
+    SET income_code = CONCAT('INC-', LPAD(id::text, 5, '0'))
+    WHERE income_code IS NULL OR TRIM(income_code) = '';
+  `);
+
+  await pool.query(`
+    UPDATE finance_expenses
+    SET expense_code = CONCAT('EXP-', LPAD(id::text, 5, '0'))
+    WHERE expense_code IS NULL OR TRIM(expense_code) = '';
+  `);
+
+  await pool.query(`
+    UPDATE finance_payments
+    SET payment_code = CONCAT('PAY-', LPAD(id::text, 5, '0'))
+    WHERE payment_code IS NULL OR TRIM(payment_code) = '';
+  `);
+
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_income_code ON finance_income(income_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_income_status ON finance_income(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_income_received_date ON finance_income(received_date DESC);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_expenses_code ON finance_expenses(expense_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_expenses_category ON finance_expenses(category);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_expenses_status ON finance_expenses(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_expenses_date ON finance_expenses(expense_date DESC);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_payments_code ON finance_payments(payment_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_payments_status ON finance_payments(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_payments_vendor ON finance_payments(vendor_name);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_payments_income ON finance_payments(income_code);`);
+}
+
 async function ensureSupportTables() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS support_customers (
@@ -1431,6 +1676,7 @@ async function initializeDatabase() {
   await ensureTrainingProgramsTable();
   await ensurePayrollRecordsTable();
   await ensureSalesTables();
+  await ensureFinanceTables();
   await ensureInventoryTables();
   await ensureSupportTables();
   const seededUsers = await seedDemoUsers();

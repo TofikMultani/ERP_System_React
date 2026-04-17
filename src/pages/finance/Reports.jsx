@@ -1,6 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
-import { usePersistentSnapshot } from "../../utils/persistentState.js";
 import {
   BarChart,
   Bar,
@@ -16,12 +16,9 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { fetchFinanceIncome, fetchFinanceExpenses } from "../../utils/financeApi.js";
 
 const COLORS = ["#5a3df0", "#3b82f6", "#10b981", "#fbbf24", "#ef4444"];
-
-function parseCurrency(value) {
-  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
-}
 
 function getMonthLabel(value) {
   const date = new Date(value);
@@ -33,63 +30,94 @@ function getMonthLabel(value) {
 }
 
 function FinanceReports() {
-  const invoices = usePersistentSnapshot("erp_finance_invoices", []);
-  const expenses = usePersistentSnapshot("erp_finance_expenses", []);
+  const [income, setIncome] = useState([]);
+  const [expenses, setExpenses] = useState([]);
 
-  const monthlyIncomeMap = invoices.reduce((accumulator, invoice) => {
-    const month = getMonthLabel(invoice.date);
-    if (!month) {
-      return accumulator;
-    }
-    accumulator[month] = (accumulator[month] || 0) + parseCurrency(invoice.amount);
-    return accumulator;
-  }, {});
+  useEffect(() => {
+    let isMounted = true;
 
-  const monthlyExpenseMap = expenses.reduce((accumulator, expense) => {
-    const month = getMonthLabel(expense.date);
-    if (!month) {
-      return accumulator;
-    }
-    accumulator[month] = (accumulator[month] || 0) + parseCurrency(expense.amount);
-    return accumulator;
-  }, {});
+    const loadData = async () => {
+      try {
+        const [incomeData, expenseData] = await Promise.all([
+          fetchFinanceIncome(),
+          fetchFinanceExpenses(),
+        ]);
 
-  const monthKeys = Array.from(
-    new Set([...Object.keys(monthlyIncomeMap), ...Object.keys(monthlyExpenseMap)]),
-  )
-    .sort((left, right) => left.localeCompare(right))
-    .slice(-6);
-
-  const monthlyData = monthKeys.map((monthKey) => {
-    const income = monthlyIncomeMap[monthKey] || 0;
-    const monthlyExpenses = monthlyExpenseMap[monthKey] || 0;
-    return {
-      month: monthKey,
-      income,
-      expenses: monthlyExpenses,
-      profit: income - monthlyExpenses,
+        if (isMounted) {
+          setIncome(incomeData);
+          setExpenses(expenseData);
+        }
+      } catch (error) {
+        console.error("Unable to load finance reports data:", error);
+      }
     };
-  });
 
-  const categoryMap = expenses.reduce((accumulator, expense) => {
-    const category = expense.category || "Others";
-    accumulator[category] = (accumulator[category] || 0) + parseCurrency(expense.amount);
-    return accumulator;
-  }, {});
+    loadData();
 
-  const expenseCategoryData = Object.entries(categoryMap).map(
-    ([category, amount]) => ({ category, amount }),
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const monthlyData = useMemo(() => {
+    const monthlyIncomeMap = income.reduce((accumulator, record) => {
+      const month = getMonthLabel(record.receivedDate || record.date);
+      if (!month) {
+        return accumulator;
+      }
+      accumulator[month] = (accumulator[month] || 0) + (Number(record.amount) || 0);
+      return accumulator;
+    }, {});
+
+    const monthlyExpenseMap = expenses.reduce((accumulator, expense) => {
+      const month = getMonthLabel(expense.expenseDate || expense.date);
+      if (!month) {
+        return accumulator;
+      }
+      accumulator[month] = (accumulator[month] || 0) + (Number(expense.amount) || 0);
+      return accumulator;
+    }, {});
+
+    const monthKeys = Array.from(
+      new Set([...Object.keys(monthlyIncomeMap), ...Object.keys(monthlyExpenseMap)]),
+    )
+      .sort((left, right) => left.localeCompare(right))
+      .slice(-6);
+
+    return monthKeys.map((monthKey) => {
+      const income = monthlyIncomeMap[monthKey] || 0;
+      const monthlyExpenses = monthlyExpenseMap[monthKey] || 0;
+      return {
+        month: monthKey,
+        income,
+        expenses: monthlyExpenses,
+        profit: income - monthlyExpenses,
+      };
+    });
+  }, [income, expenses]);
+
+  const expenseCategoryData = useMemo(() => {
+    const categoryMap = expenses.reduce((accumulator, expense) => {
+      const category = expense.category || "Others";
+      accumulator[category] = (accumulator[category] || 0) + (Number(expense.amount) || 0);
+      return accumulator;
+    }, {});
+
+    return Object.entries(categoryMap).map(([category, amount]) => ({ category, amount }));
+  }, [expenses]);
+
+  const summaryRows = useMemo(
+    () => monthlyData.map((row) => [
+      row.month,
+      `$${row.income.toFixed(2)}`,
+      `$${row.expenses.toFixed(2)}`,
+      `$${row.profit.toFixed(2)}`,
+    ]),
+    [monthlyData],
   );
 
-  const summaryRows = monthlyData.map((row) => [
-    row.month,
-    `₹${(row.income / 100000).toFixed(2)}L`,
-    `₹${(row.expenses / 100000).toFixed(2)}L`,
-    `₹${(row.profit / 100000).toFixed(2)}L`,
-  ]);
-
-  const totalIncome = monthlyData.reduce((sum, m) => sum + m.income, 0);
-  const totalExpenses = monthlyData.reduce((sum, m) => sum + m.expenses, 0);
+  const totalIncome = monthlyData.reduce((sum, month) => sum + month.income, 0);
+  const totalExpenses = monthlyData.reduce((sum, month) => sum + month.expenses, 0);
   const totalProfit = totalIncome - totalExpenses;
 
   return (
@@ -102,24 +130,12 @@ function FinanceReports() {
       </div>
 
       <div className="finance-cards">
-        <Card
-          title="Total Income"
-          value={"₹" + (totalIncome / 100000).toFixed(2) + "L"}
-          helper="YTD"
-        />
-        <Card
-          title="Total Expenses"
-          value={"₹" + (totalExpenses / 100000).toFixed(2) + "L"}
-          helper="YTD"
-        />
-        <Card
-          title="Net Profit"
-          value={"₹" + (totalProfit / 100000).toFixed(2) + "L"}
-          helper="YTD"
-        />
+        <Card title="Total Income" value={`$${totalIncome.toFixed(2)}`} helper="YTD" />
+        <Card title="Total Expenses" value={`$${totalExpenses.toFixed(2)}`} helper="YTD" />
+        <Card title="Net Profit" value={`$${totalProfit.toFixed(2)}`} helper="YTD" />
         <Card
           title="Profit Margin"
-          value={totalIncome ? ((totalProfit / totalIncome) * 100).toFixed(1) + "%" : "0.0%"}
+          value={totalIncome ? `${((totalProfit / totalIncome) * 100).toFixed(1)}%` : "0.0%"}
           helper="Of income"
         />
       </div>
@@ -132,7 +148,7 @@ function FinanceReports() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `₹${value}`} />
+              <Tooltip formatter={(value) => `$${value}`} />
               <Legend />
               <Bar dataKey="income" fill="#10b981" name="Income" />
               <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
@@ -154,13 +170,10 @@ function FinanceReports() {
                 outerRadius={80}
               >
                 {expenseCategoryData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => `₹${value}`} />
+              <Tooltip formatter={(value) => `$${value}`} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -172,15 +185,9 @@ function FinanceReports() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `₹${value}`} />
+              <Tooltip formatter={(value) => `$${value}`} />
               <Legend />
-              <Line
-                type="monotone"
-                dataKey="profit"
-                stroke="#5a3df0"
-                strokeWidth={2}
-                name="Profit"
-              />
+              <Line type="monotone" dataKey="profit" stroke="#5a3df0" strokeWidth={2} name="Profit" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -188,13 +195,8 @@ function FinanceReports() {
 
       <div className="finance-panel">
         <h3 className="finance-panel__title">Monthly Summary</h3>
-        <Table
-          columns={["Period", "Income", "Expenses", "Profit"]}
-          rows={summaryRows}
-        />
-        {!summaryRows.length ? (
-          <p className="root-admin-dashboard__empty-state">No monthly summary data yet.</p>
-        ) : null}
+        <Table columns={["Period", "Income", "Expenses", "Profit"]} rows={summaryRows} />
+        {!summaryRows.length ? <p className="root-admin-dashboard__empty-state">No monthly summary data yet.</p> : null}
       </div>
     </div>
   );

@@ -111,7 +111,7 @@ const moduleChildNavigation = {
   ],
   "/finance": [
     { label: "Dashboard", path: "/finance" },
-    { label: "Invoices", path: "/finance/invoices" },
+    { label: "Income", path: "/finance/income" },
     { label: "Expenses", path: "/finance/expenses" },
     { label: "Payments", path: "/finance/payments" },
     { label: "Reports", path: "/finance/reports" },
