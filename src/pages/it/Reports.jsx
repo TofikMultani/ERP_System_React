@@ -1,6 +1,11 @@
+import { useEffect, useMemo, useState } from "react";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
-import { usePersistentSnapshot } from "../../utils/persistentState.js";
+import {
+  fetchItSystems,
+  fetchItAssets,
+  fetchItMaintenance,
+} from "../../utils/itApi.js";
 import {
   BarChart,
   Bar,
@@ -14,10 +19,6 @@ import {
   Legend,
 } from "recharts";
 
-function parseCurrency(value) {
-  return Number.parseInt(String(value ?? "0").replace(/[^\d]/g, ""), 10) || 0;
-}
-
 function getMonthLabel(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -28,9 +29,37 @@ function getMonthLabel(value) {
 }
 
 function Reports() {
-  const systems = usePersistentSnapshot("erp_it_systems", []);
-  const assets = usePersistentSnapshot("erp_it_assets", []);
-  const maintenance = usePersistentSnapshot("erp_it_maintenance", []);
+  const [systems, setSystems] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [maintenance, setMaintenance] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        const [systemsDataRows, assetsDataRows, maintenanceDataRows] = await Promise.all([
+          fetchItSystems(),
+          fetchItAssets(),
+          fetchItMaintenance(),
+        ]);
+
+        if (isMounted) {
+          setSystems(systemsDataRows);
+          setAssets(assetsDataRows);
+          setMaintenance(maintenanceDataRows);
+        }
+      } catch (error) {
+        console.error("Unable to load IT reports data:", error);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const operationalCount = systems.filter(
     (system) => system.status === "Operational",
@@ -39,43 +68,53 @@ function Reports() {
     ? ((operationalCount / systems.length) * 100).toFixed(2)
     : "0.00";
 
-  const uptimeData = [0.92, 0.95, 0.98, 1].map((ratio, index) => ({
-    week: `Week ${index + 1}`,
-    uptime: Number((Number(avgUptime) * ratio).toFixed(2)),
-  }));
+  const uptimeData = useMemo(
+    () =>
+      [0.92, 0.95, 0.98, 1].map((ratio, index) => ({
+        week: `Week ${index + 1}`,
+        uptime: Number((Number(avgUptime) * ratio).toFixed(2)),
+      })),
+    [avgUptime],
+  );
 
-  const maintenanceMonthMap = maintenance.reduce((accumulator, task) => {
-    const month = getMonthLabel(task.scheduledDate);
-    if (!month) {
+  const maintenanceData = useMemo(() => {
+    const maintenanceMonthMap = maintenance.reduce((accumulator, task) => {
+      const month = getMonthLabel(task.scheduledDate);
+      if (!month) {
+        return accumulator;
+      }
+      if (!accumulator[month]) {
+        accumulator[month] = { month, completed: 0, pending: 0 };
+      }
+
+      if (task.status === "Completed") {
+        accumulator[month].completed += 1;
+      } else {
+        accumulator[month].pending += 1;
+      }
+
       return accumulator;
-    }
-    if (!accumulator[month]) {
-      accumulator[month] = { month, completed: 0, pending: 0 };
-    }
+    }, {});
 
-    if (task.status === "Completed") {
-      accumulator[month].completed += 1;
-    } else {
-      accumulator[month].pending += 1;
-    }
+    return Object.values(maintenanceMonthMap)
+      .sort((left, right) => left.month.localeCompare(right.month))
+      .slice(-6)
+      .map((row) => ({ ...row, month: row.month.slice(5) }));
+  }, [maintenance]);
 
-    return accumulator;
-  }, {});
-
-  const maintenanceData = Object.values(maintenanceMonthMap)
-    .sort((left, right) => left.month.localeCompare(right.month))
-    .slice(-6)
-    .map((row) => ({ ...row, month: row.month.slice(5) }));
-
-  const assetTypeMap = assets.reduce((accumulator, asset) => {
-    const type = asset.assetType || "Other";
-    if (!accumulator[type]) {
-      accumulator[type] = { count: 0, value: 0 };
-    }
-    accumulator[type].count += 1;
-    accumulator[type].value += parseCurrency(asset.value);
-    return accumulator;
-  }, {});
+  const assetTypeMap = useMemo(
+    () =>
+      assets.reduce((accumulator, asset) => {
+        const type = asset.assetType || "Other";
+        if (!accumulator[type]) {
+          accumulator[type] = { count: 0, value: 0 };
+        }
+        accumulator[type].count += 1;
+        accumulator[type].value += Number(asset.value || 0);
+        return accumulator;
+      }, {}),
+    [assets],
+  );
 
   const assetBreakdownData = Object.entries(assetTypeMap).map(([type, metrics]) => ({
     type,
@@ -85,7 +124,7 @@ function Reports() {
   const assetSummary = Object.entries(assetTypeMap).map(([type, metrics]) => [
     type,
     String(metrics.count),
-    `₹${(metrics.value / 100000).toFixed(2)}L`,
+    `$${metrics.value.toFixed(2)}`,
     "Active",
   ]);
 

@@ -1262,6 +1262,137 @@ async function ensureFinanceTables() {
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_payments_income ON finance_payments(income_code);`);
 }
 
+async function ensureItTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS it_systems (
+      id BIGSERIAL PRIMARY KEY,
+      system_code VARCHAR(60) UNIQUE NOT NULL,
+      system_name VARCHAR(255) NOT NULL,
+      ip_address VARCHAR(120) NOT NULL,
+      environment VARCHAR(80) NOT NULL DEFAULT 'Production',
+      status VARCHAR(80) NOT NULL DEFAULT 'Operational',
+      uptime_percent NUMERIC(5,2) NOT NULL DEFAULT 99.50,
+      last_checked_at TIMESTAMP,
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS it_assets (
+      id BIGSERIAL PRIMARY KEY,
+      asset_code VARCHAR(60) UNIQUE NOT NULL,
+      asset_name VARCHAR(255) NOT NULL,
+      asset_type VARCHAR(120) NOT NULL,
+      model VARCHAR(255),
+      serial_number VARCHAR(255),
+      assigned_to VARCHAR(255),
+      purchase_date DATE,
+      status VARCHAR(80) NOT NULL DEFAULT 'Active',
+      asset_value NUMERIC(14,2) NOT NULL DEFAULT 0,
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS it_maintenance (
+      id BIGSERIAL PRIMARY KEY,
+      maintenance_code VARCHAR(60) UNIQUE NOT NULL,
+      asset_code VARCHAR(60),
+      asset_name VARCHAR(255) NOT NULL,
+      maintenance_type VARCHAR(120) NOT NULL,
+      scheduled_date DATE NOT NULL,
+      completed_date DATE,
+      technician VARCHAR(255),
+      priority VARCHAR(80) NOT NULL DEFAULT 'Medium',
+      status VARCHAR(80) NOT NULL DEFAULT 'Scheduled',
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS system_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS system_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS ip_address VARCHAR(120);`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS environment VARCHAR(80) NOT NULL DEFAULT 'Production';`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Operational';`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS uptime_percent NUMERIC(5,2) NOT NULL DEFAULT 99.50;`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS last_checked_at TIMESTAMP;`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE it_systems ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS asset_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS asset_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS asset_type VARCHAR(120);`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS model VARCHAR(255);`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS serial_number VARCHAR(255);`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS assigned_to VARCHAR(255);`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS purchase_date DATE;`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Active';`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS asset_value NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE it_assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS maintenance_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS asset_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS asset_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS maintenance_type VARCHAR(120);`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS scheduled_date DATE;`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS completed_date DATE;`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS technician VARCHAR(255);`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS priority VARCHAR(80) NOT NULL DEFAULT 'Medium';`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Scheduled';`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE it_maintenance ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`
+    UPDATE it_systems
+    SET system_code = CONCAT('SYS-', LPAD(id::text, 5, '0'))
+    WHERE system_code IS NULL OR TRIM(system_code) = '';
+  `);
+
+  await pool.query(`
+    UPDATE it_assets
+    SET asset_code = CONCAT('AST-', LPAD(id::text, 5, '0'))
+    WHERE asset_code IS NULL OR TRIM(asset_code) = '';
+  `);
+
+  await pool.query(`
+    UPDATE it_maintenance
+    SET maintenance_code = CONCAT('MNT-', LPAD(id::text, 5, '0'))
+    WHERE maintenance_code IS NULL OR TRIM(maintenance_code) = '';
+  `);
+
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_it_systems_code ON it_systems(system_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_it_systems_status ON it_systems(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_it_systems_environment ON it_systems(environment);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_it_assets_code ON it_assets(asset_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_it_assets_status ON it_assets(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_it_assets_type ON it_assets(asset_type);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_it_maintenance_code ON it_maintenance(maintenance_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_it_maintenance_status ON it_maintenance(status);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_it_maintenance_scheduled_date ON it_maintenance(scheduled_date DESC);`);
+}
+
 async function ensureSupportTables() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS support_customers (
@@ -1677,6 +1808,7 @@ async function initializeDatabase() {
   await ensurePayrollRecordsTable();
   await ensureSalesTables();
   await ensureFinanceTables();
+  await ensureItTables();
   await ensureInventoryTables();
   await ensureSupportTables();
   const seededUsers = await seedDemoUsers();

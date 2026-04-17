@@ -65,6 +65,7 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 const supportRoutes = require('./routes/supportRoutes');
 const salesRoutes = require('./routes/salesRoutes');
 const financeRoutes = require('./routes/financeRoutes');
+const itRoutes = require('./routes/itRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use('/api/access-requests', accessRequestRoutes);
@@ -81,6 +82,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/finance', financeRoutes);
+app.use('/api/it', itRoutes);
 
 // Module Routes (to be implemented)
 // app.use('/api/users', require('./routes/userRoutes'));

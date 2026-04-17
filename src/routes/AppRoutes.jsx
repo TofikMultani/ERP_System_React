@@ -53,9 +53,9 @@ import { FinanceExpenses, FinanceExpensesForm } from "../pages/finance/Expenses.
 import { FinancePayments, FinancePaymentsForm } from "../pages/finance/Payments.jsx";
 import FinanceReports from "../pages/finance/Reports.jsx";
 import ITDashboard from "../pages/it/ITDashboard.jsx";
-import Systems from "../pages/it/Systems.jsx";
-import Assets from "../pages/it/Assets.jsx";
-import Maintenance from "../pages/it/Maintenance.jsx";
+import { Systems, SystemsForm } from "../pages/it/Systems.jsx";
+import { Assets, AssetsForm } from "../pages/it/Assets.jsx";
+import { Maintenance, MaintenanceForm } from "../pages/it/Maintenance.jsx";
 import ITReports from "../pages/it/Reports.jsx";
 import SupportDashboard from "../pages/support/Dashboard.jsx";
 import SupportCustomers from "../pages/support/Customers.jsx";
@@ -217,8 +217,14 @@ function AppRoutes() {
             <Route index element={<ITDashboard />} />
             <Route path="dashboard" element={<Navigate to="/it" replace />} />
             <Route path="systems" element={<Systems />} />
+            <Route path="systems/new" element={<SystemsForm />} />
+            <Route path="systems/:systemCode/edit" element={<SystemsForm />} />
             <Route path="assets" element={<Assets />} />
+            <Route path="assets/new" element={<AssetsForm />} />
+            <Route path="assets/:assetCode/edit" element={<AssetsForm />} />
             <Route path="maintenance" element={<Maintenance />} />
+            <Route path="maintenance/new" element={<MaintenanceForm />} />
+            <Route path="maintenance/:maintenanceCode/edit" element={<MaintenanceForm />} />
             <Route path="reports" element={<ITReports />} />
           </Route>
 

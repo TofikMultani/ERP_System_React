@@ -1,5 +1,10 @@
+import { useEffect, useMemo, useState } from "react";
 import Card from "../../components/Card.jsx";
-import { usePersistentSnapshot } from "../../utils/persistentState.js";
+import {
+  fetchItSystems,
+  fetchItAssets,
+  fetchItMaintenance,
+} from "../../utils/itApi.js";
 import {
   BarChart,
   Bar,
@@ -13,31 +18,64 @@ import {
   Legend,
 } from "recharts";
 
-const systemsData = [];
+function getMonthLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 function ITDashboard() {
-  const systems = usePersistentSnapshot("erp_it_systems", []);
-  const assets = usePersistentSnapshot("erp_it_assets", []);
-  const maintenance = usePersistentSnapshot("erp_it_maintenance", []);
+  const [systems, setSystems] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [maintenance, setMaintenance] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        const [systemsDataRows, assetsDataRows, maintenanceDataRows] = await Promise.all([
+          fetchItSystems(),
+          fetchItAssets(),
+          fetchItMaintenance(),
+        ]);
+
+        if (isMounted) {
+          setSystems(systemsDataRows);
+          setAssets(assetsDataRows);
+          setMaintenance(maintenanceDataRows);
+        }
+      } catch (error) {
+        console.error("Unable to load IT dashboard data:", error);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const totalAssets = assets.length;
-  const totalValue = assets.reduce(
-    (sum, asset) =>
-      sum +
-      (Number.parseInt(String(asset.value).replace(/[^\d]/g, ""), 10) || 0),
-    0,
+  const totalValue = useMemo(
+    () => assets.reduce((sum, asset) => sum + (Number(asset.value) || 0), 0),
+    [assets],
   );
-  const operationalSystems = systems.filter(
-    (system) => system.status === "Operational",
-  ).length;
+  const operationalSystems = useMemo(
+    () => systems.filter((system) => String(system.status || "") === "Operational").length,
+    [systems],
+  );
   const uptime = systems.length
     ? ((operationalSystems / systems.length) * 100).toFixed(2)
     : "0.00";
   const assetDistribution = Object.entries(
     assets.reduce((accumulator, asset) => {
       const type = asset.assetType || "Other";
-      const value =
-        Number.parseInt(String(asset.value).replace(/[^\d]/g, ""), 10) || 0;
+      const value = Number(asset.value) || 0;
 
       if (!accumulator[type]) {
         accumulator[type] = { count: 0, value: 0 };
@@ -50,8 +88,73 @@ function ITDashboard() {
   ).map(([type, data]) => ({
     type,
     count: data.count,
-    value: `₹${(data.value / 100000).toFixed(2)}L`,
+    value: `$${data.value.toFixed(2)}`,
   }));
+
+  const systemsTrendData = useMemo(() => {
+    const monthMap = systems.reduce((accumulator, system) => {
+      const month = getMonthLabel(system.lastCheckedAt || system.updatedAt);
+      if (!month) {
+        return accumulator;
+      }
+
+      if (!accumulator[month]) {
+        accumulator[month] = {
+          month,
+          uptimeTotal: 0,
+          count: 0,
+          incidents: 0,
+        };
+      }
+
+      accumulator[month].uptimeTotal += Number(system.uptimePercent || 0);
+      accumulator[month].count += 1;
+      if (String(system.status || "").toLowerCase() === "down") {
+        accumulator[month].incidents += 1;
+      }
+
+      return accumulator;
+    }, {});
+
+    return Object.values(monthMap)
+      .sort((left, right) => left.month.localeCompare(right.month))
+      .slice(-6)
+      .map((row) => ({
+        week: row.month.slice(5),
+        uptime: row.count ? Number((row.uptimeTotal / row.count).toFixed(2)) : 0,
+        incidents: row.incidents,
+      }));
+  }, [systems]);
+
+  const maintenanceTrendData = useMemo(() => {
+    const monthMap = maintenance.reduce((accumulator, task) => {
+      const month = getMonthLabel(task.scheduledDate);
+      if (!month) {
+        return accumulator;
+      }
+
+      if (!accumulator[month]) {
+        accumulator[month] = {
+          month,
+          incidents: 0,
+        };
+      }
+
+      if (String(task.status || "").toLowerCase() !== "completed") {
+        accumulator[month].incidents += 1;
+      }
+
+      return accumulator;
+    }, {});
+
+    return Object.values(monthMap)
+      .sort((left, right) => left.month.localeCompare(right.month))
+      .slice(-6)
+      .map((row) => ({
+        week: row.month.slice(5),
+        incidents: row.incidents,
+      }));
+  }, [maintenance]);
 
   return (
     <div className="it-page">
@@ -78,7 +181,7 @@ function ITDashboard() {
         />
         <Card
           title="Total Asset Value"
-          value={`₹${(totalValue / 100000).toFixed(2)}L`}
+          value={`$${totalValue.toFixed(2)}`}
           helper="Inventory value"
         />
       </div>
@@ -87,7 +190,7 @@ function ITDashboard() {
         <div className="it-panel">
           <h3 className="it-panel__title">System Uptime & Incidents</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={systemsData}>
+            <BarChart data={systemsTrendData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="week" />
               <YAxis yAxisId="left" type="number" domain={[98, 100]} />
@@ -165,7 +268,7 @@ function ITDashboard() {
         <div className="it-panel">
           <h3 className="it-panel__title">Maintenance Timeline</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={systemsData}>
+            <LineChart data={maintenanceTrendData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="week" />
               <YAxis />
