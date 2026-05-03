@@ -70,6 +70,7 @@ router.get('/quotations/next-code', salesController.quotationsHandlers.fetchNext
 router.post('/quotations', sanitizeInput, salesController.quotationsHandlers.createItem);
 router.patch('/quotations/:code', sanitizeInput, salesController.quotationsHandlers.updateItem);
 router.delete('/quotations/:code', salesController.quotationsHandlers.deleteItem);
+router.post('/quotations/:code/send', salesController.sendQuotationEmail);
 
 // Dashboard route
 router.get('/dashboard', salesController.getDashboard);

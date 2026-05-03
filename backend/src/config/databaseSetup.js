@@ -1945,6 +1945,57 @@ async function ensureInventoryTables() {
   await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
   await pool.query(`ALTER TABLE inventory_adjustments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
 
+  // Add foreign key relationships for stock tracking
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS product_id BIGINT;`);
+  await pool.query(`ALTER TABLE inventory_stock ADD COLUMN IF NOT EXISTS warehouse_id BIGINT;`);
+
+  // Create stock location tracking table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS stock_warehouse_locations (
+      id BIGSERIAL PRIMARY KEY,
+      stock_id BIGINT NOT NULL,
+      product_id BIGINT NOT NULL,
+      warehouse_id BIGINT NOT NULL,
+      bin_location VARCHAR(120),
+      quantity_in_bin INTEGER NOT NULL DEFAULT 0,
+      last_verified_at TIMESTAMP,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Create stock distribution view for reporting
+  await pool.query(`
+    CREATE OR REPLACE VIEW stock_distribution_view AS
+    SELECT
+      p.id as product_id,
+      p.product_code,
+      p.name as product_name,
+      p.sku,
+      p.category,
+      p.unit_price,
+      p.reorder_level,
+      w.id as warehouse_id,
+      w.warehouse_code,
+      w.name as warehouse_name,
+      w.location as warehouse_location,
+      s.stock_code,
+      s.on_hand,
+      s.reserved_qty,
+      s.reorder_qty,
+      (s.on_hand - s.reserved_qty) as available_qty,
+      s.last_counted_at,
+      s.status,
+      p.stock_qty as total_product_stock
+    FROM inventory_products p
+    LEFT JOIN inventory_stock s ON p.name = s.product_name AND p.sku = s.sku
+    LEFT JOIN inventory_warehouses w ON s.warehouse_name = w.name
+    WHERE p.status = 'Active' AND (s.status = 'Active' OR s.status IS NULL)
+    ORDER BY p.product_code, w.warehouse_code;
+  `);
+
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_products_code ON inventory_products(product_code);`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_products_sku ON inventory_products(sku);`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_inventory_products_category ON inventory_products(category);`);
@@ -1955,6 +2006,12 @@ async function ensureInventoryTables() {
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_warehouses_code ON inventory_warehouses(warehouse_code);`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_purchase_orders_number ON purchase_orders(po_number);`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_adjustments_code ON inventory_adjustments(adjustment_code);`);
+  
+  // Indexes for stock warehouse relationships
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_inventory_stock_product_id ON inventory_stock(product_id);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_inventory_stock_warehouse_id ON inventory_stock(warehouse_id);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_stock_warehouse_locations_stock_id ON stock_warehouse_locations(stock_id);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_stock_warehouse_locations_product_warehouse ON stock_warehouse_locations(product_id, warehouse_id);`);
 }
 
 async function seedDemoUsers() {

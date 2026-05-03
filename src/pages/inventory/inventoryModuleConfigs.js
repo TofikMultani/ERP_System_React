@@ -104,11 +104,12 @@ export const productsConfig = {
     { header: "Product Name", accessor: "name" },
     { header: "Category", accessor: "category" },
     { header: "SKU", accessor: "sku" },
+    { header: "Warehouse", accessor: "warehouseName" },
     { header: "Price", accessor: "unitPrice" },
     { header: "Stock", accessor: "stockQty" },
     { header: "Status", accessor: "status" },
   ],
-  searchFields: ["productCode", "name", "category", "sku", "status"],
+  searchFields: ["productCode", "name", "category", "sku", "warehouseName", "status"],
   pageSize: 8,
   statusFilters: baseStatusFilters,
   codeField: "productCode",
@@ -117,9 +118,13 @@ export const productsConfig = {
     name: "",
     category: "",
     sku: "",
+    warehouseName: "",
     unitPrice: "",
     stockQty: "0",
+    reservedQty: "0",
     reorderLevel: "10",
+    reorderQty: "10",
+    lastCountedAt: "",
     status: "Active",
     description: "",
   },
@@ -128,9 +133,13 @@ export const productsConfig = {
     { name: "name", label: "Product Name", type: "text", placeholder: "e.g. Desktop PC", required: true },
     { name: "category", label: "Category", type: "select", options: categoryOptions, required: true },
     { name: "sku", label: "SKU", type: "text", placeholder: "e.g. PROD-001", required: true },
+    { name: "warehouseName", label: "Warehouse", type: "select", contextKey: "warehouseOptions" },
     { name: "unitPrice", label: "Unit Price", type: "number", placeholder: "0.00", step: "0.01" },
     { name: "stockQty", label: "Stock Quantity", type: "number", placeholder: "0", required: true },
+    { name: "reservedQty", label: "Reserved Qty", type: "number", placeholder: "0" },
     { name: "reorderLevel", label: "Reorder Level", type: "number", placeholder: "10" },
+    { name: "reorderQty", label: "Reorder Qty", type: "number", placeholder: "10" },
+    { name: "lastCountedAt", label: "Last Counted", type: "date" },
     { name: "status", label: "Status", type: "select", options: statusOptions, required: true },
     { name: "description", label: "Description", type: "textarea", fullWidth: true, placeholder: "Notes or product specs" },
   ],
@@ -139,6 +148,10 @@ export const productsConfig = {
   createItem: createInventoryProduct,
   updateItem: updateInventoryProduct,
   deleteRow: deleteInventoryProduct,
+  extraActionLabel: "View Stock",
+  extraAction: async (row, loadRows, navigate) => {
+    navigate(`/inventory/stock?search=${encodeURIComponent(row.sku)}`);
+  },
   buildSummary(rows) {
     const totalValue = rows.reduce((sum, row) => sum + toNumber(row.unitPrice) * toNumber(row.stockQty), 0);
     const lowStock = rows.filter((row) => toNumber(row.stockQty) <= toNumber(row.reorderLevel)).length;
@@ -155,9 +168,13 @@ export const productsConfig = {
       name: row.name || "",
       category: row.category || "",
       sku: row.sku || "",
+      warehouseName: row.warehouseName || "",
       unitPrice: row.unitPrice || "",
       stockQty: String(row.stockQty ?? "0"),
+      reservedQty: String(row.reservedQty ?? "0"),
       reorderLevel: String(row.reorderLevel ?? "10"),
+      reorderQty: String(row.reorderQty ?? "10"),
+      lastCountedAt: row.lastCountedAt || "",
       status: row.status || "Active",
       description: row.description || "",
     };
@@ -168,16 +185,26 @@ export const productsConfig = {
       name: String(form.name || "").trim(),
       category: String(form.category || "").trim(),
       sku: String(form.sku || "").trim(),
+      warehouseName: String(form.warehouseName || "").trim(),
       unitPrice: toNumber(form.unitPrice),
       stockQty: toNumber(form.stockQty),
+      reservedQty: toNumber(form.reservedQty),
       reorderLevel: toNumber(form.reorderLevel),
+      reorderQty: toNumber(form.reorderQty),
+      lastCountedAt: normalizeDate(form.lastCountedAt),
       status: String(form.status || "Active").trim(),
       description: String(form.description || "").trim(),
     };
   },
   importParser: parseProductRow,
   importRows: (rows) => importInventoryProducts({ products: rows }),
-  loadContext: async () => ({ categoryOptions: categoryOptions.map((value) => ({ value, label: value })) }),
+  loadContext: async () => {
+    const warehouses = await fetchInventoryWarehouses();
+    return { 
+      categoryOptions: categoryOptions.map((value) => ({ value, label: value })),
+      warehouseOptions: (warehouses || []).map((row) => ({ value: row.name, label: row.name }))
+    };
+  },
 };
 
 export const categoriesConfig = {
@@ -267,12 +294,11 @@ export const stockConfig = {
     { header: "Code", accessor: "stockCode" },
     { header: "Product", accessor: "productName" },
     { header: "SKU", accessor: "sku" },
-    { header: "Warehouse", accessor: "warehouseName" },
-    { header: "On Hand", accessor: "onHand" },
-    { header: "Reorder Qty", accessor: "reorderQty" },
+    { header: "Type", accessor: "transactionType" },
+    { header: "Quantity", accessor: "quantity" },
     { header: "Status", accessor: "status" },
   ],
-  searchFields: ["stockCode", "productName", "sku", "warehouseName", "status"],
+  searchFields: ["stockCode", "productName", "sku", "transactionType", "status"],
   pageSize: 8,
   statusFilters: baseStatusFilters,
   codeField: "stockCode",
@@ -280,24 +306,16 @@ export const stockConfig = {
     stockCode: "",
     productName: "",
     sku: "",
-    warehouseName: "",
-    onHand: "0",
-    reservedQty: "0",
-    reorderLevel: "0",
-    reorderQty: "0",
-    lastCountedAt: "",
+    transactionType: "Incoming",
+    quantity: "0",
     status: "Active",
   },
   fields: [
     { name: "stockCode", label: "Stock Code", type: "text", readOnly: true, required: true },
     { name: "productName", label: "Product Name", type: "select", contextKey: "productOptions", required: true },
     { name: "sku", label: "SKU", type: "text", placeholder: "Product SKU", required: true },
-    { name: "warehouseName", label: "Warehouse", type: "select", contextKey: "warehouseOptions", required: true },
-    { name: "onHand", label: "On Hand", type: "number", placeholder: "0", required: true },
-    { name: "reservedQty", label: "Reserved Qty", type: "number", placeholder: "0" },
-    { name: "reorderLevel", label: "Reorder Level", type: "number", placeholder: "0" },
-    { name: "reorderQty", label: "Reorder Qty", type: "number", placeholder: "0" },
-    { name: "lastCountedAt", label: "Last Counted At", type: "date" },
+    { name: "transactionType", label: "Type", type: "select", options: ["Incoming", "Outgoing"], required: true },
+    { name: "quantity", label: "Quantity", type: "number", placeholder: "0", required: true },
     { name: "status", label: "Status", type: "select", options: statusOptions, required: true },
   ],
   fetchRows: fetchInventoryStock,
@@ -306,13 +324,13 @@ export const stockConfig = {
   updateItem: updateInventoryStock,
   deleteRow: deleteInventoryStock,
   buildSummary(rows) {
-    const lowStock = rows.filter((row) => toNumber(row.onHand) <= toNumber(row.reorderLevel)).length;
-    const totalUnits = rows.reduce((sum, row) => sum + toNumber(row.onHand), 0);
+    const incoming = rows.filter((row) => row.transactionType === "Incoming").reduce((sum, row) => sum + toNumber(row.quantity), 0);
+    const outgoing = rows.filter((row) => row.transactionType === "Outgoing").reduce((sum, row) => sum + toNumber(row.quantity), 0);
     return [
-      { title: "Total Stock Items", value: rows.length, helper: "tracked records" },
-      { title: "Low Stock", value: lowStock, helper: "below reorder level" },
-      { title: "On Hand", value: totalUnits, helper: "units across warehouses" },
-      { title: "Warehouses", value: new Set(rows.map((row) => row.warehouseName).filter(Boolean)).size, helper: "storage locations" },
+      { title: "Total Transactions", value: rows.length, helper: "Stock records" },
+      { title: "Incoming", value: incoming, helper: "Units received" },
+      { title: "Outgoing", value: outgoing, helper: "Units dispatched" },
+      { title: "Net", value: incoming - outgoing, helper: "Net stock change" },
     ];
   },
   mapRowToForm(row) {
@@ -320,12 +338,8 @@ export const stockConfig = {
       stockCode: row.stockCode || "",
       productName: row.productName || "",
       sku: row.sku || "",
-      warehouseName: row.warehouseName || "",
-      onHand: String(row.onHand ?? "0"),
-      reservedQty: String(row.reservedQty ?? "0"),
-      reorderLevel: String(row.reorderLevel ?? "0"),
-      reorderQty: String(row.reorderQty ?? "0"),
-      lastCountedAt: row.lastCountedAt || "",
+      transactionType: row.transactionType || "Incoming",
+      quantity: String(row.quantity ?? "0"),
       status: row.status || "Active",
     };
   },
@@ -334,20 +348,15 @@ export const stockConfig = {
       stockCode: String(form.stockCode || "").trim(),
       productName: String(form.productName || "").trim(),
       sku: String(form.sku || "").trim(),
-      warehouseName: String(form.warehouseName || "").trim(),
-      onHand: toNumber(form.onHand),
-      reservedQty: toNumber(form.reservedQty),
-      reorderLevel: toNumber(form.reorderLevel),
-      reorderQty: toNumber(form.reorderQty),
-      lastCountedAt: normalizeDate(form.lastCountedAt),
+      transactionType: String(form.transactionType || "Incoming").trim(),
+      quantity: toNumber(form.quantity),
       status: String(form.status || "Active").trim(),
     };
   },
   loadContext: async () => {
-    const [products, warehouses] = await Promise.all([fetchInventoryProducts(), fetchInventoryWarehouses()]);
+    const products = await fetchInventoryProducts();
     return {
       productOptions: (products || []).map((row) => ({ value: row.name, label: `${row.name} (${row.sku})` })),
-      warehouseOptions: (warehouses || []).map((row) => ({ value: row.name, label: row.name })),
     };
   },
 };
@@ -492,6 +501,10 @@ export const warehousesConfig = {
   createItem: createInventoryWarehouse,
   updateItem: updateInventoryWarehouse,
   deleteRow: deleteInventoryWarehouse,
+  extraActionLabel: "View Stock",
+  extraAction: async (row, loadRows, navigate) => {
+    navigate(`/inventory/stock?search=${encodeURIComponent(row.name)}`);
+  },
   buildSummary(rows) {
     const totalCapacity = rows.reduce((sum, row) => sum + toNumber(row.capacity), 0);
     const occupied = rows.reduce((sum, row) => sum + toNumber(row.occupied), 0);

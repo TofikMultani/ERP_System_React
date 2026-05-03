@@ -73,3 +73,43 @@ export function downloadQuotationPdf(quotation) {
     ],
   });
 }
+
+export function generateQuotationPdfBase64(quotation) {
+  const code = quotation?.code || 'QUOTATION';
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text('Sales Quotation', 14, 20);
+  doc.setFontSize(11);
+  doc.text(`Quotation Number: ${code}`, 14, 30);
+
+  let y = 42;
+  const fields = [
+    { label: 'Customer Code', value: quotation?.customerCode || '-' },
+    { label: 'Quotation Date', value: formatDate(quotation?.quotationDate) },
+    { label: 'Expiry Date', value: formatDate(quotation?.expiryDate) },
+    { label: 'Amount', value: formatAmount(quotation?.amount) },
+    { label: 'Status', value: quotation?.status || '-' },
+  ];
+  
+  fields.forEach((field) => {
+    doc.setFont(undefined, 'bold');
+    doc.text(`${field.label}:`, 14, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(String(field.value ?? '-'), 70, y);
+    y += 9;
+  });
+
+  if (Array.isArray(quotation?.itemsJson) && quotation.itemsJson.length > 0) {
+    y += 10;
+    doc.setFont(undefined, 'bold');
+    doc.text('Line Items:', 14, y);
+    y += 8;
+    doc.setFontSize(10);
+    quotation.itemsJson.forEach((item) => {
+      doc.text(`- ${item.productName || item.productCode} | Qty: ${item.qty} | Price: ₹${Number(item.unitPrice).toFixed(2)} | Total: ₹${(Number(item.qty)*Number(item.unitPrice)).toFixed(2)}`, 14, y);
+      y += 6;
+    });
+  }
+
+  return doc.output('datauristring');
+}

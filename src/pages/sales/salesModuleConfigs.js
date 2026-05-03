@@ -20,8 +20,10 @@ import {
   updateSalesQuotation,
   deleteSalesQuotation,
   fetchSalesDashboard,
+  sendSalesQuotationEmail,
 } from '../../utils/salesApi';
-import { downloadInvoicePdf, downloadQuotationPdf } from '../../utils/salesPdf';
+import { fetchInventoryProducts } from '../../utils/inventoryApi';
+import { downloadInvoicePdf, downloadQuotationPdf, generateQuotationPdfBase64 } from '../../utils/salesPdf';
 
 // ============================================================================
 // CUSTOMERS CONFIG
@@ -481,13 +483,10 @@ export const quotationsConfig = {
     { name: 'quotationDate', label: 'Quotation Date', type: 'date', required: true },
     { name: 'expiryDate', label: 'Expiry Date', type: 'date', required: true },
     {
-      name: 'amount',
-      label: 'Amount',
-      type: 'number',
-      required: true,
-      min: 0,
-      step: 0.01,
-      placeholder: '0.00',
+      name: 'itemsJson',
+      label: 'Quotation Items',
+      type: 'items_list',
+      optionsFrom: 'productOptions',
     },
     {
       name: 'status',
@@ -511,7 +510,7 @@ export const quotationsConfig = {
     customerName: '',
     quotationDate: new Date().toISOString().split('T')[0],
     expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    amount: 0,
+    itemsJson: [],
     status: 'Sent',
     conversionStatus: 'Pending',
   },
@@ -537,28 +536,40 @@ export const quotationsConfig = {
     customerName: row.customerName || '',
     quotationDate: row.quotationDate || new Date().toISOString().split('T')[0],
     expiryDate: row.expiryDate || '',
-    amount: row.amount || 0,
+    itemsJson: row.itemsJson || [],
     status: row.status || 'Sent',
     conversionStatus: row.conversionStatus || 'Pending',
   }),
 
-  formToRow: (form) => ({
-    customerCode: form.customerCode,
-    customerName: form.customerName,
-    quotationDate: form.quotationDate,
-    expiryDate: form.expiryDate,
-    amount: Number(form.amount) || 0,
-    status: form.status,
-    conversionStatus: form.conversionStatus,
-  }),
+  formToRow: (form) => {
+    const items = Array.isArray(form.itemsJson) ? form.itemsJson : [];
+    const aggregatedAmount = items.reduce((sum, item) => sum + ((Number(item.qty) || 0) * (Number(item.unitPrice) || 0)), 0);
+    return {
+      customerCode: form.customerCode,
+      customerName: form.customerName,
+      quotationDate: form.quotationDate,
+      expiryDate: form.expiryDate,
+      items_json: items,
+      amount: aggregatedAmount,
+      status: form.status,
+      conversionStatus: form.conversionStatus,
+    };
+  },
 
   loadContext: async () => {
+    const products = await fetchInventoryProducts().catch(() => []);
     const customers = await fetchSalesCustomers();
     return {
       customers,
       customerOptions: (customers || []).map((customer) => ({
         value: customer.code || customer.customerCode,
         label: `${customer.code || customer.customerCode} - ${customer.name || customer.customerName}`,
+      })),
+      productOptions: (products || []).map((p) => ({
+        value: p.sku || p.productCode,
+        label: p.name,
+        unitPrice: p.unitPrice,
+        sku: p.sku
       })),
     };
   },
@@ -590,6 +601,11 @@ export const quotationsConfig = {
   extraAction: (row) => {
     downloadQuotationPdf(row);
   },
+  afterCreateSubmit: async (row, email) => {
+    const pdfBase64 = generateQuotationPdfBase64(row);
+    const codeToUse = row.code || row.quotationNumber;
+    await sendSalesQuotationEmail(codeToUse, email, pdfBase64);
+  }
 };
 
 // Dashboard config

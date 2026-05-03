@@ -2,6 +2,7 @@
 /* eslint-env node */
 const pool = require('../config/database');
 const financeController = require('./financeController');
+const nodemailer = require('nodemailer');
 
 function normalizeText(value) {
   return String(value ?? '').trim();
@@ -418,6 +419,7 @@ const quotationsConfig = {
     amount: row.amount,
     status: row.status,
     conversionStatus: row.conversion_status,
+    itemsJson: typeof row.items_json === 'string' ? JSON.parse(row.items_json || '[]') : (row.items_json || []),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }),
@@ -430,6 +432,7 @@ const quotationsConfig = {
     amount: normalizeNumber(input.amount || 0),
     status: normalizeText(input.status || 'Sent'),
     conversion_status: normalizeText(input.conversionStatus || input.conversion_status || 'Pending'),
+    items_json: typeof input.items_json === 'string' ? input.items_json : JSON.stringify(input.items_json || []),
   }),
   buildInsertQuery: (data) => {
     const columns = Object.keys(data);
@@ -488,6 +491,43 @@ async function getDashboard(req, res) {
   }
 }
 
+async function sendQuotationEmail(req, res) {
+  try {
+    const { email, pdfBase64, quotationNumber } = req.body;
+    if (!email || !pdfBase64) {
+      return res.status(400).json({ status: 'ERROR', message: 'Email and pdfBase64 are required' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+      port: process.env.SMTP_PORT || 587,
+      auth: {
+        user: process.env.SMTP_USER || 'ethereal_user',
+        pass: process.env.SMTP_PASS || 'ethereal_pass'
+      }
+    });
+
+    const pdfBuffer = Buffer.from(pdfBase64.split(',')[1] || pdfBase64, 'base64');
+
+    const info = await transporter.sendMail({
+      from: '"ERP System" <noreply@erpsystem.com>',
+      to: email,
+      subject: `Quotation ${quotationNumber || ''}`,
+      text: 'Please find your requested quotation attached.',
+      attachments: [{
+        filename: `Quotation_${quotationNumber || 'Document'}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      }]
+    });
+
+    res.status(200).json({ status: 'OK', message: 'Email sent successfully!', messageId: info.messageId });
+  } catch(error) {
+    console.error('Email send failed:', error);
+    res.status(500).json({ status: 'ERROR', message: 'Failed to send email', error: error.message });
+  }
+}
+
 module.exports = {
   createCrudHandlers,
   customersHandlers: createCrudHandlers(customersConfig),
@@ -495,4 +535,5 @@ module.exports = {
   invoicesHandlers: createCrudHandlers(invoicesConfig),
   quotationsHandlers: createCrudHandlers(quotationsConfig),
   getDashboard,
+  sendQuotationEmail,
 };

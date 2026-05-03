@@ -221,6 +221,7 @@ export async function fetchSalesQuotations() {
     amount: quotation.amount,
     status: quotation.status,
     conversionStatus: quotation.conversionStatus,
+    itemsJson: quotation.itemsJson || quotation.items_json,
   }));
 }
 
@@ -239,6 +240,7 @@ export async function createSalesQuotation(data) {
       amount: data.amount,
       status: data.status || 'Sent',
       conversionStatus: data.conversionStatus || 'Pending',
+      items_json: data.items_json,
     }),
   });
   return result.data;
@@ -254,6 +256,7 @@ export async function updateSalesQuotation(quotationNumber, data) {
       amount: data.amount,
       status: data.status,
       conversionStatus: data.conversionStatus,
+      items_json: data.items_json,
     }),
   });
   return result.data;
@@ -263,6 +266,18 @@ export async function deleteSalesQuotation(quotationNumber) {
   await request(`/quotations/${quotationNumber}`, {
     method: 'DELETE',
   });
+}
+
+export async function sendSalesQuotationEmail(quotationNumber, email, pdfBase64) {
+  const result = await request(`/quotations/${quotationNumber}/send`, {
+    method: 'POST',
+    body: JSON.stringify({
+      email,
+      pdfBase64,
+      quotationNumber,
+    }),
+  });
+  return result;
 }
 
 // Dashboard API

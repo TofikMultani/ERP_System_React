@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
@@ -16,11 +16,12 @@ function paginate(rows, page, pageSize) {
 export function createInventoryListPage(config) {
   return function InventoryListPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const excelInputRef = useRef(null);
     const [rows, setRows] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState(searchParams.get("search") || "");
     const [statusFilter, setStatusFilter] = useState("All");
     const [page, setPage] = useState(1);
 
@@ -216,7 +217,7 @@ export function createInventoryListPage(config) {
                         className="erp-table__action-btn erp-table__action-btn--view"
                         onClick={async () => {
                           try {
-                            await config.extraAction(row, loadRows);
+                            await config.extraAction(row, loadRows, navigate);
                           } catch (error) {
                             window.alert(error.message || `Unable to complete ${config.extraActionLabel}.`);
                           }

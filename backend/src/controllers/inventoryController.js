@@ -132,6 +132,10 @@ function createCrudHandlers(config) {
         values,
       );
 
+      if (config.afterSave) {
+        await config.afterSave(client, result.rows[0]);
+      }
+
       await client.query('COMMIT');
 
       return res.status(201).json({
@@ -153,6 +157,7 @@ function createCrudHandlers(config) {
   }
 
   async function updateItem(req, res) {
+    const client = await pool.connect();
     try {
       const { code } = req.params;
       const normalized = config.normalizeInput(req.body || {});
@@ -168,7 +173,8 @@ function createCrudHandlers(config) {
         .join(', ');
       const values = config.insertColumns.map((field) => normalized[field]);
 
-      const result = await pool.query(
+      await client.query('BEGIN');
+      const result = await client.query(
         `
           UPDATE ${config.tableName}
           SET ${setClause}, updated_by = $${values.length + 1}, updated_at = CURRENT_TIMESTAMP
@@ -179,11 +185,18 @@ function createCrudHandlers(config) {
       );
 
       if (!result.rows[0]) {
+        await client.query('ROLLBACK');
         return res.status(404).json({
           status: 'ERROR',
           message: `${config.label} not found`,
         });
       }
+
+      if (config.afterSave) {
+        await config.afterSave(client, result.rows[0]);
+      }
+
+      await client.query('COMMIT');
 
       return res.status(200).json({
         status: 'OK',
@@ -191,41 +204,57 @@ function createCrudHandlers(config) {
         data: mapRow(result.rows[0]),
       });
     } catch (error) {
+      await client.query('ROLLBACK');
       console.error(`Update ${config.label} error:`, error);
       return res.status(500).json({
         status: 'ERROR',
         message: `Error updating ${config.label}`,
         error: error.message,
       });
+    } finally {
+      client.release();
     }
   }
 
   async function deleteItem(req, res) {
+    const client = await pool.connect();
     try {
       const { code } = req.params;
-      const result = await pool.query(
+      
+      await client.query('BEGIN');
+      const result = await client.query(
         `DELETE FROM ${config.tableName} WHERE ${config.codeColumn} = $1 RETURNING *`,
         [code],
       );
 
       if (!result.rows[0]) {
+        await client.query('ROLLBACK');
         return res.status(404).json({
           status: 'ERROR',
           message: `${config.label} not found`,
         });
       }
 
+      if (config.afterDelete) {
+        await config.afterDelete(client, result.rows[0]);
+      }
+
+      await client.query('COMMIT');
+
       return res.status(200).json({
         status: 'OK',
         message: `${config.label} deleted successfully`,
       });
     } catch (error) {
+      await client.query('ROLLBACK');
       console.error(`Delete ${config.label} error:`, error);
       return res.status(500).json({
         status: 'ERROR',
         message: `Error deleting ${config.label}`,
         error: error.message,
       });
+    } finally {
+      client.release();
     }
   }
 
@@ -281,9 +310,13 @@ const productCrud = createCrudHandlers({
     'name',
     'category',
     'sku',
+    'warehouse_name',
     'unit_price',
     'stock_qty',
+    'reserved_qty',
     'reorder_level',
+    'reorder_qty',
+    'last_counted_at',
     'status',
     'description',
     'created_by',
@@ -294,9 +327,13 @@ const productCrud = createCrudHandlers({
       name: normalizeText(payload.name),
       category: normalizeText(payload.category),
       sku: normalizeText(payload.sku),
+      warehouse_name: normalizeText(payload.warehouseName),
       unit_price: normalizeNumber(payload.unitPrice),
       stock_qty: normalizeInteger(payload.stockQty),
+      reserved_qty: normalizeInteger(payload.reservedQty),
       reorder_level: normalizeInteger(payload.reorderLevel),
+      reorder_qty: normalizeInteger(payload.reorderQty),
+      last_counted_at: normalizeDate(payload.lastCountedAt),
       status: normalizeText(payload.status) || 'Active',
       description: normalizeText(payload.description),
     };
@@ -311,9 +348,13 @@ const productCrud = createCrudHandlers({
       name: row.name,
       category: row.category,
       sku: row.sku,
+      warehouseName: row.warehouse_name || '',
       unitPrice: row.unit_price === null ? '' : String(row.unit_price),
       stockQty: row.stock_qty,
+      reservedQty: row.reserved_qty || 0,
       reorderLevel: row.reorder_level,
+      reorderQty: row.reorder_qty || 0,
+      lastCountedAt: row.last_counted_at,
       status: row.status,
       description: row.description || '',
       createdAt: row.created_at,
@@ -364,12 +405,8 @@ const stockCrud = createCrudHandlers({
   insertColumns: [
     'product_name',
     'sku',
-    'warehouse_name',
-    'on_hand',
-    'reserved_qty',
-    'reorder_level',
-    'reorder_qty',
-    'last_counted_at',
+    'transaction_type',
+    'quantity',
     'status',
     'created_by',
   ],
@@ -378,17 +415,13 @@ const stockCrud = createCrudHandlers({
       stockCode: normalizeText(payload.stockCode),
       product_name: normalizeText(payload.productName),
       sku: normalizeText(payload.sku),
-      warehouse_name: normalizeText(payload.warehouseName),
-      on_hand: normalizeInteger(payload.onHand),
-      reserved_qty: normalizeInteger(payload.reservedQty),
-      reorder_level: normalizeInteger(payload.reorderLevel),
-      reorder_qty: normalizeInteger(payload.reorderQty),
-      last_counted_at: normalizeDate(payload.lastCountedAt),
+      transaction_type: normalizeText(payload.transactionType),
+      quantity: normalizeInteger(payload.quantity),
       status: normalizeText(payload.status) || 'Active',
     };
   },
   hasRequiredFields(payload) {
-    return ['product_name', 'sku', 'warehouse_name'].every((field) => normalizeText(payload[field]));
+    return ['product_name', 'sku', 'transaction_type'].every((field) => normalizeText(payload[field]));
   },
   mapRow(row) {
     return {
@@ -396,16 +429,36 @@ const stockCrud = createCrudHandlers({
       stockCode: row.stock_code,
       productName: row.product_name,
       sku: row.sku,
-      warehouseName: row.warehouse_name,
-      onHand: row.on_hand,
-      reservedQty: row.reserved_qty,
-      reorderLevel: row.reorder_level,
-      reorderQty: row.reorder_qty,
-      lastCountedAt: row.last_counted_at,
+      transactionType: row.transaction_type,
+      quantity: row.quantity,
       status: row.status,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
+  },
+  afterSave: async (client, row) => {
+    if (row.sku) {
+      await client.query(`
+        UPDATE inventory_products
+        SET stock_qty = (
+          SELECT COALESCE(SUM(CASE WHEN transaction_type = 'Incoming' THEN quantity ELSE -quantity END), 0)
+          FROM inventory_stock WHERE sku = $1
+        )
+        WHERE sku = $1
+      `, [row.sku]);
+    }
+  },
+  afterDelete: async (client, row) => {
+    if (row.sku) {
+      await client.query(`
+        UPDATE inventory_products
+        SET stock_qty = (
+          SELECT COALESCE(SUM(CASE WHEN transaction_type = 'Incoming' THEN quantity ELSE -quantity END), 0)
+          FROM inventory_stock WHERE sku = $1
+        )
+        WHERE sku = $1
+      `, [row.sku]);
+    }
   },
 });
 

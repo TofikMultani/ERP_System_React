@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
@@ -317,6 +317,9 @@ export function createSalesFormPage(config) {
     const [context, setContext] = useState({});
     const [globalErrors, setGlobalErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [createdRowData, setCreatedRowData] = useState(null);
+    const emailPromptRef = useRef(null);
 
     useEffect(() => {
       let isMounted = true;
@@ -396,7 +399,13 @@ export function createSalesFormPage(config) {
         if (isEditMode) {
           await config.updateRow(codeValue, data);
         } else {
-          await config.createRow(data);
+          const resultRow = await config.createRow(data);
+          if (config.afterCreateSubmit) {
+            setCreatedRowData(resultRow.data || resultRow);
+            setShowEmailModal(true);
+            setIsSubmitting(false);
+            return;
+          }
         }
 
         navigate(config.listRoute);
@@ -526,6 +535,60 @@ export function createSalesFormPage(config) {
                       placeholder={field.placeholder}
                       readOnly={field.readOnly}
                     />
+                  ) : field.type === "items_list" ? (
+                    <div className="sales-items-container">
+                      <table className="erp-table">
+                        <thead>
+                           <tr>
+                             <th>Product</th>
+                             <th>Qty</th>
+                             <th>Unit Price</th>
+                             <th>Total</th>
+                             <th>Drop</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           {(Array.isArray(form[field.name]) ? form[field.name] : []).map((item, index) => (
+                             <tr key={index}>
+                               <td>
+                                 <select className="sales-form__input" value={item.productCode || ""} onChange={(e) => {
+                                    const val = e.target.value;
+                                    const prod = (context[field.optionsFrom] || []).find(p => String(p.sku) === val || String(p.value) === val);
+                                    const next = [...(form[field.name] || [])];
+                                    next[index] = { ...next[index], productCode: val, productName: prod?.label || val, unitPrice: Number(prod?.unitPrice || 0) };
+                                    handleFieldChange(field.name, next);
+                                 }}>
+                                    <option value="">Select Product...</option>
+                                    {(context[field.optionsFrom] || []).map((p) => (
+                                      <option key={String(p.value || p.sku)} value={String(p.value || p.sku)}>{p.label || p.name}</option>
+                                    ))}
+                                 </select>
+                               </td>
+                               <td><input type="number" min="1" className="sales-form__input" value={item.qty || 1} onChange={(e) => {
+                                  const next = [...form[field.name]];
+                                  next[index] = { ...next[index], qty: Number(e.target.value) };
+                                  handleFieldChange(field.name, next);
+                               }} /></td>
+                               <td><input type="number" step="0.01" className="sales-form__input" value={item.unitPrice || 0} onChange={(e) => {
+                                  const next = [...form[field.name]];
+                                  next[index] = { ...next[index], unitPrice: Number(e.target.value) };
+                                  handleFieldChange(field.name, next);
+                               }} /></td>
+                               <td>₹{((Number(item.qty) || 0) * (Number(item.unitPrice) || 0)).toFixed(2)}</td>
+                               <td><button type="button" className="sales-btn sales-btn--secondary" onClick={() => {
+                                  const next = [...form[field.name]];
+                                  next.splice(index, 1);
+                                  handleFieldChange(field.name, next);
+                               }}>X</button></td>
+                             </tr>
+                           ))}
+                        </tbody>
+                      </table>
+                      <button type="button" className="sales-btn" style={{marginTop: '10px'}} onClick={() => {
+                         const current = Array.isArray(form[field.name]) ? form[field.name] : [];
+                         handleFieldChange(field.name, [...current, { productCode: '', productName: '', qty: 1, unitPrice: 0 }]);
+                      }}>+ Add Line Item</button>
+                    </div>
                   ) : field.type === "checkbox" ? (
                     <input
                       id={field.name}
@@ -583,6 +646,35 @@ export function createSalesFormPage(config) {
             </button>
           </div>
         </form>
+
+        {showEmailModal && config.afterCreateSubmit && (
+           <div className="erp-modal-overlay">
+              <div className="erp-modal" style={{background: 'var(--card-bg)', padding: '24px', borderRadius: '12px'}}>
+                 <h3>Quotation Created! Send Email?</h3>
+                 <p style={{marginTop: '8px', marginBottom: '16px'}}>Send the auto-generated PDF to the client directly.</p>
+                 <input type="email" placeholder="client@email.com" id="quotationEmailModalInput" className="sales-form__input" defaultValue={form.customerEmail || ''} ref={emailPromptRef} />
+                 <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+                   <button type="button" className="sales-btn sales-btn--secondary" onClick={() => navigate(config.listRoute)}>Skip</button>
+                   <button type="button" className="sales-btn" onClick={async (e) => {
+                     const btn = e.target;
+                     const email = emailPromptRef.current.value;
+                     if (!email) return window.alert('Enter email!');
+                     btn.disabled = true;
+                     btn.textContent = 'Sending...';
+                     try {
+                        await config.afterCreateSubmit(createdRowData, email);
+                        window.alert('Email Sent Successfully!');
+                        navigate(config.listRoute);
+                     } catch(err) {
+                        window.alert('Failed: ' + err.message);
+                        btn.disabled = false;
+                        btn.textContent = 'Retry Send';
+                     }
+                   }}>Send Email</button>
+                 </div>
+              </div>
+           </div>
+        )}
       </div>
     );
   };
