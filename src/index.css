@@ -1638,7 +1638,7 @@ a {
 
 .erp-table__actions-header,
 .erp-table__actions-cell {
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 

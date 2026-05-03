@@ -2,6 +2,81 @@ import { getStoredToken } from './auth';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+function authHeaders() {
+  const token = getStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function parseFileNameFromDisposition(disposition, fallback) {
+  if (!disposition) {
+    return fallback;
+  }
+
+  const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const regularMatch = disposition.match(/filename="?([^";]+)"?/i);
+  if (regularMatch?.[1]) {
+    return regularMatch[1];
+  }
+
+  return fallback;
+}
+
+function appendIfPresent(formData, key, value) {
+  if (value === null || value === undefined) {
+    return;
+  }
+
+  formData.append(key, value);
+}
+
+async function requestMultipart(endpoint, { method = 'POST', formData }) {
+  try {
+    const response = await fetch(`${API_BASE}/finance${endpoint}`, {
+      method,
+      headers: authHeaders(),
+      body: formData,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      throw new Error(data.message || `HTTP ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Finance multipart request failed:', error);
+    throw error;
+  }
+}
+
+async function downloadFinanceFile(endpoint, fallbackName) {
+  const response = await fetch(`${API_BASE}/finance${endpoint}`, {
+    headers: authHeaders(),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || 'Unable to open uploaded file');
+  }
+
+  const blob = await response.blob();
+  const fileName = parseFileNameFromDisposition(
+    response.headers.get('content-disposition'),
+    fallbackName,
+  );
+
+  return {
+    blob,
+    fileName,
+  };
+}
+
 async function request(endpoint, options = {}) {
   const token = getStoredToken();
   const headers = {
@@ -51,6 +126,10 @@ export async function fetchFinanceIncome() {
     amount: Number(income.amount || 0),
     status: income.status,
     reference: income.reference,
+    attachmentName: income.attachmentName,
+    attachmentMimeType: income.attachmentMimeType,
+    attachmentSizeBytes: Number(income.attachmentSizeBytes || 0),
+    hasAttachment: Boolean(income.hasAttachment),
   }));
 }
 
@@ -60,35 +139,47 @@ export async function fetchNextFinanceIncomeCode() {
 }
 
 export async function createFinanceIncome(data) {
-  const result = await request('/income', {
+  const formData = new FormData();
+  appendIfPresent(formData, 'sourceName', data.sourceName);
+  appendIfPresent(formData, 'receivedDate', data.receivedDate);
+  appendIfPresent(formData, 'amount', data.amount);
+  appendIfPresent(formData, 'status', data.status || 'Received');
+  appendIfPresent(formData, 'reference', data.reference || '');
+  appendIfPresent(formData, 'notes', data.notes || '');
+  if (data.attachmentFile) {
+    formData.append('file', data.attachmentFile);
+  }
+
+  const result = await requestMultipart('/income', {
     method: 'POST',
-    body: JSON.stringify({
-      sourceName: data.sourceName,
-      receivedDate: data.receivedDate,
-      amount: data.amount,
-      status: data.status || 'Received',
-      reference: data.reference || '',
-      notes: data.notes || '',
-    }),
+    formData,
   });
 
   return result.data;
 }
 
 export async function updateFinanceIncome(incomeCode, data) {
-  const result = await request(`/income/${incomeCode}`, {
+  const formData = new FormData();
+  appendIfPresent(formData, 'sourceName', data.sourceName);
+  appendIfPresent(formData, 'receivedDate', data.receivedDate);
+  appendIfPresent(formData, 'amount', data.amount);
+  appendIfPresent(formData, 'status', data.status);
+  appendIfPresent(formData, 'reference', data.reference || '');
+  appendIfPresent(formData, 'notes', data.notes || '');
+  if (data.attachmentFile) {
+    formData.append('file', data.attachmentFile);
+  }
+
+  const result = await requestMultipart(`/income/${incomeCode}`, {
     method: 'PATCH',
-    body: JSON.stringify({
-      sourceName: data.sourceName,
-      receivedDate: data.receivedDate,
-      amount: data.amount,
-      status: data.status,
-      reference: data.reference || '',
-      notes: data.notes || '',
-    }),
+    formData,
   });
 
   return result.data;
+}
+
+export async function downloadFinanceIncomeAttachment(incomeCode) {
+  return downloadFinanceFile(`/income/${encodeURIComponent(incomeCode)}/file`, `${incomeCode}.bin`);
 }
 
 export async function deleteFinanceIncome(incomeCode) {
@@ -107,6 +198,10 @@ export async function fetchFinanceExpenses() {
     description: expense.description,
     amount: Number(expense.amount || 0),
     status: expense.status,
+    attachmentName: expense.attachmentName,
+    attachmentMimeType: expense.attachmentMimeType,
+    attachmentSizeBytes: Number(expense.attachmentSizeBytes || 0),
+    hasAttachment: Boolean(expense.hasAttachment),
   }));
 }
 
@@ -116,35 +211,47 @@ export async function fetchNextFinanceExpenseCode() {
 }
 
 export async function createFinanceExpense(data) {
-  const result = await request('/expenses', {
+  const formData = new FormData();
+  appendIfPresent(formData, 'expenseDate', data.expenseDate);
+  appendIfPresent(formData, 'category', data.category);
+  appendIfPresent(formData, 'description', data.description);
+  appendIfPresent(formData, 'amount', data.amount);
+  appendIfPresent(formData, 'status', data.status || 'Pending');
+  appendIfPresent(formData, 'notes', data.notes || '');
+  if (data.attachmentFile) {
+    formData.append('file', data.attachmentFile);
+  }
+
+  const result = await requestMultipart('/expenses', {
     method: 'POST',
-    body: JSON.stringify({
-      expenseDate: data.expenseDate,
-      category: data.category,
-      description: data.description,
-      amount: data.amount,
-      status: data.status || 'Pending',
-      notes: data.notes || '',
-    }),
+    formData,
   });
 
   return result.data;
 }
 
 export async function updateFinanceExpense(expenseCode, data) {
-  const result = await request(`/expenses/${expenseCode}`, {
+  const formData = new FormData();
+  appendIfPresent(formData, 'expenseDate', data.expenseDate);
+  appendIfPresent(formData, 'category', data.category);
+  appendIfPresent(formData, 'description', data.description);
+  appendIfPresent(formData, 'amount', data.amount);
+  appendIfPresent(formData, 'status', data.status);
+  appendIfPresent(formData, 'notes', data.notes || '');
+  if (data.attachmentFile) {
+    formData.append('file', data.attachmentFile);
+  }
+
+  const result = await requestMultipart(`/expenses/${expenseCode}`, {
     method: 'PATCH',
-    body: JSON.stringify({
-      expenseDate: data.expenseDate,
-      category: data.category,
-      description: data.description,
-      amount: data.amount,
-      status: data.status,
-      notes: data.notes || '',
-    }),
+    formData,
   });
 
   return result.data;
+}
+
+export async function downloadFinanceExpenseAttachment(expenseCode) {
+  return downloadFinanceFile(`/expenses/${encodeURIComponent(expenseCode)}/file`, `${expenseCode}.bin`);
 }
 
 export async function deleteFinanceExpense(expenseCode) {

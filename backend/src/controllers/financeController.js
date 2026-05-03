@@ -1,9 +1,16 @@
 /* eslint-disable no-undef */
 /* eslint-env node */
+const fs = require('fs');
+const path = require('path');
 const pool = require('../config/database');
 
 function normalizeText(value) {
   return String(value ?? '').trim();
+}
+
+function normalizeNullableText(value) {
+  const text = normalizeText(value);
+  return text || null;
 }
 
 function normalizeNumber(value) {
@@ -93,7 +100,7 @@ function createCrudHandlers(config) {
       await client.query('BEGIN');
 
       const code = await getNextCode(client, config.tableName, config.codeColumn, config.codePrefix);
-      const data = config.normalizeInput(req.body, code);
+      const data = config.normalizeInput(req.body, code, req);
       const { columns, values, placeholders } = config.buildInsertQuery(data);
 
       const result = await client.query(
@@ -131,7 +138,7 @@ function createCrudHandlers(config) {
     }
 
     try {
-      const data = config.normalizeInput(req.body);
+      const data = config.normalizeInput(req.body, undefined, req);
       const { updates, values } = config.buildUpdateQuery(data);
 
       if (!updates.length) {
@@ -215,6 +222,74 @@ function createCrudHandlers(config) {
   };
 }
 
+function getAttachmentMeta(file) {
+  if (!file) {
+    return null;
+  }
+
+  return {
+    attachment_name: normalizeNullableText(file.originalname),
+    attachment_path: normalizeNullableText(file.path),
+    attachment_mime_type: normalizeNullableText(file.mimetype),
+    attachment_size_bytes: normalizeInteger(file.size || 0),
+  };
+}
+
+function toInlineDisposition(fileName, fallbackName) {
+  const name = String(fileName || fallbackName || 'attachment').replace(/[\r\n"]/g, '').trim() || 'attachment';
+  const encoded = encodeURIComponent(name);
+  return `inline; filename="${name}"; filename*=UTF-8''${encoded}`;
+}
+
+async function downloadAttachment(req, res, tableName, codeColumn, codeValue, fallbackName) {
+  try {
+    const result = await pool.query(
+      `
+        SELECT
+          ${codeColumn} AS code,
+          attachment_name,
+          attachment_path,
+          attachment_mime_type
+        FROM ${tableName}
+        WHERE ${codeColumn} = $1
+        LIMIT 1
+      `,
+      [codeValue],
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        status: 'ERROR',
+        message: 'Record not found',
+      });
+    }
+
+    const row = result.rows[0];
+    const filePath = row.attachment_path;
+
+    if (!filePath || !fs.existsSync(filePath)) {
+      return res.status(404).json({
+        status: 'ERROR',
+        message: 'Uploaded file not found',
+      });
+    }
+
+    const fileName = row.attachment_name || path.basename(filePath);
+    const mimeType = row.attachment_mime_type || 'application/octet-stream';
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', toInlineDisposition(fileName, fallbackName));
+    return res.sendFile(path.resolve(filePath));
+  } catch (error) {
+    console.error('Download finance attachment error:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: 'Error downloading uploaded file',
+      error: error.message,
+    });
+  }
+}
+
 const incomeConfig = {
   tableName: 'finance_income',
   codeColumn: 'income_code',
@@ -229,18 +304,45 @@ const incomeConfig = {
     amount: row.amount,
     status: row.status,
     reference: row.reference,
+    attachmentName: row.attachment_name,
+    attachmentMimeType: row.attachment_mime_type,
+    attachmentSizeBytes: row.attachment_size_bytes,
+    hasAttachment: Boolean(row.attachment_path),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }),
-  normalizeInput: (input, newCode) => ({
-    income_code: newCode || input.incomeCode || input.income_code,
-    source_name: normalizeText(input.sourceName || input.source_name),
-    received_date: normalizeText(input.receivedDate || input.received_date || new Date().toISOString().split('T')[0]),
-    amount: normalizeNumber(input.amount || 0),
-    status: normalizeText(input.status || 'Received'),
-    reference: normalizeText(input.reference),
-    notes: normalizeText(input.notes),
-  }),
+  normalizeInput: (input, newCode, req) => {
+    const base = {
+      income_code: newCode || input.incomeCode || input.income_code,
+      source_name: normalizeText(input.sourceName || input.source_name),
+      received_date: normalizeText(input.receivedDate || input.received_date || new Date().toISOString().split('T')[0]),
+      amount: normalizeNumber(input.amount || 0),
+      status: normalizeText(input.status || 'Received'),
+      reference: normalizeText(input.reference),
+      notes: normalizeText(input.notes),
+    };
+
+    const attachmentMeta = getAttachmentMeta(req?.file);
+
+    if (attachmentMeta) {
+      return {
+        ...base,
+        ...attachmentMeta,
+      };
+    }
+
+    if (newCode) {
+      return {
+        ...base,
+        attachment_name: null,
+        attachment_path: null,
+        attachment_mime_type: null,
+        attachment_size_bytes: null,
+      };
+    }
+
+    return base;
+  },
   buildInsertQuery: (data) => {
     const columns = Object.keys(data);
     const values = Object.values(data);
@@ -248,7 +350,7 @@ const incomeConfig = {
     return { columns, values, placeholders };
   },
   buildUpdateQuery: (data) => {
-    const entries = Object.entries(data);
+    const entries = Object.entries(data).filter(([, value]) => value !== undefined);
     const updates = entries.map(([key], i) => `${key} = $${i + 1}`);
     const values = entries.map(([, value]) => value);
     return { updates, values };
@@ -269,18 +371,45 @@ const expensesConfig = {
     description: row.description,
     amount: row.amount,
     status: row.status,
+    attachmentName: row.attachment_name,
+    attachmentMimeType: row.attachment_mime_type,
+    attachmentSizeBytes: row.attachment_size_bytes,
+    hasAttachment: Boolean(row.attachment_path),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }),
-  normalizeInput: (input, newCode) => ({
-    expense_code: newCode || input.expenseCode || input.expense_code,
-    expense_date: normalizeText(input.expenseDate || input.expense_date || new Date().toISOString().split('T')[0]),
-    category: normalizeText(input.category || 'Operations'),
-    description: normalizeText(input.description),
-    amount: normalizeNumber(input.amount || 0),
-    status: normalizeText(input.status || 'Pending'),
-    notes: normalizeText(input.notes),
-  }),
+  normalizeInput: (input, newCode, req) => {
+    const base = {
+      expense_code: newCode || input.expenseCode || input.expense_code,
+      expense_date: normalizeText(input.expenseDate || input.expense_date || new Date().toISOString().split('T')[0]),
+      category: normalizeText(input.category || 'Operations'),
+      description: normalizeText(input.description),
+      amount: normalizeNumber(input.amount || 0),
+      status: normalizeText(input.status || 'Pending'),
+      notes: normalizeText(input.notes),
+    };
+
+    const attachmentMeta = getAttachmentMeta(req?.file);
+
+    if (attachmentMeta) {
+      return {
+        ...base,
+        ...attachmentMeta,
+      };
+    }
+
+    if (newCode) {
+      return {
+        ...base,
+        attachment_name: null,
+        attachment_path: null,
+        attachment_mime_type: null,
+        attachment_size_bytes: null,
+      };
+    }
+
+    return base;
+  },
   buildInsertQuery: (data) => {
     const columns = Object.keys(data);
     const values = Object.values(data);
@@ -288,7 +417,7 @@ const expensesConfig = {
     return { columns, values, placeholders };
   },
   buildUpdateQuery: (data) => {
-    const entries = Object.entries(data);
+    const entries = Object.entries(data).filter(([, value]) => value !== undefined);
     const updates = entries.map(([key], i) => `${key} = $${i + 1}`);
     const values = entries.map(([, value]) => value);
     return { updates, values };
@@ -405,10 +534,38 @@ async function getDashboard(req, res) {
   }
 }
 
+async function downloadIncomeAttachment(req, res) {
+  const { code } = req.params;
+
+  if (!code) {
+    return res.status(400).json({
+      status: 'ERROR',
+      message: 'Code is required',
+    });
+  }
+
+  return downloadAttachment(req, res, 'finance_income', 'income_code', code, `${code}.pdf`);
+}
+
+async function downloadExpenseAttachment(req, res) {
+  const { code } = req.params;
+
+  if (!code) {
+    return res.status(400).json({
+      status: 'ERROR',
+      message: 'Code is required',
+    });
+  }
+
+  return downloadAttachment(req, res, 'finance_expenses', 'expense_code', code, `${code}.pdf`);
+}
+
 module.exports = {
   createCrudHandlers,
   incomeHandlers: createCrudHandlers(incomeConfig),
   expensesHandlers: createCrudHandlers(expensesConfig),
   paymentsHandlers: createCrudHandlers(paymentsConfig),
+  downloadIncomeAttachment,
+  downloadExpenseAttachment,
   getDashboard,
 };

@@ -364,7 +364,7 @@ function LandingPage() {
 
           <ul className="landing-contact__list">
             <li>Email: hello@erp-system.com</li>
-            <li>Phone: +1 (000) 123-4567</li>
+            <li>Phone: +7993310410</li>
             <li>Hours: Monday - Friday, 9:00 AM to 6:00 PM</li>
           </ul>
 

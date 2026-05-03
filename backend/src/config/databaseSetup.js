@@ -1196,6 +1196,10 @@ async function ensureFinanceTables() {
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS amount NUMERIC(14,2) NOT NULL DEFAULT 0;`);
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Received';`);
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS reference VARCHAR(255);`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS attachment_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS attachment_path TEXT;`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS attachment_mime_type VARCHAR(120);`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS attachment_size_bytes INTEGER;`);
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS notes TEXT;`);
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
@@ -1208,6 +1212,10 @@ async function ensureFinanceTables() {
   await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS description TEXT;`);
   await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS amount NUMERIC(14,2) NOT NULL DEFAULT 0;`);
   await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS attachment_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS attachment_path TEXT;`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS attachment_mime_type VARCHAR(120);`);
+  await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS attachment_size_bytes INTEGER;`);
   await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS notes TEXT;`);
   await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
   await pool.query(`ALTER TABLE finance_expenses ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);

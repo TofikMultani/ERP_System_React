@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Eye } from "lucide-react";
 import Card from "../../components/Card.jsx";
 import Table from "../../components/Table.jsx";
 
@@ -19,6 +20,25 @@ function normalizeOption(option) {
 }
 
 function validateField(field, value) {
+  if (field.type === "file") {
+    if (!value) {
+      return "";
+    }
+
+    if (field.maxSizeBytes && value.size > field.maxSizeBytes) {
+      return `${field.label} must be 1 MB or smaller.`;
+    }
+
+    if (Array.isArray(field.acceptedMimeTypes) && field.acceptedMimeTypes.length) {
+      const mimeType = String(value.type || "").toLowerCase();
+      if (mimeType && !field.acceptedMimeTypes.includes(mimeType)) {
+        return `${field.label} must be a PDF or image file.`;
+      }
+    }
+
+    return "";
+  }
+
   const text = String(value ?? "").trim();
 
   if (field.readOnly) {
@@ -101,6 +121,10 @@ function normalizeTableColumns(columns = []) {
 }
 
 function toFieldValue(field, value) {
+  if (field.type === "file") {
+    return "";
+  }
+
   if (field.type === "number" || field.type === "textarea") {
     return String(value ?? "");
   }
@@ -249,6 +273,39 @@ export function createFinanceListPage(config) {
             rows={isLoading ? [] : pagedRows}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            renderActions={
+              config.renderActions
+                ? (row) => config.renderActions(row, loadRows)
+                : config.extraActionLabel && config.extraAction
+                  ? (row) => {
+                      if (typeof config.extraActionWhen === "function" && !config.extraActionWhen(row)) {
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          type="button"
+                          className="erp-table__action-btn erp-table__action-btn--view"
+                          aria-label={config.extraActionAriaLabel || config.extraActionLabel}
+                          title={config.extraActionAriaLabel || config.extraActionLabel}
+                          onClick={async () => {
+                            try {
+                              await config.extraAction(row, loadRows);
+                            } catch (error) {
+                              window.alert(error.message || `Unable to complete ${config.extraActionLabel}.`);
+                            }
+                          }}
+                        >
+                          {config.extraActionIcon === "eye" ? (
+                            <Eye aria-hidden="true" size={16} strokeWidth={2.2} />
+                          ) : (
+                            config.extraActionIcon || config.extraActionLabel
+                          )}
+                        </button>
+                      );
+                    }
+                  : undefined
+            }
           />
 
           {totalPages > 1 ? (
@@ -481,6 +538,25 @@ export function createFinanceFormPage(config) {
                       placeholder={field.placeholder}
                       readOnly={field.readOnly}
                     />
+                  ) : field.type === "file" ? (
+                    <>
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="file"
+                        className={`finance-form__input ${error ? "finance-form__input--error" : ""}`}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0] || null;
+                          handleFieldChange(field.name, file);
+                        }}
+                        disabled={isSubmitting}
+                        required={field.required}
+                        accept={field.accept}
+                      />
+                      {form[field.existingFileNameField] ? (
+                        <p>Current file: {String(form[field.existingFileNameField])}</p>
+                      ) : null}
+                    </>
                   ) : (
                     <input
                       id={field.name}

@@ -4,11 +4,13 @@ import {
   createFinanceIncome,
   updateFinanceIncome,
   deleteFinanceIncome,
+  downloadFinanceIncomeAttachment,
   fetchFinanceExpenses,
   fetchNextFinanceExpenseCode,
   createFinanceExpense,
   updateFinanceExpense,
   deleteFinanceExpense,
+  downloadFinanceExpenseAttachment,
   fetchFinancePayments,
   fetchNextFinancePaymentCode,
   createFinancePayment,
@@ -16,6 +18,46 @@ import {
   deleteFinancePayment,
   fetchFinanceDashboard,
 } from '../../utils/financeApi';
+
+const FILE_ACCEPT = '.pdf,image/*';
+const FILE_ACCEPTED_MIME_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+  'image/gif',
+];
+const FILE_MAX_SIZE_BYTES = 1 * 1024 * 1024;
+
+function openBlobInNewTab(blob, fileName) {
+  const blobUrl = window.URL.createObjectURL(blob);
+  const newWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+
+  if (!newWindow) {
+    window.URL.revokeObjectURL(blobUrl);
+    throw new Error('Unable to open file in a new tab. Please allow popups and try again.');
+  }
+
+  newWindow.document.title = fileName || 'Uploaded file';
+
+  setTimeout(() => {
+    window.URL.revokeObjectURL(blobUrl);
+  }, 60 * 1000);
+}
+
+function toDateOnly(value) {
+  const text = String(value || '').trim();
+  if (!text) {
+    return '';
+  }
+
+  if (text.includes('T')) {
+    return text.split('T')[0];
+  }
+
+  return text;
+}
 
 export const financeIncomeConfig = {
   pageTitle: 'Finance Income',
@@ -35,7 +77,7 @@ export const financeIncomeConfig = {
   columns: [
     { key: 'code', label: 'Income Code', sortable: true },
     { key: 'sourceName', label: 'Source', sortable: true },
-    { key: 'receivedDate', label: 'Received Date', sortable: true },
+    { key: 'receivedDate', label: 'Received Date', sortable: true, format: (val) => toDateOnly(val) },
     { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${Number(val || 0).toFixed(2)}` },
     { key: 'status', label: 'Status', sortable: true },
     { key: 'reference', label: 'Reference', sortable: true },
@@ -50,6 +92,17 @@ export const financeIncomeConfig = {
     { name: 'amount', label: 'Amount', type: 'number', required: true, min: 0, step: 0.01, placeholder: '0.00' },
     { name: 'status', label: 'Status', type: 'select', required: true, options: ['Received', 'Pending', 'Cancelled'] },
     { name: 'reference', label: 'Reference', type: 'text', placeholder: 'Transaction or reference id' },
+    {
+      name: 'attachmentFile',
+      label: 'Upload File (Optional)',
+      type: 'file',
+      required: false,
+      accept: FILE_ACCEPT,
+      acceptedMimeTypes: FILE_ACCEPTED_MIME_TYPES,
+      maxSizeBytes: FILE_MAX_SIZE_BYTES,
+      existingFileNameField: 'attachmentName',
+      fullWidth: true,
+    },
   ],
 
   emptyForm: {
@@ -59,6 +112,8 @@ export const financeIncomeConfig = {
     amount: 0,
     status: 'Received',
     reference: '',
+    attachmentFile: null,
+    attachmentName: '',
   },
 
   fetchRows: fetchFinanceIncome,
@@ -79,10 +134,13 @@ export const financeIncomeConfig = {
   rowToForm: (row) => ({
     code: row.code || '',
     sourceName: row.sourceName || '',
-    receivedDate: row.receivedDate || new Date().toISOString().split('T')[0],
+    receivedDate: toDateOnly(row.receivedDate) || new Date().toISOString().split('T')[0],
     amount: Number(row.amount) || 0,
     status: row.status || 'Received',
     reference: row.reference || '',
+    attachmentFile: null,
+    attachmentName: row.attachmentName || '',
+    hasAttachment: Boolean(row.hasAttachment),
   }),
 
   formToRow: (form) => ({
@@ -91,7 +149,17 @@ export const financeIncomeConfig = {
     amount: Number(form.amount) || 0,
     status: form.status,
     reference: form.reference || '',
+    attachmentFile: form.attachmentFile || null,
   }),
+
+  extraActionLabel: 'View Uploaded File',
+  extraActionAriaLabel: 'View Uploaded File',
+  extraActionIcon: 'eye',
+  extraActionWhen: (row) => Boolean(row.hasAttachment),
+  extraAction: async (row) => {
+    const { blob, fileName } = await downloadFinanceIncomeAttachment(row.code);
+    openBlobInNewTab(blob, fileName || row.attachmentName || `${row.code}.bin`);
+  },
 
   buildSummary: (rows) => {
     const total = rows.length;
@@ -141,6 +209,17 @@ export const financeExpensesConfig = {
     { name: 'description', label: 'Description', type: 'text', required: true, placeholder: 'Enter expense description', fullWidth: true },
     { name: 'amount', label: 'Amount', type: 'number', required: true, min: 0, step: 0.01, placeholder: '0.00' },
     { name: 'status', label: 'Status', type: 'select', required: true, options: ['Pending', 'Approved', 'Rejected'] },
+    {
+      name: 'attachmentFile',
+      label: 'Upload File (Optional)',
+      type: 'file',
+      required: false,
+      accept: FILE_ACCEPT,
+      acceptedMimeTypes: FILE_ACCEPTED_MIME_TYPES,
+      maxSizeBytes: FILE_MAX_SIZE_BYTES,
+      existingFileNameField: 'attachmentName',
+      fullWidth: true,
+    },
   ],
 
   emptyForm: {
@@ -150,6 +229,8 @@ export const financeExpensesConfig = {
     description: '',
     amount: 0,
     status: 'Pending',
+    attachmentFile: null,
+    attachmentName: '',
   },
 
   fetchRows: fetchFinanceExpenses,
@@ -174,6 +255,9 @@ export const financeExpensesConfig = {
     description: row.description || '',
     amount: Number(row.amount) || 0,
     status: row.status || 'Pending',
+    attachmentFile: null,
+    attachmentName: row.attachmentName || '',
+    hasAttachment: Boolean(row.hasAttachment),
   }),
 
   formToRow: (form) => ({
@@ -182,7 +266,17 @@ export const financeExpensesConfig = {
     description: form.description,
     amount: Number(form.amount) || 0,
     status: form.status,
+    attachmentFile: form.attachmentFile || null,
   }),
+
+  extraActionLabel: 'View Uploaded File',
+  extraActionAriaLabel: 'View Uploaded File',
+  extraActionIcon: 'eye',
+  extraActionWhen: (row) => Boolean(row.hasAttachment),
+  extraAction: async (row) => {
+    const { blob, fileName } = await downloadFinanceExpenseAttachment(row.code);
+    openBlobInNewTab(blob, fileName || row.attachmentName || `${row.code}.bin`);
+  },
 
   buildSummary: (rows) => {
     const total = rows.length;
