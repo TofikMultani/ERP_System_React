@@ -29,6 +29,12 @@ const columns = [
     accessor: "netSalary",
     render: (value) => formatCurrency(value),
   },
+  {
+    header: "CTC",
+    accessor: "totalCtc",
+    render: (value) => formatCurrency(value),
+  },
+  { header: "Payment Mode", accessor: "paymentMode" },
   { header: "Status", accessor: "status" },
 ];
 
@@ -84,6 +90,10 @@ function Payroll() {
   const averageNetSalary = payrollRecords.length
     ? Math.round(totalPayroll / payrollRecords.length)
     : 0;
+  const totalCtc = payrollRecords.reduce(
+    (sum, record) => sum + toNumber(record.totalCtc),
+    0,
+  );
   const processedCount = payrollRecords.filter(
     (record) => String(record.status).toLowerCase() === "processed",
   ).length;
@@ -101,6 +111,11 @@ function Payroll() {
       title: "Avg Net Salary",
       value: formatCurrency(averageNetSalary),
       helper: "per payroll record",
+    },
+    {
+      title: "Total CTC",
+      value: formatCurrency(totalCtc),
+      helper: "employer monthly cost",
     },
     {
       title: "Processed",

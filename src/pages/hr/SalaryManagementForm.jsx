@@ -5,12 +5,12 @@ import {
   validateFormWithInlineErrors,
 } from "../../utils/formValidation.js";
 import {
-  createPayrollRecord,
-  fetchEmployees,
-  fetchNextPayrollCode,
-  fetchPayrollRecords,
-  updatePayrollRecord,
-} from "../../utils/adminApi.js";
+  createSalaryRecord,
+  fetchNextSalaryCode,
+  fetchSalaryRecords,
+  updateSalaryRecord,
+} from "../../utils/salaryManagementApi.js";
+import { fetchEmployees } from "../../utils/adminApi.js";
 import {
   emptyPayrollForm,
   formatCurrency,
@@ -60,10 +60,10 @@ function getDaysInMonth(payMonth) {
   return new Date(year, month, 0).getDate();
 }
 
-function PayrollForm() {
+function SalaryManagementForm() {
   const navigate = useNavigate();
-  const { payrollCode } = useParams();
-  const isEditMode = Boolean(payrollCode);
+  const { salaryCode } = useParams();
+  const isEditMode = Boolean(salaryCode);
 
   const [form, setForm] = useState(emptyPayrollForm);
   const [employees, setEmployees] = useState([]);
@@ -82,24 +82,22 @@ function PayrollForm() {
       setErrorMessage("");
 
       try {
-        const [employeeRows, payrollRows] = await Promise.all([
+        const [employeeRows, salaryRows] = await Promise.all([
           fetchEmployees(),
-          fetchPayrollRecords(),
+          fetchSalaryRecords(),
         ]);
 
         const safeEmployees = Array.isArray(employeeRows) ? employeeRows : [];
-        const records = Array.isArray(payrollRows) ? payrollRows : [];
+        const records = Array.isArray(salaryRows) ? salaryRows : [];
         setEmployees(safeEmployees);
 
         if (isEditMode) {
           const matched = records.find(
-            (record) =>
-              String(record.payrollCode).toLowerCase() ===
-              String(payrollCode).toLowerCase(),
+            (record) => String(record.salaryCode).toLowerCase() === String(salaryCode).toLowerCase(),
           );
 
           if (!matched) {
-            setErrorMessage("Payroll record not found.");
+            setErrorMessage("Salary record not found.");
             setForm(emptyPayrollForm);
             return;
           }
@@ -108,20 +106,21 @@ function PayrollForm() {
           return;
         }
 
-        const nextCode = await fetchNextPayrollCode();
+        const nextCode = await fetchNextSalaryCode();
         setForm({
           ...emptyPayrollForm,
           payrollCode: nextCode,
+          salaryCode: nextCode,
         });
       } catch (error) {
-        setErrorMessage(error.message || "Unable to load payroll form data.");
+        setErrorMessage(error.message || "Unable to load salary form data.");
       } finally {
         setIsLoading(false);
       }
     }
 
     initializeForm();
-  }, [isEditMode, payrollCode]);
+  }, [isEditMode, salaryCode]);
 
   function handleEmployeeSelection(value, previousForm) {
     const selectedEmployee = employeeById.get(String(value));
@@ -202,7 +201,7 @@ function PayrollForm() {
 
     const normalized = normalizePayrollPayload(form);
     if (!isValidPayrollPayload(normalized)) {
-      window.alert("Please fill all required payroll fields.");
+      window.alert("Please fill all required salary fields.");
       return;
     }
 
@@ -210,12 +209,12 @@ function PayrollForm() {
 
     try {
       await (isEditMode
-        ? updatePayrollRecord(payrollCode, toPayrollApiPayload(normalized))
-        : createPayrollRecord(toPayrollApiPayload(normalized)));
+        ? updateSalaryRecord(salaryCode, toPayrollApiPayload(normalized))
+        : createSalaryRecord(toPayrollApiPayload(normalized)));
 
-      navigate("/hr/payroll");
+      navigate("/hr/salary-management");
     } catch (error) {
-      window.alert(error.message || "Unable to save payroll record in database.");
+      window.alert(error.message || "Unable to save salary record in database.");
     } finally {
       setIsSaving(false);
     }
@@ -231,9 +230,9 @@ function PayrollForm() {
         <button
           type="button"
           className="hr-btn hr-btn--secondary"
-          onClick={() => navigate("/hr/payroll")}
+          onClick={() => navigate("/hr/salary-management")}
         >
-          Back to Payroll
+          Back to Salary Management
         </button>
       </div>
 
@@ -246,14 +245,12 @@ function PayrollForm() {
           noValidate
           onChange={handleFormFieldValidation}
         >
-          <h3 className="hr-panel__title">
-            {isEditMode ? "Update Salary Record" : "Create Salary Record"}
-          </h3>
+          <h3 className="hr-panel__title">{isEditMode ? "Update Salary Record" : "Create Salary Record"}</h3>
 
           <div className="hr-form__grid">
             <div className="hr-form__field">
-              <label>Payroll Code</label>
-              <input name="payrollCode" value={form.payrollCode} readOnly required />
+              <label>Salary Code</label>
+              <input name="salaryCode" value={form.salaryCode || form.payrollCode} readOnly required />
             </div>
 
             <div className="hr-form__field">
@@ -269,12 +266,7 @@ function PayrollForm() {
 
             <div className="hr-form__field">
               <label>Employee</label>
-              <select
-                name="employeeId"
-                value={form.employeeId}
-                onChange={handleChange}
-                required
-              >
+              <select name="employeeId" value={form.employeeId} onChange={handleChange} required>
                 <option value="">Select employee…</option>
                 {employees.map((employee) => (
                   <option key={employee.employeeId} value={employee.employeeId}>
@@ -499,13 +491,13 @@ function PayrollForm() {
                 name="notes"
                 value={form.notes}
                 onChange={handleChange}
-                placeholder="Optional payroll notes"
+                placeholder="Optional salary notes"
               />
             </div>
           </div>
 
           <button type="submit" className="hr-btn hr-btn--submit" disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save Payroll"}
+            {isSaving ? "Saving..." : "Save Salary Record"}
           </button>
         </form>
       )}
@@ -513,4 +505,4 @@ function PayrollForm() {
   );
 }
 
-export default PayrollForm;
+export default SalaryManagementForm;

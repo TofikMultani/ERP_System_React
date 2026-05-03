@@ -859,15 +859,33 @@ async function ensurePayrollRecordsTable() {
       basic_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
       hra NUMERIC(14,2) NOT NULL DEFAULT 0,
       allowances NUMERIC(14,2) NOT NULL DEFAULT 0,
+      special_allowance NUMERIC(14,2) NOT NULL DEFAULT 0,
+      conveyance_allowance NUMERIC(14,2) NOT NULL DEFAULT 0,
+      medical_allowance NUMERIC(14,2) NOT NULL DEFAULT 0,
       overtime_pay NUMERIC(14,2) NOT NULL DEFAULT 0,
       bonus NUMERIC(14,2) NOT NULL DEFAULT 0,
+      reimbursements NUMERIC(14,2) NOT NULL DEFAULT 0,
+      arrears NUMERIC(14,2) NOT NULL DEFAULT 0,
+      days_in_month INTEGER NOT NULL DEFAULT 30,
+      paid_days INTEGER NOT NULL DEFAULT 30,
+      lop_days INTEGER NOT NULL DEFAULT 0,
+      lop_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
       gross_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
       tax NUMERIC(14,2) NOT NULL DEFAULT 0,
       provident_fund NUMERIC(14,2) NOT NULL DEFAULT 0,
+      esi NUMERIC(14,2) NOT NULL DEFAULT 0,
+      professional_tax NUMERIC(14,2) NOT NULL DEFAULT 0,
+      tds NUMERIC(14,2) NOT NULL DEFAULT 0,
+      loan_deduction NUMERIC(14,2) NOT NULL DEFAULT 0,
       other_deductions NUMERIC(14,2) NOT NULL DEFAULT 0,
       total_deductions NUMERIC(14,2) NOT NULL DEFAULT 0,
       net_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
+      employer_pf NUMERIC(14,2) NOT NULL DEFAULT 0,
+      employer_esi NUMERIC(14,2) NOT NULL DEFAULT 0,
+      total_ctc NUMERIC(14,2) NOT NULL DEFAULT 0,
       payment_date DATE,
+      payment_mode VARCHAR(80) NOT NULL DEFAULT 'Bank Transfer',
+      bank_reference VARCHAR(255),
       status VARCHAR(80) NOT NULL DEFAULT 'Pending',
       notes TEXT,
       created_by INTEGER,
@@ -905,10 +923,37 @@ async function ensurePayrollRecordsTable() {
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS allowances NUMERIC(14,2) NOT NULL DEFAULT 0;`,
   );
   await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS special_allowance NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS conveyance_allowance NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS medical_allowance NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS overtime_pay NUMERIC(14,2) NOT NULL DEFAULT 0;`,
   );
   await pool.query(
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS bonus NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS reimbursements NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS arrears NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS days_in_month INTEGER NOT NULL DEFAULT 30;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS paid_days INTEGER NOT NULL DEFAULT 30;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS lop_days INTEGER NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS lop_amount NUMERIC(14,2) NOT NULL DEFAULT 0;`,
   );
   await pool.query(
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS gross_salary NUMERIC(14,2) NOT NULL DEFAULT 0;`,
@@ -920,6 +965,18 @@ async function ensurePayrollRecordsTable() {
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS provident_fund NUMERIC(14,2) NOT NULL DEFAULT 0;`,
   );
   await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS esi NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS professional_tax NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS tds NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS loan_deduction NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS other_deductions NUMERIC(14,2) NOT NULL DEFAULT 0;`,
   );
   await pool.query(
@@ -929,7 +986,22 @@ async function ensurePayrollRecordsTable() {
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS net_salary NUMERIC(14,2) NOT NULL DEFAULT 0;`,
   );
   await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS employer_pf NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS employer_esi NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS total_ctc NUMERIC(14,2) NOT NULL DEFAULT 0;`,
+  );
+  await pool.query(
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS payment_date DATE;`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS payment_mode VARCHAR(80) NOT NULL DEFAULT 'Bank Transfer';`,
+  );
+  await pool.query(
+    `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS bank_reference VARCHAR(255);`,
   );
   await pool.query(
     `ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`,
@@ -960,6 +1032,103 @@ async function ensurePayrollRecordsTable() {
   await pool.query(
     `CREATE INDEX IF NOT EXISTS idx_payroll_records_status ON payroll_records(status);`,
   );
+}
+
+async function ensureSalaryManagementTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS salary_management_records (
+      id BIGSERIAL PRIMARY KEY,
+      salary_code VARCHAR(60) UNIQUE NOT NULL,
+      employee_id VARCHAR(50) NOT NULL,
+      employee_name VARCHAR(255) NOT NULL,
+      department VARCHAR(180) NOT NULL,
+      role_designation VARCHAR(180) NOT NULL,
+      pay_month VARCHAR(20) NOT NULL,
+      basic_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
+      hra NUMERIC(14,2) NOT NULL DEFAULT 0,
+      allowances NUMERIC(14,2) NOT NULL DEFAULT 0,
+      special_allowance NUMERIC(14,2) NOT NULL DEFAULT 0,
+      conveyance_allowance NUMERIC(14,2) NOT NULL DEFAULT 0,
+      medical_allowance NUMERIC(14,2) NOT NULL DEFAULT 0,
+      overtime_pay NUMERIC(14,2) NOT NULL DEFAULT 0,
+      bonus NUMERIC(14,2) NOT NULL DEFAULT 0,
+      reimbursements NUMERIC(14,2) NOT NULL DEFAULT 0,
+      arrears NUMERIC(14,2) NOT NULL DEFAULT 0,
+      days_in_month INTEGER NOT NULL DEFAULT 30,
+      paid_days INTEGER NOT NULL DEFAULT 30,
+      lop_days INTEGER NOT NULL DEFAULT 0,
+      lop_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+      gross_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
+      tax NUMERIC(14,2) NOT NULL DEFAULT 0,
+      provident_fund NUMERIC(14,2) NOT NULL DEFAULT 0,
+      esi NUMERIC(14,2) NOT NULL DEFAULT 0,
+      professional_tax NUMERIC(14,2) NOT NULL DEFAULT 0,
+      tds NUMERIC(14,2) NOT NULL DEFAULT 0,
+      loan_deduction NUMERIC(14,2) NOT NULL DEFAULT 0,
+      other_deductions NUMERIC(14,2) NOT NULL DEFAULT 0,
+      total_deductions NUMERIC(14,2) NOT NULL DEFAULT 0,
+      net_salary NUMERIC(14,2) NOT NULL DEFAULT 0,
+      employer_pf NUMERIC(14,2) NOT NULL DEFAULT 0,
+      employer_esi NUMERIC(14,2) NOT NULL DEFAULT 0,
+      total_ctc NUMERIC(14,2) NOT NULL DEFAULT 0,
+      payment_date DATE,
+      payment_mode VARCHAR(80) NOT NULL DEFAULT 'Bank Transfer',
+      bank_reference VARCHAR(255),
+      status VARCHAR(80) NOT NULL DEFAULT 'Pending',
+      notes TEXT,
+      created_by INTEGER,
+      updated_by INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS salary_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50);`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS employee_name VARCHAR(255);`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS department VARCHAR(180);`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS role_designation VARCHAR(180);`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS pay_month VARCHAR(20);`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS basic_salary NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS hra NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS allowances NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS special_allowance NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS conveyance_allowance NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS medical_allowance NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS overtime_pay NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS bonus NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS reimbursements NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS arrears NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS days_in_month INTEGER NOT NULL DEFAULT 30;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS paid_days INTEGER NOT NULL DEFAULT 30;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS lop_days INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS lop_amount NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS gross_salary NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS tax NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS provident_fund NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS esi NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS professional_tax NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS tds NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS loan_deduction NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS other_deductions NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS total_deductions NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS net_salary NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS employer_pf NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS employer_esi NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS total_ctc NUMERIC(14,2) NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS payment_date DATE;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS payment_mode VARCHAR(80) NOT NULL DEFAULT 'Bank Transfer';`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS bank_reference VARCHAR(255);`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS status VARCHAR(80) NOT NULL DEFAULT 'Pending';`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS notes TEXT;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS created_by INTEGER;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS updated_by INTEGER;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+  await pool.query(`ALTER TABLE salary_management_records ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;`);
+
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_salary_management_records_salary_code ON salary_management_records(salary_code);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_salary_management_records_employee_id ON salary_management_records(employee_id);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_salary_management_records_pay_month ON salary_management_records(pay_month);`);
 }
 
 async function ensureSalesTables() {
@@ -1854,6 +2023,7 @@ async function initializeDatabase() {
   await ensureHrDocumentsTable();
   await ensureTrainingProgramsTable();
   await ensurePayrollRecordsTable();
+  await ensureSalaryManagementTable();
   await ensureSalesTables();
   await ensureFinanceTables();
   await ensureItTables();

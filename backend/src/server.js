@@ -66,6 +66,7 @@ const supportRoutes = require('./routes/supportRoutes');
 const salesRoutes = require('./routes/salesRoutes');
 const financeRoutes = require('./routes/financeRoutes');
 const itRoutes = require('./routes/itRoutes');
+const salaryManagementRoutes = require('./routes/salaryManagementRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use('/api/access-requests', accessRequestRoutes);
@@ -83,6 +84,7 @@ app.use('/api/support', supportRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/it', itRoutes);
+app.use('/api/salary-management', salaryManagementRoutes);
 
 // Module Routes (to be implemented)
 // app.use('/api/users', require('./routes/userRoutes'));
