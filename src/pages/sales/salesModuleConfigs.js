@@ -149,7 +149,6 @@ export const customersConfig = {
     ];
   },
 };
-
 // ============================================================================
 // ORDERS CONFIG
 // ============================================================================
@@ -176,6 +175,7 @@ export const ordersConfig = {
     { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${val.toFixed(2)}` },
     { key: 'itemCount', label: 'Items', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
+    { key: 'paymentStatus', label: 'Payment Status', sortable: true },
   ],
 
   searchFields: ['code', 'customerCode'],
@@ -210,6 +210,13 @@ export const ordersConfig = {
       required: true,
       options: ['Processing', 'Shipped', 'Delivered'],
     },
+    {
+      name: 'paymentStatus',
+      label: 'Payment Status',
+      type: 'select',
+      required: true,
+      options: ['Pending', 'Partially Paid', 'Paid'],
+    },
   ],
 
   emptyForm: {
@@ -220,6 +227,7 @@ export const ordersConfig = {
     amount: 0,
     itemCount: 0,
     status: 'Processing',
+    paymentStatus: 'Pending',
   },
 
   fetchRows: fetchSalesOrders,
@@ -245,6 +253,7 @@ export const ordersConfig = {
     amount: row.amount || 0,
     itemCount: row.itemCount || 0,
     status: row.status || 'Processing',
+    paymentStatus: row.paymentStatus || 'Pending',
   }),
 
   formToRow: (form) => ({
@@ -254,6 +263,7 @@ export const ordersConfig = {
     amount: Number(form.amount) || 0,
     itemCount: Number(form.itemCount) || 0,
     status: form.status,
+    paymentStatus: form.paymentStatus || 'Pending',
   }),
 
   loadContext: async () => {

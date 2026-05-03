@@ -116,6 +116,7 @@ router.use(ensureFinanceAccess);
 
 router.get('/income', financeController.incomeHandlers.fetchItems);
 router.get('/income/next-code', financeController.incomeHandlers.fetchNextCodeHandler);
+router.post('/income/reconcile-sales', financeController.reconcileSalesIncomeHandler);
 router.get('/income/:code/file', financeController.downloadIncomeAttachment);
 router.post('/income', handleSingleFileUpload, sanitizeInput, financeController.incomeHandlers.createItem);
 router.patch('/income/:code', handleSingleFileUpload, sanitizeInput, financeController.incomeHandlers.updateItem);

@@ -108,6 +108,7 @@ export async function fetchSalesOrders() {
     amount: order.amount,
     itemCount: order.itemCount,
     status: order.status,
+    paymentStatus: order.paymentStatus,
   }));
 }
 
@@ -125,6 +126,7 @@ export async function createSalesOrder(data) {
       amount: data.amount,
       itemCount: data.itemCount,
       status: data.status || 'Processing',
+      paymentStatus: data.paymentStatus || 'Pending',
     }),
   });
   return result.data;
@@ -139,6 +141,7 @@ export async function updateSalesOrder(orderNumber, data) {
       amount: data.amount,
       itemCount: data.itemCount,
       status: data.status,
+      paymentStatus: data.paymentStatus,
     }),
   });
   return result.data;

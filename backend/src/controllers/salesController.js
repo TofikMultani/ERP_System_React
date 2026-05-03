@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 /* eslint-env node */
 const pool = require('../config/database');
+const financeController = require('./financeController');
 
 function normalizeText(value) {
   return String(value ?? '').trim();
@@ -104,9 +105,18 @@ function createCrudHandlers(config) {
 
       await client.query('COMMIT');
 
+      const mappedRow = mapRow(result.rows[0]);
+      if (typeof config.afterCreate === 'function') {
+        try {
+          await config.afterCreate(mappedRow, req);
+        } catch (hookError) {
+          console.error(`Post-create hook for ${config.label} failed:`, hookError);
+        }
+      }
+
       res.status(201).json({
         status: 'OK',
-        data: mapRow(result.rows[0]),
+        data: mappedRow,
       });
     } catch (error) {
       await client.query('ROLLBACK');
@@ -156,9 +166,19 @@ function createCrudHandlers(config) {
         });
       }
 
+      const mappedRow = mapRow(result.rows[0]);
+
+      if (typeof config.afterUpdate === 'function') {
+        try {
+          await config.afterUpdate(mappedRow, req);
+        } catch (hookError) {
+          console.error(`Post-update hook for ${config.label} failed:`, hookError);
+        }
+      }
+
       res.status(200).json({
         status: 'OK',
-        data: mapRow(result.rows[0]),
+        data: mappedRow,
       });
     } catch (error) {
       console.error(`Update ${config.label} error:`, error);
@@ -273,6 +293,7 @@ const ordersConfig = {
     amount: row.amount,
     itemCount: row.item_count,
     status: row.status,
+    paymentStatus: row.payment_status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }),
@@ -284,6 +305,7 @@ const ordersConfig = {
     amount: normalizeNumber(input.amount || 0),
     item_count: normalizeInteger(input.itemCount || input.item_count || 0),
     status: normalizeText(input.status || 'Processing'),
+    payment_status: normalizeText(input.paymentStatus || input.payment_status || 'Pending'),
   }),
   buildInsertQuery: (data) => {
     const columns = Object.keys(data);
@@ -296,6 +318,42 @@ const ordersConfig = {
     const updates = entries.map(([key], i) => `${key} = $${i + 1}`);
     const values = entries.map(([, value]) => value);
     return { updates, values };
+  },
+  afterCreate: async (row, req) => {
+    if (String(row.status || '').toLowerCase() !== 'delivered') {
+      return;
+    }
+
+    await financeController.syncSalesOrderIncome(
+      {
+        orderNumber: row.orderNumber,
+        customerName: row.customerName,
+        customerCode: row.customerCode,
+        orderDate: row.orderDate,
+        amount: row.amount,
+        paymentStatus: row.paymentStatus,
+        notes: `Auto-synced from sales order ${row.orderNumber}`,
+      },
+      req.user?.id || null,
+    );
+  },
+  afterUpdate: async (row, req) => {
+    if (String(row.status || '').toLowerCase() !== 'delivered') {
+      return;
+    }
+
+    await financeController.syncSalesOrderIncome(
+      {
+        orderNumber: row.orderNumber,
+        customerName: row.customerName,
+        customerCode: row.customerCode,
+        orderDate: row.orderDate,
+        amount: row.amount,
+        paymentStatus: row.paymentStatus,
+        notes: `Auto-synced from sales order ${row.orderNumber}`,
+      },
+      req.user?.id || null,
+    );
   },
 };
 

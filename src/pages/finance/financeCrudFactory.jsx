@@ -101,9 +101,9 @@ function normalizeTableColumns(columns = []) {
       return {
         header,
         accessor,
-        render: (value) => {
+        render: (value, row) => {
           try {
-            return column.format(value);
+            return column.format(value, row);
           } catch (error) {
             console.error(`Format error for column ${accessor}:`, error);
             return String(value ?? "");

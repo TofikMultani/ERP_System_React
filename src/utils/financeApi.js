@@ -116,11 +116,23 @@ async function request(endpoint, options = {}) {
   }
 }
 
+export async function reconcileDeliveredSalesIncome() {
+  const result = await request('/income/reconcile-sales', {
+    method: 'POST',
+  });
+
+  return result.data || [];
+}
+
 export async function fetchFinanceIncome() {
+  await reconcileDeliveredSalesIncome();
+
   const result = await request('/income');
   return (result.data || []).map((income) => ({
     id: income.id,
     code: income.incomeCode,
+    sourceType: income.sourceType,
+    sourceCode: income.sourceCode,
     sourceName: income.sourceName,
     receivedDate: income.receivedDate,
     amount: Number(income.amount || 0),
@@ -140,6 +152,8 @@ export async function fetchNextFinanceIncomeCode() {
 
 export async function createFinanceIncome(data) {
   const formData = new FormData();
+  appendIfPresent(formData, 'sourceType', data.sourceType || 'Manual');
+  appendIfPresent(formData, 'sourceCode', data.sourceCode || '');
   appendIfPresent(formData, 'sourceName', data.sourceName);
   appendIfPresent(formData, 'receivedDate', data.receivedDate);
   appendIfPresent(formData, 'amount', data.amount);
@@ -160,6 +174,8 @@ export async function createFinanceIncome(data) {
 
 export async function updateFinanceIncome(incomeCode, data) {
   const formData = new FormData();
+  appendIfPresent(formData, 'sourceType', data.sourceType || 'Manual');
+  appendIfPresent(formData, 'sourceCode', data.sourceCode || '');
   appendIfPresent(formData, 'sourceName', data.sourceName);
   appendIfPresent(formData, 'receivedDate', data.receivedDate);
   appendIfPresent(formData, 'amount', data.amount);

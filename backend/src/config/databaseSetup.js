@@ -1161,6 +1161,7 @@ async function ensureSalesTables() {
       amount NUMERIC(14,2) NOT NULL DEFAULT 0,
       item_count INTEGER NOT NULL DEFAULT 0,
       status VARCHAR(80) NOT NULL DEFAULT 'Processing',
+      payment_status VARCHAR(80) NOT NULL DEFAULT 'Pending',
       shipping_address TEXT,
       notes TEXT,
       created_by INTEGER,
@@ -1189,6 +1190,8 @@ async function ensureSalesTables() {
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  await pool.query(`ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_status VARCHAR(80) NOT NULL DEFAULT 'Pending';`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS sales_quotations (
@@ -1230,6 +1233,8 @@ async function ensureFinanceTables() {
     CREATE TABLE IF NOT EXISTS finance_income (
       id BIGSERIAL PRIMARY KEY,
       income_code VARCHAR(60) UNIQUE NOT NULL,
+      source_type VARCHAR(80) NOT NULL DEFAULT 'Manual',
+      source_code VARCHAR(80),
       source_name VARCHAR(255) NOT NULL,
       received_date DATE NOT NULL,
       amount NUMERIC(14,2) NOT NULL DEFAULT 0,
@@ -1360,6 +1365,8 @@ async function ensureFinanceTables() {
   `);
 
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS income_code VARCHAR(60);`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS source_type VARCHAR(80) NOT NULL DEFAULT 'Manual';`);
+  await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS source_code VARCHAR(80);`);
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS source_name VARCHAR(255);`);
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS received_date DATE;`);
   await pool.query(`ALTER TABLE finance_income ADD COLUMN IF NOT EXISTS amount NUMERIC(14,2) NOT NULL DEFAULT 0;`);
@@ -1454,6 +1461,12 @@ async function ensureFinanceTables() {
   `);
 
   await pool.query(`
+    UPDATE finance_income
+    SET source_type = COALESCE(NULLIF(TRIM(source_type), ''), 'Manual')
+    WHERE source_type IS NULL OR TRIM(source_type) = '';
+  `);
+
+  await pool.query(`
     UPDATE finance_expenses
     SET expense_code = CONCAT('EXP-', LPAD(id::text, 5, '0'))
     WHERE expense_code IS NULL OR TRIM(expense_code) = '';
@@ -1466,6 +1479,7 @@ async function ensureFinanceTables() {
   `);
 
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_income_code ON finance_income(income_code);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_income_source_link ON finance_income(source_type, source_code) WHERE source_code IS NOT NULL;`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_income_status ON finance_income(status);`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_finance_income_received_date ON finance_income(received_date DESC);`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_expenses_code ON finance_expenses(expense_code);`);

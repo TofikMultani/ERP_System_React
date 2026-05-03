@@ -18,6 +18,8 @@ import {
   deleteFinancePayment,
   fetchFinanceDashboard,
 } from '../../utils/financeApi';
+import { createElement as h } from 'react';
+import Badge from '../../components/Badge.jsx';
 
 const FILE_ACCEPT = '.pdf,image/*';
 const FILE_ACCEPTED_MIME_TYPES = [
@@ -76,7 +78,19 @@ export const financeIncomeConfig = {
 
   columns: [
     { key: 'code', label: 'Income Code', sortable: true },
-    { key: 'sourceName', label: 'Source', sortable: true },
+    {
+      key: 'sourceName',
+      label: 'Source',
+      sortable: true,
+      render: (val, row) => h(
+        'div',
+        { className: 'finance-source-cell' },
+        h('div', null, String(val || '')),
+        String(row?.sourceType || '').toLowerCase() === 'sales order'
+          ? h(Badge, { variant: 'info', size: 'sm' }, 'Fetched from Sales')
+          : null,
+      ),
+    },
     { key: 'receivedDate', label: 'Received Date', sortable: true, format: (val) => toDateOnly(val) },
     { key: 'amount', label: 'Amount', sortable: true, format: (val) => `₹${Number(val || 0).toFixed(2)}` },
     { key: 'status', label: 'Status', sortable: true },
@@ -107,6 +121,8 @@ export const financeIncomeConfig = {
 
   emptyForm: {
     code: '',
+    sourceType: 'Manual',
+    sourceCode: '',
     sourceName: '',
     receivedDate: new Date().toISOString().split('T')[0],
     amount: 0,
@@ -117,6 +133,9 @@ export const financeIncomeConfig = {
   },
 
   fetchRows: fetchFinanceIncome,
+  beforeFetch: async () => {
+    await reconcileDeliveredSalesIncome();
+  },
   fetchRow: async (code) => {
     const items = await fetchFinanceIncome();
     const item = items.find((x) => x.code === code);
@@ -133,6 +152,8 @@ export const financeIncomeConfig = {
 
   rowToForm: (row) => ({
     code: row.code || '',
+    sourceType: row.sourceType || 'Manual',
+    sourceCode: row.sourceCode || '',
     sourceName: row.sourceName || '',
     receivedDate: toDateOnly(row.receivedDate) || new Date().toISOString().split('T')[0],
     amount: Number(row.amount) || 0,
@@ -144,6 +165,8 @@ export const financeIncomeConfig = {
   }),
 
   formToRow: (form) => ({
+    sourceType: form.sourceType || 'Manual',
+    sourceCode: form.sourceCode || '',
     sourceName: form.sourceName,
     receivedDate: form.receivedDate,
     amount: Number(form.amount) || 0,
